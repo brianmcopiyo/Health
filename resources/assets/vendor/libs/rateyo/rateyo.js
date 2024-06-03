@@ -1,1 +1,3 @@
-import 'rateyo/src/jquery.rateyo';
+import rateYo from 'rateyo/src/jquery.rateyo';
+
+export { rateYo };

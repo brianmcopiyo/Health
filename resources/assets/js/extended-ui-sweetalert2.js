@@ -361,7 +361,7 @@
       var timerInterval;
       Swal.fire({
         title: 'Auto close alert!',
-        html: 'I will close in <strong></strong> seconds.',
+        html: 'I will close in <span class="fw-medium"></span> seconds.',
         timer: 2000,
         customClass: {
           confirmButton: 'btn btn-primary waves-effect waves-light'

@@ -1,7 +1,3 @@
-import moment from 'moment/moment';
-
-try {
-  window.moment = moment;
-} catch (e) {}
+import * as moment from 'moment/moment';
 
 export { moment };

@@ -1,7 +1,3 @@
-import Sortable from 'sortablejs/Sortable';
-
-try {
-  window.Sortable = Sortable;
-} catch (e) {}
+import * as Sortable from 'sortablejs/Sortable';
 
 export { Sortable };

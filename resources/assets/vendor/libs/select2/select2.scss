@@ -17,11 +17,11 @@ $select2-multiple-selection-line-height: 1.5rem !default;
   vertical-align: middle;
   box-sizing: border-box;
 
-  @import 'select2/src/scss/single';
-  @import 'select2/src/scss/multiple';
+  @import '~select2/src/scss/single';
+  @import '~select2/src/scss/multiple';
 }
 
-@import 'select2/src/scss/dropdown';
+@import '~select2/src/scss/dropdown';
 
 .select2-results__option[role='option'] {
   margin: 0.25rem 0.5rem;

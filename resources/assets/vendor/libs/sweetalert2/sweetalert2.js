@@ -1,4 +1,4 @@
-import SwalPlugin from 'sweetalert2/dist/sweetalert2';
+import * as SwalPlugin from 'sweetalert2/dist/sweetalert2';
 
 const Swal = SwalPlugin.mixin({
   buttonsStyling: false,
@@ -8,9 +8,5 @@ const Swal = SwalPlugin.mixin({
     denyButton: 'btn btn-label-secondary'
   }
 });
-
-try {
-  window.Swal = Swal;
-} catch (e) {}
 
 export { Swal };

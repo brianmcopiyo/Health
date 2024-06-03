@@ -216,6 +216,12 @@
   }
 }
 
+// CTA
+.landing-cta {
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 // Contact US
 .landing-contact {
   .text-heading {
@@ -226,9 +232,14 @@
     .contact-img {
       border-radius: 3.75rem light.$border-radius light.$border-radius light.$border-radius;
     }
-    .contact-border-img {
+    &::before {
+      content: url('../../../img/front-pages/icons/contact-border.png');
+      position: absolute;
       inset-block-start: -2.5rem;
       inset-inline-start: -2.8125rem;
+      @include light.media-breakpoint-down(md) {
+        display: none;
+      }
     }
   }
 }
@@ -243,6 +254,10 @@
         background-color: light.$card-bg;
       }
     }
+    //CTA
+    .landing-cta {
+      background-image: url('../../../img/front-pages/backgrounds/cta-bg.png');
+    }
   }
 }
 
@@ -255,6 +270,21 @@
       &::after {
         background-color: dark.$card-bg;
       }
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 100%;
+        height: 100%;
+        background: url('../../../img/front-pages/backgrounds/hero-bg-dark.png') center no-repeat;
+        background-size: contain;
+      }
+    }
+    //CTA
+    .landing-cta {
+      background-image: url('../../../img/front-pages/backgrounds/cta-bg-dark.png');
     }
   }
 }

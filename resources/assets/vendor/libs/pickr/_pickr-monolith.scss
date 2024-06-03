@@ -1,4 +1,4 @@
-@import '@simonwep/pickr/dist/themes/monolith.min';
+@import '~@simonwep/pickr/src/scss/themes/monolith.scss';
 
 @include app-rtl(false) {
   .pcr-app[data-theme='monolith'] .pcr-selection .pcr-color-preview .pcr-last-color {

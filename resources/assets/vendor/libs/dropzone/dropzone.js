@@ -49,8 +49,4 @@ Dropzone.prototype.uploadFiles = function (files) {
   }
 };
 
-try {
-  window.Dropzone = Dropzone;
-} catch (e) {}
-
 export { Dropzone };

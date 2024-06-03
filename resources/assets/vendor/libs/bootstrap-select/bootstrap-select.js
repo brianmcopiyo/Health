@@ -1,1 +1,3 @@
-import 'bootstrap-select/js/bootstrap-select';
+import bootstrapSelect from 'bootstrap-select/js/bootstrap-select';
+
+export { bootstrapSelect };

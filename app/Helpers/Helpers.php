@@ -92,22 +92,13 @@ class Helpers
       }
     }
     $styleVal = $data['myStyle'] == "dark" ? "dark" : "light";
-    if(isset($_COOKIE['mode'])){
-      if($_COOKIE['mode'] === "system"){
-        if(isset($_COOKIE['colorPref'])) {
-          $styleVal = Str::lower($_COOKIE['colorPref']);
-        }
-      }
-      else {
-        $styleVal = $_COOKIE['mode'];
-      }
+    if (isset($_COOKIE['style'])) {
+      $styleVal = $_COOKIE['style'];
     }
-    isset($_COOKIE['theme']) ? $themeVal = $_COOKIE['theme'] : $themeVal = $data['myTheme'];
     //layout classes
     $layoutClasses = [
       'layout' => $data['myLayout'],
-      'theme' => $themeVal,
-      'themeOpt' => $data['myTheme'],
+      'theme' => $data['myTheme'],
       'style' => $styleVal,
       'styleOpt' => $data['myStyle'],
       'rtlSupport' => $data['myRTLSupport'],

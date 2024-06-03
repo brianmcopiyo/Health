@@ -1,11 +1,10 @@
 <!-- Footer: Start -->
 <footer class="landing-footer bg-body footer-text">
-  <div class="footer-top position-relative overflow-hidden z-1">
-    <img src="{{asset('assets/img/front-pages/backgrounds/footer-bg-'.$configData['style'].'.png')}}" alt="footer bg" class="footer-bg banner-bg-img z-n1" data-app-light-img="front-pages/backgrounds/footer-bg-light.png" data-app-dark-img="front-pages/backgrounds/footer-bg-dark.png" />
+  <div class="footer-top">
     <div class="container">
       <div class="row gx-0 gy-4 g-md-5">
         <div class="col-lg-5">
-          <a href="javascript:;" class="app-brand-link mb-4">
+          <a href="{{url('front-pages/landing')}}" class="app-brand-link mb-4">
             <span class="app-brand-logo demo">@include('_partials.macros',['height'=>20,'withbg' => "fill: #fff;"])</span>
             <span class="app-brand-text demo footer-link fw-bold ms-2 ps-1">{{ config('variables.templateName') }}</span>
           </a>
@@ -26,19 +25,19 @@
           <h6 class="footer-title mb-4">Demos</h6>
           <ul class="list-unstyled">
             <li class="mb-3">
-              <a href="javascript:;" target="_blank" class="footer-link">Vertical Layout</a>
+              <a href="/demo-1" target="_blank" class="footer-link">Vertical Layout</a>
             </li>
             <li class="mb-3">
-              <a href="javascript:;" target="_blank" class="footer-link">Horizontal Layout</a>
+              <a href="/demo-5" target="_blank" class="footer-link">Horizontal Layout</a>
             </li>
             <li class="mb-3">
-              <a href="javascript:;" target="_blank" class="footer-link">Bordered Layout</a>
+              <a href="/demo-2" target="_blank" class="footer-link">Bordered Layout</a>
             </li>
             <li class="mb-3">
-              <a href="javascript:;" target="_blank" class="footer-link">Semi Dark Layout</a>
+              <a href="/demo-3" target="_blank" class="footer-link">Semi Dark Layout</a>
             </li>
             <li class="mb-3">
-              <a href="javascript:;" target="_blank" class="footer-link">Dark Layout</a>
+              <a href="/demo-4" target="_blank" class="footer-link">Dark Layout</a>
             </li>
           </ul>
         </div>
@@ -46,19 +45,19 @@
           <h6 class="footer-title mb-4">Pages</h6>
           <ul class="list-unstyled">
             <li class="mb-3">
-              <a href="javascript:;" class="footer-link">Pricing</a>
+              <a href="{{url('/front-pages/pricing')}}" class="footer-link">Pricing</a>
             </li>
             <li class="mb-3">
-              <a href="javascript:;" class="footer-link">Payment<span class="badge rounded bg-primary ms-2">New</span></a>
+              <a href="{{url('/front-pages/payment')}}" class="footer-link">Payment<span class="badge rounded bg-primary ms-2">New</span></a>
             </li>
             <li class="mb-3">
-              <a href="javascript:;" class="footer-link">Checkout</a>
+              <a href="{{url('/front-pages/checkout')}}" class="footer-link">Checkout</a>
             </li>
             <li class="mb-3">
-              <a href="javascript:;" class="footer-link">Help Center</a>
+              <a href="{{url('/front-pages/help-center')}}" class="footer-link">Help Center</a>
             </li>
             <li class="mb-3">
-              <a href="javascript:;" target="_blank" class="footer-link">Login/Register</a>
+              <a href="{{url('/auth/login-cover')}}" target="_blank" class="footer-link">Login/Register</a>
             </li>
           </ul>
         </div>

@@ -1,7 +1,7 @@
-@import '@simonwep/pickr/dist/themes/nano.min';
+@import '~@simonwep/pickr/src/scss/themes/nano.scss';
 
 @include app-rtl(false) {
   .pcr-app[data-theme='nano'] .pcr-selection .pcr-color-preview {
-    margin-right: 0.6em;
+    margin-right: $padding;
   }
 }

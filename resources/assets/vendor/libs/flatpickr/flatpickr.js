@@ -1,7 +1,3 @@
-import flatpickr from 'flatpickr/dist/flatpickr';
-
-try {
-  window.flatpickr = flatpickr;
-} catch (e) {}
+import * as flatpickr from 'flatpickr/dist/flatpickr';
 
 export { flatpickr };

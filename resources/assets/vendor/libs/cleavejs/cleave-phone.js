@@ -1,1 +1,3 @@
-import 'cleave.js/dist/addons/cleave-phone.us';
+import * as phone from 'cleave.js/dist/addons/cleave-phone.us';
+
+export { phone };

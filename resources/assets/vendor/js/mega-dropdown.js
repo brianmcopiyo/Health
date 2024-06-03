@@ -202,5 +202,4 @@ class MegaDropdown {
   }
 }
 
-window.MegaDropdown = MegaDropdown
 export { MegaDropdown }

@@ -1,7 +1,3 @@
-import toastr from 'toastr/toastr';
-
-try {
-  window.toastr = toastr;
-} catch (e) {}
+import * as toastr from 'toastr/toastr';
 
 export { toastr };

@@ -1,7 +1,3 @@
-import noUiSlider from 'nouislider';
-
-try {
-  window.noUiSlider = noUiSlider;
-} catch (e) {}
+import * as noUiSlider from 'nouislider';
 
 export { noUiSlider };
