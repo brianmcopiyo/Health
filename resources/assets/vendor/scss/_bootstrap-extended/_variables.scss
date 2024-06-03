@@ -384,8 +384,8 @@ $btn-padding-x-xl: $input-btn-padding-x-xl !default; // (C)
 $btn-font-size-xl: $input-btn-font-size-xl !default; // (C)
 
 $btn-line-height-xs: $input-btn-line-height-xs !default; // (C)
-$btn-line-height-sm: $line-height-sm; //(C)
-$btn-line-height-lg: $line-height-lg; //(C)
+$btn-line-height-sm: $line-height-sm !default; //(C)
+$btn-line-height-lg: $line-height-lg !default; //(C)
 $btn-line-height-xl: $input-btn-line-height-xl !default; // (C)
 
 $btn-font-weight: 500 !default;

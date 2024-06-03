@@ -3,8 +3,8 @@
  */
 'use strict';
 
-let isRtl = window.Helpers.isRtl(),
-  isDarkStyle = window.Helpers.isDarkStyle();
+window.isRtl = window.Helpers.isRtl();
+window.isDarkStyle = window.Helpers.isDarkStyle();
 
 (function () {
   const menu = document.getElementById('navbarSupportedContent'),

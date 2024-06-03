@@ -985,4 +985,5 @@ class Menu {
   }
 }
 
+window.Menu = Menu
 export { Menu }

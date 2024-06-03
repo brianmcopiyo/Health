@@ -2,19 +2,19 @@
 $menuCollapsed = ($configData['menuCollapsed'] === 'layout-menu-collapsed') ? json_encode(true) : false;
 @endphp
 <!-- laravel style -->
-<script src="{{ asset('assets/vendor/js/helpers.js') }}"></script>
+@vite(['resources/assets/vendor/js/helpers.js'])
 <!-- beautify ignore:start -->
 @if ($configData['hasCustomizer'])
   <!--! Template customizer & Theme config files MUST be included after core stylesheets and helpers.js in the <head> section -->
   <!--? Template customizer: To hide customizer set displayCustomizer value false in config.js.  -->
-  <script src="{{ asset('assets/vendor/js/template-customizer.js') }}"></script>
+  @vite(['resources/assets/vendor/js/template-customizer.js'])
 @endif
 
   <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
-  <script src="{{ asset('assets/js/config.js') }}"></script>
+  @vite(['resources/assets/js/config.js'])
 
 @if ($configData['hasCustomizer'])
-<script>
+<script type="module">
   window.templateCustomizer = new TemplateCustomizer({
     cssPath: '',
     themesPath: '',
@@ -26,15 +26,14 @@ $menuCollapsed = ($configData['menuCollapsed'] === 'layout-menu-collapsed') ? js
       var resolvedPaths = {
         // Core stylesheets
         @foreach (['core'] as $name)
-          '{{ $name }}.css': '{{ asset(mix("assets/vendor/css{$configData['rtlSupport']}/{$name}.css")) }}',
-          '{{ $name }}-dark.css': '{{ asset(mix("assets/vendor/css{$configData['rtlSupport']}/{$name}-dark.css")) }}',
+          '{{ $name }}.scss': '{{ Vite::asset('resources/assets/vendor/scss'.$configData["rtlSupport"].'/'.$name.'.scss') }}',
+          '{{ $name }}-dark.scss': '{{ Vite::asset('resources/assets/vendor/scss'.$configData["rtlSupport"].'/'.$name.'-dark.scss') }}',
         @endforeach
 
         // Themes
         @foreach (['default', 'bordered', 'semi-dark'] as $name)
-          'theme-{{ $name }}.css': '{{ asset(mix("assets/vendor/css{$configData['rtlSupport']}/theme-{$name}.css")) }}',
-          'theme-{{ $name }}-dark.css':
-          '{{ asset(mix("assets/vendor/css{$configData['rtlSupport']}/theme-{$name}-dark.css")) }}',
+          'theme-{{ $name }}.scss': '{{ Vite::asset('resources/assets/vendor/scss'.$configData["rtlSupport"].'/theme-'.$name.'.scss') }}',
+          'theme-{{ $name }}-dark.scss': '{{ Vite::asset('resources/assets/vendor/scss'.$configData["rtlSupport"].'/theme-'.$name.'-dark.scss') }}',
         @endforeach
       }
       return resolvedPaths[path] || path;

@@ -4,9 +4,9 @@
 
 'use strict';
 
-let isRtl = window.Helpers.isRtl(),
-  isDarkStyle = window.Helpers.isDarkStyle(),
-  menu,
+window.isRtl = window.Helpers.isRtl();
+window.isDarkStyle = window.Helpers.isDarkStyle();
+let menu,
   animate,
   isHorizontalLayout = false;
 

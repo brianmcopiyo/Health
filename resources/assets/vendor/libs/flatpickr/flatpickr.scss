@@ -92,12 +92,17 @@ $flatpickr-width: ($flatpickr-cell-size * 7)+ ($flatpickr-content-padding-x * 2)
     }
   }
 
-  &.hasTime .flatpickr-time {
-    height: $flatpickr-time-picker-height;
+  &.hasTime {
+    padding-bottom: 0;
+    .flatpickr-time {
+      height: $flatpickr-time-picker-height;
+    }
   }
 
-  &.noCalendar.hasTime .flatpickr-time {
-    height: auto;
+  &.noCalendar.hasTime {
+    .flatpickr-time {
+      height: auto;
+    }
   }
 
   input[type='number'] {
