@@ -3,8 +3,8 @@
  */
 'use strict';
 
-let isRtl = window.Helpers.isRtl(),
-  isDarkStyle = window.Helpers.isDarkStyle();
+window.isRtl = window.Helpers.isRtl();
+window.isDarkStyle = window.Helpers.isDarkStyle();
 
 (function () {
   const menu = document.getElementById('navbarSupportedContent'),
@@ -84,58 +84,6 @@ let isRtl = window.Helpers.isRtl(),
       new MegaDropdown(e);
     });
   }
-
-  //Style Switcher (Light/Dark/System Mode)
-  let styleSwitcher = document.querySelector('.dropdown-style-switcher');
-
-  // Get style from local storage or use 'system' as default
-  let storedStyle =
-    localStorage.getItem('templateCustomizer-' + templateName + '--Style') || //if no template style then use Customizer style
-    (window.templateCustomizer?.settings?.defaultStyle ?? 'light'); //!if there is no Customizer then use default style as light
-
-  // Set style on click of style switcher item if template customizer is enabled
-  if (window.templateCustomizer && styleSwitcher) {
-    let styleSwitcherItems = [].slice.call(styleSwitcher.children[1].querySelectorAll('.dropdown-item'));
-    styleSwitcherItems.forEach(function (item) {
-      item.addEventListener('click', function () {
-        let currentStyle = this.getAttribute('data-theme');
-        if (currentStyle === 'light') {
-          window.templateCustomizer.setStyle('light');
-        } else if (currentStyle === 'dark') {
-          window.templateCustomizer.setStyle('dark');
-        } else {
-          window.templateCustomizer.setStyle('system');
-        }
-      });
-    });
-
-    // Update style switcher icon based on the stored style
-
-    const styleSwitcherIcon = styleSwitcher.querySelector('i');
-
-    if (storedStyle === 'light') {
-      styleSwitcherIcon.classList.add('ti-sun');
-      new bootstrap.Tooltip(styleSwitcherIcon, {
-        title: 'Light Mode',
-        fallbackPlacements: ['bottom']
-      });
-    } else if (storedStyle === 'dark') {
-      styleSwitcherIcon.classList.add('ti-moon');
-      new bootstrap.Tooltip(styleSwitcherIcon, {
-        title: 'Dark Mode',
-        fallbackPlacements: ['bottom']
-      });
-    } else {
-      styleSwitcherIcon.classList.add('ti-device-desktop');
-      new bootstrap.Tooltip(styleSwitcherIcon, {
-        title: 'System Mode',
-        fallbackPlacements: ['bottom']
-      });
-    }
-  }
-
-  // Run switchImage function based on the stored style
-  switchImage(storedStyle);
 
   // Update light/dark image based on current style
   function switchImage(style) {

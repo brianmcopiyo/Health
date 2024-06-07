@@ -7,23 +7,29 @@ $customizerHidden = 'customizer-hide';
 @section('title', 'Login Basic - Pages')
 
 @section('vendor-style')
-<!-- Vendor -->
-<link rel="stylesheet" href="{{asset('assets/vendor/libs/@form-validation/umd/styles/index.min.css')}}" />
+@vite([
+  'resources/assets/vendor/libs/@form-validation/form-validation.scss'
+])
 @endsection
 
 @section('page-style')
-<!-- Page -->
-<link rel="stylesheet" href="{{asset('assets/vendor/css/pages/page-auth.css')}}">
+@vite([
+  'resources/assets/vendor/scss/pages/page-auth.scss'
+])
 @endsection
 
 @section('vendor-script')
-<script src="{{asset('assets/vendor/libs/@form-validation/umd/bundle/popular.min.js')}}"></script>
-<script src="{{asset('assets/vendor/libs/@form-validation/umd/plugin-bootstrap5/index.min.js')}}"></script>
-<script src="{{asset('assets/vendor/libs/@form-validation/umd/plugin-auto-focus/index.min.js')}}"></script>
+@vite([
+  'resources/assets/vendor/libs/@form-validation/popular.js',
+  'resources/assets/vendor/libs/@form-validation/bootstrap5.js',
+  'resources/assets/vendor/libs/@form-validation/auto-focus.js'
+])
 @endsection
 
 @section('page-script')
-<script src="{{asset('assets/js/pages-auth.js')}}"></script>
+@vite([
+  'resources/assets/js/pages-auth.js'
+])
 @endsection
 
 @section('content')
@@ -52,7 +58,7 @@ $customizerHidden = 'customizer-hide';
             <div class="mb-3 form-password-toggle">
               <div class="d-flex justify-content-between">
                 <label class="form-label" for="password">Password</label>
-                <a href="{{url('auth/forgot-password-basic')}}">
+                <a href="javascript:void(0);">
                   <small>Forgot Password?</small>
                 </a>
               </div>

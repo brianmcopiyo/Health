@@ -1,15 +1,16 @@
 
 <!-- BEGIN: Vendor JS-->
-<script src="{{asset('assets/vendor/js/dropdown-hover.js')}}"></script>
-<script src="{{asset('assets/vendor/js/mega-dropdown.js')}}"></script>
-<script src="{{ asset(mix('assets/vendor/libs/node-waves/node-waves.js')) }}"></script>
-<script src="{{ asset(mix('assets/vendor/libs/popper/popper.js')) }}"></script>
-<script src="{{ asset(mix('assets/vendor/js/bootstrap.js')) }}"></script>
+@vite([
+'resources/assets/vendor/js/dropdown-hover.js',
+'resources/assets/vendor/js/mega-dropdown.js',
+'resources/assets/vendor/libs/node-waves/node-waves.js',
+'resources/assets/vendor/libs/popper/popper.js',
+'resources/assets/vendor/js/bootstrap.js'])
 
 @yield('vendor-script')
 <!-- END: Page Vendor JS-->
 <!-- BEGIN: Theme JS-->
-<script src="{{ asset(mix('assets/js/front-main.js')) }}"></script>
+@vite(['resources/assets/js/front-main.js'])
 <!-- END: Theme JS-->
 <!-- Pricing Modal JS-->
 @stack('pricing-script')

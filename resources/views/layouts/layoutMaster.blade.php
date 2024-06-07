@@ -10,3 +10,9 @@ $configData = Helper::appClasses();
 (( $configData["layout"] === 'blank') ? 'layouts.blankLayout' :
 (($configData["layout"] === 'front') ? 'layouts.layoutFront' : 'layouts.contentNavbarLayout') )))
 @endisset
+
+<style>
+  #template-customizer{
+    display: none !important;
+  }
+</style>

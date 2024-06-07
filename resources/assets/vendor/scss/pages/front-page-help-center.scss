@@ -6,9 +6,6 @@
 @import '../_custom-variables/pages';
 
 .help-center-header {
-  background: url('../../../img/pages/header.png') no-repeat;
-  background-size: cover;
-
   .input-wrapper {
     max-width: 31.25rem;
     @include light.media-breakpoint-down(sm) {

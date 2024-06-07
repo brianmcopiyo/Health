@@ -9,7 +9,7 @@ $configData = Helper::appClasses();
 
 @section('page-style')
 <!-- Page -->
-<link rel="stylesheet" href="{{asset('assets/vendor/css/pages/page-misc.css')}}">
+@vite(['resources/assets/vendor/scss/pages/page-misc.scss'])
 @endsection
 
 

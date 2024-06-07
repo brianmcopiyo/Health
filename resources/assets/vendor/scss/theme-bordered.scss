@@ -92,6 +92,7 @@ div.dataTables_wrapper .dt-button-collection > div[role='menu'] {
 }
 .navbar-detached {
   border: 1px solid $border-color;
+  box-shadow: none;
 }
 .layout-navbar-fixed .layout-page:before {
   backdrop-filter: saturate(200%) blur(10px);

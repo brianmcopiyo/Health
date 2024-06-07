@@ -97,15 +97,19 @@ document.addEventListener('DOMContentLoaded', function (e) {
     });
 
     // FlatPickr Initialization & Validation
-    flatpickr(formAddNewRecord.querySelector('[name="basicDate"]'), {
-      enableTime: false,
-      // See https://flatpickr.js.org/formatting/
-      dateFormat: 'm/d/Y',
-      // After selecting a date, we need to revalidate the field
-      onChange: function () {
-        fv.revalidateField('basicDate');
-      }
-    });
+    const flatpickrDate = document.querySelector('[name="basicDate"]');
+
+    if (flatpickrDate) {
+      flatpickrDate.flatpickr({
+        enableTime: false,
+        // See https://flatpickr.js.org/formatting/
+        dateFormat: 'm/d/Y',
+        // After selecting a date, we need to revalidate the field
+        onChange: function () {
+          fv.revalidateField('basicDate');
+        }
+      });
+    }
   })();
 });
 

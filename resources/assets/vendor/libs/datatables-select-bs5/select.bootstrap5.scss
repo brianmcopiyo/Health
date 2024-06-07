@@ -3,7 +3,7 @@
 @use '../../scss/_components/include' as comp;
 
 @import '../../scss/_custom-variables/libs';
-@import '~datatables.net-select-bs5/css/select.bootstrap5';
+@import 'datatables.net-select-bs5/css/select.bootstrap5';
 
 // Background color for select row
 table.dataTable tbody > tr.selected td,

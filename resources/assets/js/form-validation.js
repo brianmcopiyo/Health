@@ -262,15 +262,19 @@ document.addEventListener('DOMContentLoaded', function (e) {
     //? Revalidation third-party libs inputs on change trigger
 
     // Flatpickr
-    flatpickr(formValidationExamples.querySelector('[name="formValidationDob"]'), {
-      enableTime: false,
-      // See https://flatpickr.js.org/formatting/
-      dateFormat: 'Y/m/d',
-      // After selecting a date, we need to revalidate the field
-      onChange: function () {
-        fv.revalidateField('formValidationDob');
-      }
-    });
+    const flatpickrDate = document.querySelector('[name="formValidationDob"]');
+
+    if (flatpickrDate) {
+      flatpickrDate.flatpickr({
+        enableTime: false,
+        // See https://flatpickr.js.org/formatting/
+        dateFormat: 'Y/m/d',
+        // After selecting a date, we need to revalidate the field
+        onChange: function () {
+          fv.revalidateField('formValidationDob');
+        }
+      });
+    }
 
     // Select2 (Country)
     if (formValidationSelect2Ele.length) {

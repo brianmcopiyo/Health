@@ -4,9 +4,9 @@
 
 'use strict';
 
-let isRtl = window.Helpers.isRtl(),
-  isDarkStyle = window.Helpers.isDarkStyle(),
-  menu,
+window.isRtl = window.Helpers.isRtl();
+window.isDarkStyle = window.Helpers.isDarkStyle();
+let menu,
   animate,
   isHorizontalLayout = false;
 
@@ -26,52 +26,6 @@ if (document.getElementById('layout-menu')) {
     Waves.attach("[class*='btn-label-']");
     Waves.attach('.pagination .page-item .page-link');
   }
-
-  // Initialize menu
-  //-----------------
-
-  let layoutMenuEl = document.querySelectorAll('#layout-menu');
-  layoutMenuEl.forEach(function (element) {
-    menu = new Menu(element, {
-      orientation: isHorizontalLayout ? 'horizontal' : 'vertical',
-      closeChildren: isHorizontalLayout ? true : false,
-      // ? This option only works with Horizontal menu
-      showDropdownOnHover: localStorage.getItem('templateCustomizer-' + templateName + '--ShowDropdownOnHover') // If value(showDropdownOnHover) is set in local storage
-        ? localStorage.getItem('templateCustomizer-' + templateName + '--ShowDropdownOnHover') === 'true' // Use the local storage value
-        : window.templateCustomizer !== undefined // If value is set in config.js
-        ? window.templateCustomizer.settings.defaultShowDropdownOnHover // Use the config.js value
-        : true // Use this if you are not using the config.js and want to set value directly from here
-    });
-    // Change parameter to true if you want scroll animation
-    window.Helpers.scrollToActive((animate = false));
-    window.Helpers.mainMenu = menu;
-  });
-
-  // Initialize menu togglers and bind click on each
-  let menuToggler = document.querySelectorAll('.layout-menu-toggle');
-  menuToggler.forEach(item => {
-    item.addEventListener('click', event => {
-      event.preventDefault();
-      window.Helpers.toggleCollapsed();
-      // Enable menu state with local storage support if enableMenuLocalStorage = true from config.js
-      if (config.enableMenuLocalStorage && !window.Helpers.isSmallScreen()) {
-        try {
-          localStorage.setItem(
-            'templateCustomizer-' + templateName + '--LayoutCollapsed',
-            String(window.Helpers.isCollapsed())
-          );
-          // Update customizer checkbox state on click of menu toggler
-          let layoutCollapsedCustomizerOptions = document.querySelector('.template-customizer-layouts-options');
-          if (layoutCollapsedCustomizerOptions) {
-            let layoutCollapsedVal = window.Helpers.isCollapsed() ? 'collapsed' : 'expanded';
-            layoutCollapsedCustomizerOptions.querySelector(`input[value="${layoutCollapsedVal}"]`).click();
-          }
-        } catch (e) {}
-      }
-    });
-  });
-
-  // Menu swipe gesture
 
   // Detect swipe gesture on the target element and call swipe In
   window.Helpers.swipeIn('.drag-target', function (e) {
@@ -112,94 +66,8 @@ if (document.getElementById('layout-menu')) {
     });
   }
 
-  //Style Switcher (Light/Dark/System Mode)
-  let styleSwitcher = document.querySelector('.dropdown-style-switcher');
-
-  // Get style from local storage or use 'system' as default
-  let storedStyle =
-    localStorage.getItem('templateCustomizer-' + templateName + '--Style') || //if no template style then use Customizer style
-    (window.templateCustomizer?.settings?.defaultStyle ?? 'light'); //!if there is no Customizer then use default style as light
-
-  // Set style on click of style switcher item if template customizer is enabled
-  if (window.templateCustomizer && styleSwitcher) {
-    let styleSwitcherItems = [].slice.call(styleSwitcher.children[1].querySelectorAll('.dropdown-item'));
-    styleSwitcherItems.forEach(function (item) {
-      item.addEventListener('click', function () {
-        let currentStyle = this.getAttribute('data-theme');
-        if (currentStyle === 'light') {
-          window.templateCustomizer.setStyle('light');
-        } else if (currentStyle === 'dark') {
-          window.templateCustomizer.setStyle('dark');
-        } else {
-          window.templateCustomizer.setStyle('system');
-        }
-      });
-    });
-
-    // Update style switcher icon based on the stored style
-
-    const styleSwitcherIcon = styleSwitcher.querySelector('i');
-
-    if (storedStyle === 'light') {
-      styleSwitcherIcon.classList.add('ti-sun');
-      new bootstrap.Tooltip(styleSwitcherIcon, {
-        title: 'Light Mode',
-        fallbackPlacements: ['bottom']
-      });
-    } else if (storedStyle === 'dark') {
-      styleSwitcherIcon.classList.add('ti-moon');
-      new bootstrap.Tooltip(styleSwitcherIcon, {
-        title: 'Dark Mode',
-        fallbackPlacements: ['bottom']
-      });
-    } else {
-      styleSwitcherIcon.classList.add('ti-device-desktop');
-      new bootstrap.Tooltip(styleSwitcherIcon, {
-        title: 'System Mode',
-        fallbackPlacements: ['bottom']
-      });
-    }
-  }
-
   // Run switchImage function based on the stored style
   switchImage(storedStyle);
-
-  let languageDropdown = document.getElementsByClassName('dropdown-language');
-
-  if (languageDropdown.length) {
-    let dropdownItems = languageDropdown[0].querySelectorAll('.dropdown-item');
-    const dropdownActiveItem = languageDropdown[0].querySelector('.dropdown-item.active');
-
-    directionChange(dropdownActiveItem.dataset.textDirection);
-
-    for (let i = 0; i < dropdownItems.length; i++) {
-      dropdownItems[i].addEventListener('click', function () {
-        let textDirection = this.getAttribute('data-text-direction');
-        window.templateCustomizer.setLang(this.getAttribute('data-language'));
-        directionChange(textDirection);
-      });
-    }
-    function directionChange(textDirection) {
-      if (textDirection === 'rtl') {
-        if (localStorage.getItem('templateCustomizer-' + templateName + '--Rtl') !== 'true')
-          window.templateCustomizer ? window.templateCustomizer.setRtl(true) : '';
-      } else {
-        if (localStorage.getItem('templateCustomizer-' + templateName + '--Rtl') === 'true')
-          window.templateCustomizer ? window.templateCustomizer.setRtl(false) : '';
-      }
-    }
-  }
-
-  // add on click javascript for template customizer reset button id template-customizer-reset-btn
-
-  setTimeout(function () {
-    let templateCustomizerResetBtn = document.querySelector('.template-customizer-reset-btn');
-    if (templateCustomizerResetBtn) {
-      templateCustomizerResetBtn.onclick = function () {
-        window.location.href = baseUrl + 'lang/en';
-      };
-    }
-  }, 1500);
 
   // Notification
   // ------------
@@ -272,16 +140,6 @@ if (document.getElementById('layout-menu')) {
   // Init PerfectScrollbar in Navbar Dropdown (i.e notification)
   window.Helpers.initNavbarDropdownScrollbar();
 
-  let horizontalMenuTemplate = document.querySelector("[data-template^='horizontal-menu']");
-  if (horizontalMenuTemplate) {
-    // if screen size is small then set navbar fixed
-    if (window.innerWidth < window.Helpers.LAYOUT_BREAKPOINT) {
-      window.Helpers.setNavbarFixed('fixed');
-    } else {
-      window.Helpers.setNavbarFixed('');
-    }
-  }
-
   // On window resize listener
   // -------------------------
   window.addEventListener(
@@ -294,64 +152,13 @@ if (document.getElementById('layout-menu')) {
           document.querySelector('.search-input').value = '';
         }
       }
-      // Horizontal Layout : Update menu based on window size
-      if (horizontalMenuTemplate) {
-        // if screen size is small then set navbar fixed
-        if (window.innerWidth < window.Helpers.LAYOUT_BREAKPOINT) {
-          window.Helpers.setNavbarFixed('fixed');
-        } else {
-          window.Helpers.setNavbarFixed('');
-        }
-        setTimeout(function () {
-          if (window.innerWidth < window.Helpers.LAYOUT_BREAKPOINT) {
-            if (document.getElementById('layout-menu')) {
-              if (document.getElementById('layout-menu').classList.contains('menu-horizontal')) {
-                menu.switchMenu('vertical');
-              }
-            }
-          } else {
-            if (document.getElementById('layout-menu')) {
-              if (document.getElementById('layout-menu').classList.contains('menu-vertical')) {
-                menu.switchMenu('horizontal');
-              }
-            }
-          }
-        }, 100);
-      }
     },
     true
   );
 
-  // Manage menu expanded/collapsed with templateCustomizer & local storage
-  //------------------------------------------------------------------
-
   // If current layout is horizontal OR current window screen is small (overlay menu) than return from here
   if (isHorizontalLayout || window.Helpers.isSmallScreen()) {
     return;
-  }
-
-  // If current layout is vertical and current window screen is > small
-
-  // Auto update menu collapsed/expanded based on the themeConfig
-  if (typeof TemplateCustomizer !== 'undefined') {
-    if (window.templateCustomizer.settings.defaultMenuCollapsed) {
-      window.Helpers.setCollapsed(true, false);
-    } else {
-      window.Helpers.setCollapsed(false, false);
-    }
-  }
-
-  // Manage menu expanded/collapsed state with local storage support If enableMenuLocalStorage = true in config.js
-  if (typeof config !== 'undefined') {
-    if (config.enableMenuLocalStorage) {
-      try {
-        if (localStorage.getItem('templateCustomizer-' + templateName + '--LayoutCollapsed') !== null)
-          window.Helpers.setCollapsed(
-            localStorage.getItem('templateCustomizer-' + templateName + '--LayoutCollapsed') === 'true',
-            false
-          );
-      } catch (e) {}
-    }
   }
 })();
 
@@ -445,151 +252,38 @@ if (typeof $ !== 'undefined') {
       // Init typeahead on searchInput
       searchInput.each(function () {
         var $this = $(this);
-        searchInput
-          .typeahead(
-            {
-              hint: false,
-              classNames: {
-                menu: 'tt-menu navbar-search-suggestion',
-                cursor: 'active',
-                suggestion: 'suggestion d-flex justify-content-between px-3 py-2 w-100'
-              }
-            },
-            // ? Add/Update blocks as per need
-            // Pages
-            {
-              name: 'pages',
-              display: 'name',
-              limit: 5,
-              source: filterConfig(searchData.pages),
-              templates: {
-                header: '<h6 class="suggestions-header text-primary mb-0 mx-3 mt-3 pb-2">Pages</h6>',
-                suggestion: function ({ url, icon, name }) {
-                  return (
-                    '<a href="' +
-                    baseUrl +
-                    url +
-                    '">' +
-                    '<div>' +
-                    '<i class="ti ' +
-                    icon +
-                    ' me-2"></i>' +
-                    '<span class="align-middle">' +
-                    name +
-                    '</span>' +
-                    '</div>' +
-                    '</a>'
-                  );
-                },
-                notFound:
-                  '<div class="not-found px-3 py-2">' +
-                  '<h6 class="suggestions-header text-primary mb-2">Pages</h6>' +
-                  '<p class="py-2 mb-0"><i class="ti ti-alert-circle ti-xs me-2"></i> No Results Found</p>' +
-                  '</div>'
-              }
-            },
-            // Files
-            {
-              name: 'files',
-              display: 'name',
-              limit: 4,
-              source: filterConfig(searchData.files),
-              templates: {
-                header: '<h6 class="suggestions-header text-primary mb-0 mx-3 mt-3 pb-2">Files</h6>',
-                suggestion: function ({ src, name, subtitle, meta }) {
-                  return (
-                    '<a href="javascript:;">' +
-                    '<div class="d-flex w-50">' +
-                    '<img class="me-3" src="' +
-                    assetsPath +
-                    src +
-                    '" alt="' +
-                    name +
-                    '" height="32">' +
-                    '<div class="w-75">' +
-                    '<h6 class="mb-0">' +
-                    name +
-                    '</h6>' +
-                    '<small class="text-muted">' +
-                    subtitle +
-                    '</small>' +
-                    '</div>' +
-                    '</div>' +
-                    '<small class="text-muted">' +
-                    meta +
-                    '</small>' +
-                    '</a>'
-                  );
-                },
-                notFound:
-                  '<div class="not-found px-3 py-2">' +
-                  '<h6 class="suggestions-header text-primary mb-2">Files</h6>' +
-                  '<p class="py-2 mb-0"><i class="ti ti-alert-circle ti-xs me-2"></i> No Results Found</p>' +
-                  '</div>'
-              }
-            },
-            // Members
-            {
-              name: 'members',
-              display: 'name',
-              limit: 4,
-              source: filterConfig(searchData.members),
-              templates: {
-                header: '<h6 class="suggestions-header text-primary mb-0 mx-3 mt-3 pb-2">Members</h6>',
-                suggestion: function ({ name, src, subtitle }) {
-                  return (
-                    '<a href="' +
-                    baseUrl +
-                    'app/user/view/account">' +
-                    '<div class="d-flex align-items-center">' +
-                    '<img class="rounded-circle me-3" src="' +
-                    assetsPath +
-                    src +
-                    '" alt="' +
-                    name +
-                    '" height="32">' +
-                    '<div class="user-info">' +
-                    '<h6 class="mb-0">' +
-                    name +
-                    '</h6>' +
-                    '<small class="text-muted">' +
-                    subtitle +
-                    '</small>' +
-                    '</div>' +
-                    '</div>' +
-                    '</a>'
-                  );
-                },
-                notFound:
-                  '<div class="not-found px-3 py-2">' +
-                  '<h6 class="suggestions-header text-primary mb-2">Members</h6>' +
-                  '<p class="py-2 mb-0"><i class="ti ti-alert-circle ti-xs me-2"></i> No Results Found</p>' +
-                  '</div>'
-              }
+        searchInput.typeahead(
+          {
+            hint: false,
+            classNames: {
+              menu: 'tt-menu navbar-search-suggestion',
+              cursor: 'active',
+              suggestion: 'suggestion d-flex justify-content-between px-3 py-2 w-100'
             }
-          )
-          //On typeahead result render.
-          .bind('typeahead:render', function () {
-            // Show content backdrop,
-            contentBackdrop.addClass('show').removeClass('fade');
-          })
-          // On typeahead select
-          .bind('typeahead:select', function (ev, suggestion) {
-            // Open selected page
-            if (suggestion.url !== 'javascript:;') {
-              window.location = baseUrl + suggestion.url;
-            }
-          })
-          // On typeahead close
-          .bind('typeahead:close', function () {
-            // Clear search
-            searchInput.val('');
-            $this.typeahead('val', '');
-            // Hide search input wrapper
-            searchInputWrapper.addClass('d-none');
-            // Fade content backdrop
-            contentBackdrop.addClass('fade').removeClass('show');
-          });
+          },
+          // ? Add/Update blocks as per need
+          // Pages
+          {
+            name: 'pages',
+            display: 'name',
+            limit: 5,
+            source: filterConfig(searchData.pages)
+          },
+          // Files
+          {
+            name: 'files',
+            display: 'name',
+            limit: 4,
+            source: filterConfig(searchData.files)
+          },
+          // Members
+          {
+            name: 'members',
+            display: 'name',
+            limit: 4,
+            source: filterConfig(searchData.members)
+          }
+        );
 
         // On searchInput keyup, Fade content backdrop if search input is blank
         searchInput.on('keyup', function () {

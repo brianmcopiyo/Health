@@ -340,6 +340,8 @@ $(function () {
         }
       }
     });
+    // To remove default btn-secondary in export buttons
+    $('.dt-buttons > .btn-group > button').removeClass('btn-secondary');
   }
 
   // Delete Record
