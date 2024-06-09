@@ -10,6 +10,6 @@ class MiscError extends Controller
   public function index()
   {
     $pageConfigs = ['myLayout' => 'blank'];
-    return view('content.pages.pages-misc-error', ['pageConfigs' => $pageConfigs]);
+    return view('pages.error', ['pageConfigs' => $pageConfigs]);
   }
 }
