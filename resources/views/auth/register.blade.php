@@ -51,10 +51,26 @@ $customizerHidden = 'customizer-hide';
           <h4 class="mb-1 pt-2">Adventure starts here 🚀</h4>
           <p class="mb-4">Make your app management easy and fun!</p>
 
-          <form id="formAuthentication" class="mb-3" action="{{url('/')}}" method="GET">
+          @if ($errors->any())
+            @foreach ($errors->all() as $error)
+
+              <div class="alert alert-danger">
+                <p class="mb-0">{{ $error }}</p>
+              </div>
+            @endforeach
+          @endif
+
+          @if (session('success'))
+              <div class="alert alert-success">
+                <p class="mb-0">{{ session('success') }}</p>
+              </div>
+          @endif
+
+          <form id="formAuthentication" class="mb-3" action="{{ route('signup') }}" method="POST">
+            @csrf
             <div class="mb-3">
-              <label for="username" class="form-label">Username</label>
-              <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" autofocus>
+              <label for="name" class="form-label">Full name</label>
+              <input type="text" class="form-control" id="name" name="name" placeholder="Enter your name" autofocus>
             </div>
             <div class="mb-3">
               <label for="email" class="form-label">Email</label>
@@ -68,7 +84,7 @@ $customizerHidden = 'customizer-hide';
               </div>
             </div>
 
-            <div class="mb-3">
+            <!--<div class="mb-3">
               <div class="form-check">
                 <input class="form-check-input" type="checkbox" id="terms-conditions" name="terms">
                 <label class="form-check-label" for="terms-conditions">
@@ -76,7 +92,7 @@ $customizerHidden = 'customizer-hide';
                   <a href="javascript:void(0);">privacy policy & terms</a>
                 </label>
               </div>
-            </div>
+            </div>-->
             <button class="btn btn-primary d-grid w-100">
               Sign up
             </button>
