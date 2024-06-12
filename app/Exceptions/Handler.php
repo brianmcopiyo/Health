@@ -2,6 +2,7 @@
 
 namespace App\Exceptions;
 
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Throwable;
@@ -33,6 +34,13 @@ class Handler extends ExceptionHandler
   {
     if ($exception instanceof MethodNotAllowedHttpException) {
       return redirect()->route('error');
+    }
+
+    if ($exception instanceof QueryException) {
+      // Check if the error is due to too many connections
+      if ($exception->getCode() == 1040) {
+        return redirect()->route('login')->withErrors(['error' => 'Please retry again or signup if you still don\'t have an acount.']);
+      }
     }
 
     return parent::render($request, $exception);
