@@ -4,7 +4,7 @@ $customizerHidden = 'customizer-hide';
 
 @extends('layouts/layoutMaster')
 
-@section('title', 'Login | Vision Nexus')
+@section('title', 'Login')
 
 @section('vendor-style')
 @vite([
