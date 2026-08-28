@@ -4,10 +4,15 @@
 /public/hot
 /public/storage
 /storage/*.key
+/storage/pail
+/bootstrap/ssr
 /vendor
-#.env
+.env
 .env.backup
 .env.production
+.env.*
+!.env.example
+.phpactor.json
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
@@ -16,6 +21,8 @@ npm-debug.log
 yarn-error.log
 /.fleet
 /.idea
+/.nova
+/.zed
 
 # Logs
 logs
@@ -28,14 +35,14 @@ lerna-debug.log*
 
 node_modules
 .DS_Store
+Thumbs.db
+Desktop.ini
 dist
 dist-ssr
 *.local
 
 /cypress/videos/
 /cypress/screenshots/
-
-# 👉 Custom Git ignores
 
 # Editor directories and files
 .vscode/*
@@ -56,7 +63,3 @@ resources/js/plugins/iconify/icons.css
 
 # Ignore MSW script
 public/mockServiceWorker.js
-
-# Env files
-.env*
-!.env.example

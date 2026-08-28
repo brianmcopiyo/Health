@@ -2,46 +2,128 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Support\ModuleCatalog;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'name',
         'email',
         'password',
+        'hospital_id',
+        'role_id',
+        'phone',
+        'job_title',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+        ];
+    }
+
+    public function hospital()
+    {
+        return $this->belongsTo(Hospital::class);
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function memberships()
+    {
+        return $this->hasMany(HospitalMembership::class);
+    }
+
+    public function isPlatformAdmin(): bool
+    {
+        return $this->role?->slug === 'platform-admin';
+    }
+
+    public function hasPermission(string $action, string $subject): bool
+    {
+        $this->loadMissing('role.permissions');
+
+        $permissions = $this->role?->permissions ?? collect();
+
+        if ($permissions->contains(fn (Permission $permission) => $permission->action === 'manage' && $permission->subject === 'all')) {
+            return true;
+        }
+
+        return $permissions->contains(function (Permission $permission) use ($action, $subject) {
+            return $permission->subject === $subject
+                && in_array($permission->action, [$action, 'manage'], true);
+        });
+    }
+
+    public function abilityRules(): array
+    {
+        $this->loadMissing('role.permissions');
+
+        return $this->role?->permissions
+            ->map(fn (Permission $permission) => $permission->toAbilityRule())
+            ->values()
+            ->all() ?? [];
+    }
+
+    public function belongsToHospital(int $hospitalId): bool
+    {
+        if ($this->hospital_id === $hospitalId) {
+            return true;
+        }
+
+        return $this->memberships()->where('hospital_id', $hospitalId)->exists();
+    }
+
+    public function toAuthPayload(): array
+    {
+        $this->loadMissing(['role', 'hospital']);
+
+        return [
+            'id' => $this->id,
+            'fullName' => $this->name,
+            'username' => strstr($this->email, '@', true) ?: $this->email,
+            'email' => $this->email,
+            'role' => $this->role?->slug,
+            'roleName' => $this->role?->name,
+            'hospitalId' => $this->hospital_id,
+            'hospitalName' => $this->hospital?->name,
+            'phone' => $this->phone,
+            'jobTitle' => $this->job_title,
+            'avatar' => null,
+            'workspace' => $this->role?->workspace,
+            'homeRoute' => ModuleCatalog::homeRoute($this),
+            'modules' => ModuleCatalog::keysFor($this),
+            'memberships' => $this->memberships()->with(['hospital', 'role'])->get()->map(fn (HospitalMembership $membership) => [
+                'hospitalId' => $membership->hospital_id,
+                'hospitalName' => $membership->hospital?->name,
+                'role' => $membership->role?->slug,
+                'roleName' => $membership->role?->name,
+            ])->values()->all(),
+        ];
+    }
+
+    public function toSessionPayload(): array
+    {
+        return [
+            'userData' => $this->toAuthPayload(),
+            'userAbilityRules' => $this->abilityRules(),
+            'navigation' => ModuleCatalog::navigation($this),
         ];
     }
 }

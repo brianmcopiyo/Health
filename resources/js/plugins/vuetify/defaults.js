@@ -26,6 +26,7 @@ export default {
     label: true,
   },
   VDataTable: {
+    noDataText: 'No records yet',
     VPagination: {
       showFirstLastPage: true,
       firstIcon: 'tabler-chevrons-left',

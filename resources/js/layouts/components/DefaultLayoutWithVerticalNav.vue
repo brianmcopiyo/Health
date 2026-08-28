@@ -1,22 +1,36 @@
 <script setup>
-import navItems from '@/navigation/vertical'
 import { themeConfig } from '@themeConfig'
-
-// Components
 import Footer from '@/layouts/components/Footer.vue'
-import NavBarNotifications from '@/layouts/components/NavBarNotifications.vue'
-import NavSearchBar from '@/layouts/components/NavSearchBar.vue'
-import NavbarShortcuts from '@/layouts/components/NavbarShortcuts.vue'
 import NavbarThemeSwitcher from '@/layouts/components/NavbarThemeSwitcher.vue'
 import UserProfile from '@/layouts/components/UserProfile.vue'
-import NavBarI18n from '@core/components/I18n.vue'
-
-// @layouts plugin
 import { VerticalNavLayout } from '@layouts'
+import { buildNavigation } from '@/navigation/vertical'
+import { pageLoadError } from '@/composables/usePageLoad'
 
-// SECTION: Loading Indicator
 const isFallbackStateActive = ref(false)
 const refLoadingIndicator = ref(null)
+const userData = useCookie('userData')
+const ability = useAbility()
+const route = useRoute()
+const navItems = computed(() => buildNavigation(ability, userData.value))
+const pageError = ref(null)
+
+watch(() => route.fullPath, () => {
+  pageError.value = null
+  pageLoadError.value = null
+})
+
+watch(pageLoadError, value => {
+  if (value)
+    pageError.value = value
+})
+
+onErrorCaptured(error => {
+  pageError.value = error?.data?.message || error?.message || 'This page failed to load'
+  isFallbackStateActive.value = false
+
+  return false
+})
 
 watch([
   isFallbackStateActive,
@@ -27,12 +41,10 @@ watch([
   if (!isFallbackStateActive.value && refLoadingIndicator.value)
     refLoadingIndicator.value.resolveHandle()
 }, { immediate: true })
-// !SECTION
 </script>
 
 <template>
   <VerticalNavLayout :nav-items="navItems">
-    <!-- 👉 navbar -->
     <template #navbar="{ toggleVerticalOverlayNavActive }">
       <div class="d-flex h-100 align-center">
         <IconBtn
@@ -46,40 +58,68 @@ watch([
           />
         </IconBtn>
 
-        <NavSearchBar class="ms-lg-n3" />
+        <div class="text-body-1 font-weight-medium text-truncate">
+          {{ userData?.hospitalName || themeConfig.app.title }}
+          <span
+            v-if="userData?.roleName"
+            class="text-medium-emphasis ms-2"
+          >{{ userData.roleName }}</span>
+        </div>
 
         <VSpacer />
 
-        <NavBarI18n
-          v-if="themeConfig.app.i18n.enable && themeConfig.app.i18n.langConfig?.length"
-          :languages="themeConfig.app.i18n.langConfig"
-        />
         <NavbarThemeSwitcher />
-        <NavbarShortcuts />
-        <NavBarNotifications class="me-1" />
         <UserProfile />
       </div>
     </template>
 
     <AppLoadingIndicator ref="refLoadingIndicator" />
 
-    <!-- 👉 Pages -->
+    <VAlert
+      v-if="pageError"
+      type="error"
+      class="mb-4"
+      closable
+      @click:close="pageError = null"
+    >
+      {{ pageError }}
+    </VAlert>
+
     <RouterView v-slot="{ Component }">
       <Suspense
+        v-if="Component"
         :timeout="0"
         @fallback="isFallbackStateActive = true"
         @resolve="isFallbackStateActive = false"
       >
-        <Component :is="Component" />
+        <component
+          :is="Component"
+          :key="route.fullPath"
+        />
+        <template #fallback>
+          <div class="d-flex justify-center align-center py-16">
+            <VProgressCircular
+              indeterminate
+              color="primary"
+            />
+          </div>
+        </template>
       </Suspense>
+      <div
+        v-else
+        class="d-flex justify-center align-center py-16"
+      >
+        <VProgressCircular
+          indeterminate
+          color="primary"
+        />
+      </div>
     </RouterView>
 
-    <!-- 👉 Footer -->
     <template #footer>
       <Footer />
     </template>
 
-    <!-- 👉 Customizer -->
     <TheCustomizer />
   </VerticalNavLayout>
 </template>
