@@ -82,13 +82,24 @@ const login = async () => {
             v-model="credentials.email"
             label="Email"
             type="email"
+            icon="mail"
+            autocomplete="username"
+            required
+            placeholder="you@hospital.org"
             :error="errors.email"
+            :disabled="submitting"
+            :loading="submitting"
           />
           <HInput
             v-model="credentials.password"
             label="Password"
             type="password"
+            icon="lock"
+            autocomplete="current-password"
+            required
             :error="errors.password"
+            :disabled="submitting"
+            :loading="submitting"
           />
           <HButton
             type="submit"

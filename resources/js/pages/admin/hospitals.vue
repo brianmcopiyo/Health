@@ -114,14 +114,19 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HInput
           v-model="form.name"
           label="Name"
+          required
         />
         <HInput
           v-model="form.code"
           label="Code"
+          required
         />
         <HInput
           v-model="form.city"
@@ -134,23 +139,25 @@ await withPageLoad(load)
         <HInput
           v-model="form.phone"
           label="Phone"
+          type="tel"
+          icon="phone"
         />
         <HInput
           v-model="form.email"
           label="Email"
+          type="email"
+          icon="mail"
         />
-        <HInput
+        <HTextarea
           v-model="form.address"
           label="Address"
         />
-        <label class="h-check">
-          <input
-            v-model="form.is_active"
-            type="checkbox"
-          >
-          Active
-        </label>
-      </div>
+        <HSwitch
+          v-model="form.is_active"
+          label="Hospital is active"
+          hint="Inactive hospitals cannot receive referrals"
+        />
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

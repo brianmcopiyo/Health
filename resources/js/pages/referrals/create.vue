@@ -128,6 +128,7 @@ await withPageLoad(async () => {
           item-title="full_name"
           item-value="id"
           label="Patient"
+          required
           @update:model-value="onPatient"
         />
         <HSelect
@@ -146,6 +147,7 @@ await withPageLoad(async () => {
       <HTextarea
         v-model="form.reason"
         label="Clinical reason"
+        required
         style="margin-top:12px"
       />
       <div
@@ -167,10 +169,10 @@ await withPageLoad(async () => {
           item-value="id"
           label="Required service"
         />
-        <HInput
+        <HNumber
           v-model="form.required_capacity"
-          type="number"
           label="Required capacity"
+          :min="1"
           @update:model-value="searchHospitals"
         />
       </div>

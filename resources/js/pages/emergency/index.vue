@@ -133,13 +133,17 @@ onBeforeUnmount(() => {
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HSelect
           v-model="form.patient_id"
           :items="patients"
           item-title="full_name"
           item-value="id"
           label="Patient"
+          required
         />
         <HInput
           v-model="form.chief_complaint"
@@ -152,7 +156,7 @@ onBeforeUnmount(() => {
           item-value="id"
           label="Clinician"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

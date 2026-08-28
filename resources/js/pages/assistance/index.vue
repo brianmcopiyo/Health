@@ -171,18 +171,23 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HSelect
           v-model="form.to_hospital_id"
           :items="hospitals"
           item-title="name"
           item-value="id"
           label="Destination hospital"
+          required
         />
         <HSelect
           v-model="form.type"
           :items="assistanceTypes"
           label="Type"
+          required
         />
         <HSelect
           v-model="form.facility_type_id"
@@ -191,12 +196,18 @@ await withPageLoad(load)
           item-value="id"
           label="Requested resource"
         />
+        <HNumber
+          v-model="form.quantity"
+          label="Quantity"
+          :min="1"
+        />
         <HSelect
           v-model="form.patient_id"
           :items="patients"
           item-title="full_name"
           item-value="id"
           label="Patient"
+          optional
           @update:model-value="onAssistancePatient"
         />
         <HSelect
@@ -208,12 +219,13 @@ await withPageLoad(load)
         <HInput
           v-model="form.title"
           label="Title"
+          required
         />
         <HTextarea
           v-model="form.description"
           label="Details"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

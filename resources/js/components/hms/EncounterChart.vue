@@ -1,4 +1,5 @@
 <script setup>
+import { diagnosisKindOptions, doseFrequencies } from '@/utils/clinicalOptions'
 import { labelize, statusColor } from '@/utils/status'
 
 const props = defineProps({
@@ -174,20 +175,23 @@ const complete = async () => {
         v-if="canTreat"
         class="h-grid cols-3"
       >
-        <HInput
+        <HNumber
           v-model="vitalForm.temperature"
-          type="number"
           label="Temp"
+          :step="0.1"
+          :min="30"
+          :max="45"
         />
-        <HInput
+        <HNumber
           v-model="vitalForm.pulse"
-          type="number"
           label="Pulse"
+          :min="0"
         />
-        <HInput
+        <HNumber
           v-model="vitalForm.spo2"
-          type="number"
           label="SpO2"
+          :min="0"
+          :max="100"
         />
       </div>
       <HButton
@@ -214,9 +218,9 @@ const complete = async () => {
           v-model="diagnosisForm.name"
           label="Diagnosis"
         />
-        <HSelect
+        <HRadioGroup
           v-model="diagnosisForm.kind"
-          :items="['primary', 'secondary']"
+          :items="diagnosisKindOptions"
           label="Type"
         />
       </div>
@@ -321,15 +325,17 @@ const complete = async () => {
         <HInput
           v-model="rxForm.dose"
           label="Dose"
+          placeholder="e.g. 75 mg"
         />
-        <HInput
+        <HCombobox
           v-model="rxForm.frequency"
+          :items="doseFrequencies"
           label="Frequency"
         />
-        <HInput
+        <HNumber
           v-model="rxForm.quantity"
-          type="number"
           label="Qty"
+          :min="1"
         />
       </div>
       <HButton

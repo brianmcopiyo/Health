@@ -103,22 +103,25 @@ const saveStatus = async () => {
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HSelect
           v-model="statusForm.status"
           :items="facilityStatuses"
           label="Status"
         />
-        <HInput
+        <HNumber
           v-model="statusForm.current_utilization"
-          type="number"
           label="Current utilization"
+          :min="0"
         />
         <HTextarea
           v-model="statusForm.resource_notes"
           label="Resource availability"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

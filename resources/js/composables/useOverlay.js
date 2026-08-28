@@ -2,7 +2,7 @@ let overlayCount = 0
 
 export const useOverlay = (isOpen, close) => {
   const onKeydown = event => {
-    if (event.key === 'Escape' && isOpen.value)
+    if (event.key === 'Escape' && isOpen.value && !document.querySelector('.h-popover'))
       close()
   }
 

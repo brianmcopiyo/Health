@@ -1,5 +1,6 @@
 <script setup>
 import EncounterChart from '@/components/hms/EncounterChart.vue'
+import { bloodGroups, sexOptions, visitTypeOptions } from '@/utils/clinicalOptions'
 import { labelize, statusColor } from '@/utils/status'
 
 definePage({
@@ -149,26 +150,34 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HInput
           v-model="patientForm.first_name"
           label="First name"
+          required
         />
         <HInput
           v-model="patientForm.last_name"
           label="Last name"
+          required
         />
-        <HSelect
+        <HRadioGroup
           v-model="patientForm.sex"
-          :items="['male', 'female', 'other']"
+          :items="sexOptions"
           label="Sex"
         />
         <HInput
           v-model="patientForm.phone"
           label="Phone"
+          type="tel"
+          icon="phone"
         />
-        <HInput
+        <HCombobox
           v-model="patientForm.blood_group"
+          :items="bloodGroups"
           label="Blood group"
         />
         <HInput
@@ -178,8 +187,9 @@ await withPageLoad(load)
         <HInput
           v-model="patientForm.next_of_kin_phone"
           label="Next of kin phone"
+          type="tel"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"
@@ -203,27 +213,27 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HSelect
           v-model="visitForm.patient_id"
           :items="patients"
           item-title="full_name"
           item-value="id"
           label="Patient"
+          required
         />
-        <HSelect
+        <HRadioGroup
           v-model="visitForm.type"
-          :items="[
-            { title: 'OPD', value: 'opd' },
-            { title: 'Emergency', value: 'emergency' },
-          ]"
-          item-title="title"
-          item-value="value"
+          :items="visitTypeOptions"
           label="Visit type"
         />
         <HInput
           v-model="visitForm.chief_complaint"
           label="Chief complaint"
+          placeholder="Why is the patient here?"
         />
         <HSelect
           v-model="visitForm.clinician_id"
@@ -232,7 +242,7 @@ await withPageLoad(load)
           item-value="id"
           label="Clinician"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

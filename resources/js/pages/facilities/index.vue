@@ -131,6 +131,8 @@ await withPageLoad(load)
         <HInput
           v-model="search"
           label="Search"
+          icon="search"
+          clearable
           placeholder="Search facilities"
           @update:model-value="load"
         />
@@ -190,15 +192,20 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HInput
           v-model="form.name"
           label="Name"
+          required
         />
         <div class="h-grid cols-2">
           <HInput
             v-model="form.code"
             label="Code"
+            required
           />
           <HSelect
             v-model="form.facility_type_id"
@@ -206,6 +213,7 @@ await withPageLoad(load)
             item-title="name"
             item-value="id"
             label="Type"
+            required
           />
         </div>
         <div class="h-grid cols-3">
@@ -214,22 +222,23 @@ await withPageLoad(load)
             :items="facilityStatuses"
             label="Status"
           />
-          <HInput
+          <HNumber
             v-model="form.capacity"
-            type="number"
             label="Capacity"
+            :min="1"
           />
-          <HInput
+          <HNumber
             v-model="form.current_utilization"
-            type="number"
             label="Current utilization"
+            :min="0"
           />
         </div>
         <HTextarea
           v-model="form.resource_notes"
           label="Resource availability"
+          hint="Visible to referral and assistance matching"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

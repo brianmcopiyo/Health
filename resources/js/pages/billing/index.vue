@@ -1,4 +1,5 @@
 <script setup>
+import { paymentMethods } from '@/utils/clinicalOptions'
 import { labelize, statusColor } from '@/utils/status'
 
 definePage({
@@ -180,6 +181,8 @@ await withPageLoad(load)
         item-title="full_name"
         item-value="id"
         label="Patient"
+        required
+        :disabled="saving"
         @update:model-value="loadEncounters"
       />
       <HSelect
@@ -187,31 +190,31 @@ await withPageLoad(load)
         v-model="form.encounter_id"
         :items="encounterOptions"
         label="Encounter"
+        hint="Leave lines empty to open the encounter charge sheet"
+        :disabled="saving"
       />
-      <p style="color:var(--muted);font-size:13px">
-        Leave lines empty to open the encounter charge sheet.
-      </p>
-      <div
+      <fieldset
         v-for="(item, index) in form.items"
         :key="index"
         class="h-grid cols-3"
         style="margin-top:12px"
+        :disabled="saving"
       >
         <HInput
           v-model="item.description"
           label="Description"
         />
-        <HInput
+        <HNumber
           v-model="item.quantity"
-          type="number"
           label="Qty"
+          :min="1"
         />
-        <HInput
+        <HNumber
           v-model="item.unit_amount"
-          type="number"
           label="Unit amount"
+          :min="0"
         />
-      </div>
+      </fieldset>
       <HButton
         variant="ghost"
         style="margin-top:12px"
@@ -242,18 +245,22 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
-        <HInput
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
+        <HNumber
           v-model="payForm.amount"
-          type="number"
           label="Amount"
+          :min="1"
+          required
         />
-        <HSelect
+        <HRadioGroup
           v-model="payForm.method"
-          :items="['cash', 'card', 'mobile_money', 'insurance']"
+          :items="paymentMethods"
           label="Method"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

@@ -102,10 +102,14 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HInput
           v-model="form.name"
           label="Name"
+          required
         />
         <HSelect
           v-model="form.module_key"
@@ -113,15 +117,13 @@ await withPageLoad(load)
           item-title="title"
           item-value="key"
           label="Module"
+          required
         />
-        <label class="h-check">
-          <input
-            v-model="form.is_active"
-            type="checkbox"
-          >
-          Active
-        </label>
-      </div>
+        <HSwitch
+          v-model="form.is_active"
+          label="Department is active"
+        />
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

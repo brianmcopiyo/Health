@@ -136,14 +136,19 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HInput
           v-model="form.name"
           label="Name"
+          required
         />
         <HTextarea
           v-model="form.description"
           label="Description"
+          hint="Shown to administrators when assigning this role"
         />
         <HSelect
           v-model="form.workspace"
@@ -151,27 +156,19 @@ await withPageLoad(load)
           item-title="title"
           item-value="value"
           label="Workspace"
+          required
         />
-        <div
+        <HMultiSelect
           v-for="(group, name) in groupedPermissions"
           :key="name"
-          class="h-perm-group"
-        >
-          <h4>{{ name }}</h4>
-          <label
-            v-for="permission in group"
-            :key="permission.id"
-            class="h-check"
-          >
-            <input
-              v-model="form.permission_ids"
-              type="checkbox"
-              :value="permission.id"
-            >
-            {{ permission.name }}
-          </label>
-        </div>
-      </div>
+          v-model="form.permission_ids"
+          :items="group"
+          item-title="name"
+          item-value="id"
+          :label="name"
+          :placeholder="`Choose ${String(name).toLowerCase()} permissions`"
+        />
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

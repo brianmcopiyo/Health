@@ -433,22 +433,25 @@ const headers = [
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HSelect
           v-model="form.status"
           :items="facilityStatuses"
           label="Status"
         />
-        <HInput
+        <HNumber
           v-model="form.current_utilization"
-          type="number"
           label="Current utilization"
+          :min="0"
         />
         <HTextarea
           v-model="form.resource_notes"
           label="Resource notes"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"
@@ -472,13 +475,17 @@ const headers = [
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HSelect
           v-model="orderForm.patient_id"
           :items="patients"
           item-title="full_name"
           item-value="id"
           label="Patient"
+          required
         />
         <HSelect
           v-if="encounterOptions.length"
@@ -489,12 +496,13 @@ const headers = [
         <HInput
           v-model="orderForm.item_name"
           label="Test / item"
+          required
         />
         <HTextarea
           v-model="orderForm.notes"
           label="Notes"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"
@@ -518,13 +526,17 @@ const headers = [
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HSelect
           v-model="assignmentForm.patient_id"
           :items="patients"
           item-title="full_name"
           item-value="id"
           label="Patient"
+          required
         />
         <HSelect
           v-model="assignmentForm.facility_id"
@@ -532,8 +544,9 @@ const headers = [
           item-title="name"
           item-value="id"
           label="Bed"
+          required
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

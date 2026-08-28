@@ -1,4 +1,5 @@
 <script setup>
+import { bloodGroups, kinshipOptions, sexOptions } from '@/utils/clinicalOptions'
 import { labelize, statusColor } from '@/utils/status'
 
 definePage({
@@ -86,6 +87,8 @@ const save = async () => {
 }
 
 await withPageLoad(load)
+
+const today = new Date().toISOString().slice(0, 10)
 </script>
 
 <template>
@@ -150,50 +153,63 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-grid cols-2">
+      <fieldset
+        class="h-grid cols-2"
+        :disabled="saving"
+      >
         <HInput
           v-model="form.first_name"
           label="First name"
+          required
         />
         <HInput
           v-model="form.last_name"
           label="Last name"
+          required
         />
-        <HSelect
+        <HRadioGroup
           v-model="form.sex"
-          :items="['male', 'female', 'other']"
+          :items="sexOptions"
           label="Sex"
         />
-        <HInput
+        <HDatePicker
           v-model="form.date_of_birth"
-          type="date"
           label="Date of birth"
+          :max="today"
         />
         <HInput
           v-model="form.phone"
           label="Phone"
+          type="tel"
+          icon="phone"
         />
         <HInput
           v-model="form.mrn"
-          label="MRN (optional)"
+          label="MRN"
+          optional
+          hint="Leave blank to generate automatically"
         />
         <HInput
           v-model="form.national_id"
           label="National ID"
         />
-        <HInput
+        <HCombobox
           v-model="form.blood_group"
+          :items="bloodGroups"
           label="Blood group"
+          placeholder="Select or type"
         />
-      </div>
+      </fieldset>
       <HInput
         v-model="form.address"
         label="Address"
         style="margin-top:12px"
+        :disabled="saving"
       />
-      <div
+      <fieldset
         class="h-grid cols-3"
         style="margin-top:12px"
+        :disabled="saving"
       >
         <HInput
           v-model="form.next_of_kin_name"
@@ -202,12 +218,15 @@ await withPageLoad(load)
         <HInput
           v-model="form.next_of_kin_phone"
           label="Next of kin phone"
+          type="tel"
+          icon="phone"
         />
-        <HInput
+        <HCombobox
           v-model="form.next_of_kin_relation"
+          :items="kinshipOptions"
           label="Relation"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

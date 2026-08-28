@@ -1,5 +1,6 @@
 <script setup>
 import { ambulanceStatuses, labelize, statusColor } from '@/utils/status'
+import { vehicleTypes } from '@/utils/clinicalOptions'
 
 definePage({
   meta: {
@@ -19,6 +20,7 @@ const isVehicleDialogVisible = ref(false)
 const dispatching = ref(null)
 const completing = ref(null)
 const handoverNotes = ref('')
+const handoverTime = ref('')
 const saving = ref(false)
 const formError = ref('')
 const form = ref({
@@ -152,6 +154,7 @@ const updateTrip = async (trip, status) => {
     formError.value = ''
     completing.value = trip
     handoverNotes.value = ''
+    handoverTime.value = new Date().toTimeString().slice(0, 5)
     return
   }
   await $api(`/ambulance-trips/${trip.id}/status`, {
@@ -165,7 +168,10 @@ const completeTrip = async () => {
   await wrapSave(saving, formError, async () => {
     await $api(`/ambulance-trips/${completing.value.id}/status`, {
       method: 'PATCH',
-      body: { status: 'completed', handover_notes: handoverNotes.value },
+        body: {
+          status: 'completed',
+          handover_notes: [handoverTime.value && `Handover ${handoverTime.value}`, handoverNotes.value].filter(Boolean).join(' — '),
+        },
     })
     completing.value = null
     await load()
@@ -275,13 +281,18 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HInput
           v-model="form.vehicle_code"
           label="Vehicle code"
+          required
         />
-        <HInput
+        <HCombobox
           v-model="form.vehicle_type"
+          :items="vehicleTypes"
           label="Vehicle type"
         />
         <HSelect
@@ -289,12 +300,12 @@ await withPageLoad(load)
           :items="ambulanceStatuses"
           label="Status"
         />
-        <HInput
+        <HNumber
           v-model="form.capacity"
-          type="number"
           label="Capacity"
+          :min="1"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"
@@ -319,9 +330,10 @@ await withPageLoad(load)
       :persistent="saving"
       @update:model-value="val => { if (!val) dispatching = null }"
     >
-      <div
+      <fieldset
         v-if="dispatching"
         class="h-stack"
+        :disabled="saving"
       >
         <HSelect
           v-model="dispatchForm.referral_id"
@@ -346,6 +358,7 @@ await withPageLoad(load)
         <HInput
           v-model="dispatchForm.origin"
           label="Origin"
+          required
         />
         <HInput
           v-model="dispatchForm.pickup_location"
@@ -354,6 +367,7 @@ await withPageLoad(load)
         <HInput
           v-model="dispatchForm.destination"
           label="Destination"
+          required
         />
         <HSelect
           v-model="dispatchForm.destination_hospital_id"
@@ -366,7 +380,7 @@ await withPageLoad(load)
           v-model="dispatchForm.notes"
           label="Notes"
         />
-      </div>
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"
@@ -391,10 +405,19 @@ await withPageLoad(load)
       :persistent="saving"
       @update:model-value="val => { if (!val) completing = null }"
     >
-      <HTextarea
-        v-model="handoverNotes"
-        label="Handover notes"
-      />
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
+        <HTimePicker
+          v-model="handoverTime"
+          label="Handover time"
+        />
+        <HTextarea
+          v-model="handoverNotes"
+          label="Handover notes"
+        />
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"

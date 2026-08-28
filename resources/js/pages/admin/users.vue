@@ -129,19 +129,30 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <div class="h-stack">
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
         <HInput
           v-model="form.name"
           label="Name"
+          required
         />
         <HInput
           v-model="form.email"
           label="Email"
+          type="email"
+          icon="mail"
+          required
         />
         <HInput
           v-model="form.password"
           :label="editing ? 'New password' : 'Password'"
+          :optional="Boolean(editing)"
+          :required="!editing"
           type="password"
+          icon="lock"
+          :hint="editing ? 'Leave blank to keep the current password' : ''"
         />
         <HSelect
           v-model="form.role_id"
@@ -149,6 +160,7 @@ await withPageLoad(load)
           item-title="name"
           item-value="id"
           label="Role"
+          required
         />
         <HSelect
           v-if="ability.can('manage', 'Hospital')"
@@ -162,7 +174,13 @@ await withPageLoad(load)
           v-model="form.job_title"
           label="Job title"
         />
-      </div>
+        <HInput
+          v-model="form.phone"
+          label="Phone"
+          type="tel"
+          icon="phone"
+        />
+      </fieldset>
       <template #actions>
         <HButton
           variant="ghost"
