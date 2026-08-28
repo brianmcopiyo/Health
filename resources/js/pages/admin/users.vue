@@ -10,7 +10,9 @@ const ability = useAbility()
 const users = ref([])
 const roles = ref([])
 const hospitals = ref([])
-const isDialogVisible = ref(false)
+const formOpen = ref(false)
+const saving = ref(false)
+const formError = ref('')
 const editing = ref(null)
 const form = ref({
   name: '',
@@ -37,6 +39,7 @@ const load = async () => {
 }
 
 const openCreate = async () => {
+  formError.value = ''
   editing.value = null
   if (ability.can('manage', 'Hospital'))
     hospitals.value = asList(await $api('/hospitals'))
@@ -49,10 +52,11 @@ const openCreate = async () => {
     phone: '',
     job_title: '',
   }
-  isDialogVisible.value = true
+  formOpen.value = true
 }
 
 const openEdit = item => {
+  formError.value = ''
   editing.value = item
   form.value = {
     name: item.name,
@@ -63,21 +67,23 @@ const openEdit = item => {
     phone: item.phone,
     job_title: item.job_title,
   }
-  isDialogVisible.value = true
+  formOpen.value = true
 }
 
 const save = async () => {
-  const payload = { ...form.value }
-  if (editing.value) {
-    if (!payload.password)
-      delete payload.password
-    await $api(`/users/${editing.value.id}`, { method: 'PUT', body: payload })
-  }
-  else {
-    await $api('/users', { method: 'POST', body: payload })
-  }
-  isDialogVisible.value = false
-  await load()
+  await wrapSave(saving, formError, async () => {
+    const payload = { ...form.value }
+    if (editing.value) {
+      if (!payload.password)
+        delete payload.password
+      await $api(`/users/${editing.value.id}`, { method: 'PUT', body: payload })
+    }
+    else {
+      await $api('/users', { method: 'POST', body: payload })
+    }
+    formOpen.value = false
+    await load()
+  })
 }
 
 await withPageLoad(load)
@@ -117,9 +123,11 @@ await withPageLoad(load)
       </HTable>
     </HCard>
 
-    <HDialog
-      v-model="isDialogVisible"
+    <HModal
+      v-model="formOpen"
       :title="editing ? 'Update user' : 'Add user'"
+      :error="formError"
+      :persistent="saving"
     >
       <div class="h-stack">
         <HInput
@@ -158,14 +166,18 @@ await withPageLoad(load)
       <template #actions>
         <HButton
           variant="ghost"
-          @click="isDialogVisible = false"
+          :disabled="saving"
+          @click="formOpen = false"
         >
           Cancel
         </HButton>
-        <HButton @click="save">
+        <HButton
+          :disabled="saving"
+          @click="save"
+        >
           Save
         </HButton>
       </template>
-    </HDialog>
+    </HModal>
   </div>
 </template>

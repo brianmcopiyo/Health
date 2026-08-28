@@ -15,6 +15,8 @@ const hospitals = ref([])
 const direction = ref('all')
 const isCreateVisible = ref(false)
 const selected = ref(null)
+const saving = ref(false)
+const formError = ref('')
 const responseNotes = ref('')
 const form = ref({
   to_hospital_id: null,
@@ -38,6 +40,7 @@ const load = async () => {
 }
 
 const openCreate = async () => {
+  formError.value = ''
   hospitals.value = asList(await $api('/network/hospitals'))
   form.value = {
     to_hospital_id: hospitals.value[0]?.id ?? null,
@@ -49,21 +52,25 @@ const openCreate = async () => {
 }
 
 const create = async () => {
-  await $api('/assistance-requests', { method: 'POST', body: form.value })
-  isCreateVisible.value = false
-  await load()
+  await wrapSave(saving, formError, async () => {
+    await $api('/assistance-requests', { method: 'POST', body: form.value })
+    isCreateVisible.value = false
+    await load()
+  })
 }
 
 const updateStatus = async status => {
-  await $api(`/assistance-requests/${selected.value.id}/status`, {
-    method: 'PATCH',
-    body: {
-      status,
-      response_notes: responseNotes.value,
-    },
+  await wrapSave(saving, formError, async () => {
+    await $api(`/assistance-requests/${selected.value.id}/status`, {
+      method: 'PATCH',
+      body: {
+        status,
+        response_notes: responseNotes.value,
+      },
+    })
+    selected.value = null
+    await load()
   })
-  selected.value = null
-  await load()
 }
 
 const setDirection = value => {
@@ -118,7 +125,7 @@ await withPageLoad(load)
           <HButton
             variant="ghost"
             size="sm"
-            @click="selected = item"
+            @click="formError = ''; selected = item"
           >
             Manage
           </HButton>
@@ -126,9 +133,11 @@ await withPageLoad(load)
       </HTable>
     </HCard>
 
-    <HDialog
+    <HModal
       v-model="isCreateVisible"
       title="Request assistance"
+      :error="formError"
+      :persistent="saving"
     >
       <div class="h-stack">
         <HSelect
@@ -155,19 +164,25 @@ await withPageLoad(load)
       <template #actions>
         <HButton
           variant="ghost"
+          :disabled="saving"
           @click="isCreateVisible = false"
         >
           Cancel
         </HButton>
-        <HButton @click="create">
+        <HButton
+          :disabled="saving"
+          @click="create"
+        >
           Submit
         </HButton>
       </template>
-    </HDialog>
+    </HModal>
 
-    <HDialog
+    <HModal
       :model-value="Boolean(selected)"
       :title="selected?.title || 'Assistance'"
+      :error="formError"
+      :persistent="saving"
       @update:model-value="val => { if (!val) selected = null }"
     >
       <div v-if="selected">
@@ -184,6 +199,7 @@ await withPageLoad(load)
         <HButton
           v-if="selected && userData?.hospitalId === selected.from_hospital_id && selected.status === 'pending'"
           variant="ghost"
+          :disabled="saving"
           @click="updateStatus('cancelled')"
         >
           Cancel
@@ -191,6 +207,7 @@ await withPageLoad(load)
         <HButton
           v-if="selected && userData?.hospitalId === selected.to_hospital_id && selected.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
           variant="danger"
+          :disabled="saving"
           @click="updateStatus('declined')"
         >
           Decline
@@ -198,17 +215,19 @@ await withPageLoad(load)
         <HButton
           v-if="selected && userData?.hospitalId === selected.to_hospital_id && selected.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
           variant="ok"
+          :disabled="saving"
           @click="updateStatus('accepted')"
         >
           Accept
         </HButton>
         <HButton
           v-if="selected && userData?.hospitalId === selected.to_hospital_id && selected.status === 'accepted'"
+          :disabled="saving"
           @click="updateStatus('fulfilled')"
         >
           Mark fulfilled
         </HButton>
       </template>
-    </HDialog>
+    </HModal>
   </div>
 </template>

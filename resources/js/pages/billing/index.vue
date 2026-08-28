@@ -11,7 +11,9 @@ definePage({
 const ability = useAbility()
 const invoices = ref([])
 const patients = ref([])
-const isDialogVisible = ref(false)
+const formOpen = ref(false)
+const saving = ref(false)
+const formError = ref('')
 const form = ref({
   patient_id: null,
   items: [{ description: '', quantity: 1, unit_amount: 0 }],
@@ -23,15 +25,22 @@ const load = async () => {
     patients.value = asList(await $api('/patients'))
 }
 
+const openCreate = () => {
+  formError.value = ''
+  form.value = { patient_id: null, items: [{ description: '', quantity: 1, unit_amount: 0 }] }
+  formOpen.value = true
+}
+
 const addItem = () => {
   form.value.items.push({ description: '', quantity: 1, unit_amount: 0 })
 }
 
 const save = async () => {
-  await $api('/invoices', { method: 'POST', body: form.value })
-  isDialogVisible.value = false
-  form.value = { patient_id: null, items: [{ description: '', quantity: 1, unit_amount: 0 }] }
-  await load()
+  await wrapSave(saving, formError, async () => {
+    await $api('/invoices', { method: 'POST', body: form.value })
+    formOpen.value = false
+    await load()
+  })
 }
 
 const updateStatus = async (invoice, status) => {
@@ -50,7 +59,7 @@ await withPageLoad(load)
     >
       <HButton
         v-if="ability.can('create', 'Invoice')"
-        @click="isDialogVisible = true"
+        @click="openCreate"
       >
         <HIcon name="plus" />
         New invoice
@@ -99,10 +108,12 @@ await withPageLoad(load)
       </HTable>
     </HCard>
 
-    <HDialog
-      v-model="isDialogVisible"
+    <HOffcanvas
+      v-model="formOpen"
       title="Create invoice"
-      wide
+      size="lg"
+      :error="formError"
+      :persistent="saving"
     >
       <HSelect
         v-model="form.patient_id"
@@ -142,17 +153,18 @@ await withPageLoad(load)
       <template #actions>
         <HButton
           variant="ghost"
-          @click="isDialogVisible = false"
+          :disabled="saving"
+          @click="formOpen = false"
         >
           Cancel
         </HButton>
         <HButton
-          :disabled="!form.patient_id"
+          :disabled="saving || !form.patient_id"
           @click="save"
         >
           Save
         </HButton>
       </template>
-    </HDialog>
+    </HOffcanvas>
   </div>
 </template>

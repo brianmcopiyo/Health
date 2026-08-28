@@ -38,8 +38,12 @@ const emptyBoard = () => ({
 })
 
 const board = ref(emptyBoard())
-const statusDialog = ref(false)
+const statusOpen = ref(false)
+const orderOpen = ref(false)
+const assignmentOpen = ref(false)
 const selected = ref(null)
+const saving = ref(false)
+const formError = ref('')
 const form = ref({
   status: 'available',
   current_utilization: 0,
@@ -83,34 +87,51 @@ const load = async () => {
 }
 
 const openStatus = item => {
+  formError.value = ''
   selected.value = item
   form.value = {
     status: item.status,
     current_utilization: item.current_utilization,
     resource_notes: item.resource_notes || '',
   }
-  statusDialog.value = true
+  statusOpen.value = true
+}
+
+const openOrder = () => {
+  formError.value = ''
+  orderForm.value = { patient_id: null, item_name: '', notes: '' }
+  orderOpen.value = true
+}
+
+const openAssignment = () => {
+  formError.value = ''
+  assignmentForm.value = { patient_id: null, facility_id: null }
+  assignmentOpen.value = true
 }
 
 const saveStatus = async () => {
-  await $api(`/modules/${props.moduleKey}/facilities/${selected.value.id}/status`, {
-    method: 'PATCH',
-    body: form.value,
+  await wrapSave(saving, formError, async () => {
+    await $api(`/modules/${props.moduleKey}/facilities/${selected.value.id}/status`, {
+      method: 'PATCH',
+      body: form.value,
+    })
+    statusOpen.value = false
+    await load()
   })
-  statusDialog.value = false
-  await load()
 }
 
 const createOrder = async () => {
-  await $api('/service-orders', {
-    method: 'POST',
-    body: {
-      module_key: props.moduleKey,
-      ...orderForm.value,
-    },
+  await wrapSave(saving, formError, async () => {
+    await $api('/service-orders', {
+      method: 'POST',
+      body: {
+        module_key: props.moduleKey,
+        ...orderForm.value,
+      },
+    })
+    orderOpen.value = false
+    await load()
   })
-  orderForm.value = { patient_id: null, item_name: '', notes: '' }
-  await load()
 }
 
 const updateOrder = async (order, status) => {
@@ -122,12 +143,14 @@ const updateOrder = async (order, status) => {
 }
 
 const assignBed = async () => {
-  await $api('/bed-assignments', {
-    method: 'POST',
-    body: assignmentForm.value,
+  await wrapSave(saving, formError, async () => {
+    await $api('/bed-assignments', {
+      method: 'POST',
+      body: assignmentForm.value,
+    })
+    assignmentOpen.value = false
+    await load()
   })
-  assignmentForm.value = { patient_id: null, facility_id: null }
-  await load()
 }
 
 const discharge = async assignment => {
@@ -225,31 +248,18 @@ const headers = [
       title="Orders"
       style="margin-top:18px"
     >
-      <div
+      <template
         v-if="ability.can('create', subject)"
-        class="h-grid cols-3"
-        style="margin-bottom:16px"
+        #actions
       >
-        <HSelect
-          v-model="orderForm.patient_id"
-          :items="patients"
-          item-title="full_name"
-          item-value="id"
-          label="Patient"
-        />
-        <HInput
-          v-model="orderForm.item_name"
-          label="Test / item"
-        />
-        <div style="display:flex;align-items:flex-end">
-          <HButton
-            :disabled="!orderForm.patient_id || !orderForm.item_name"
-            @click="createOrder"
-          >
-            Add order
-          </HButton>
-        </div>
-      </div>
+        <HButton
+          size="sm"
+          @click="openOrder"
+        >
+          <HIcon name="plus" />
+          Add order
+        </HButton>
+      </template>
       <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
@@ -295,34 +305,18 @@ const headers = [
       title="Bed assignments"
       style="margin-top:18px"
     >
-      <div
+      <template
         v-if="ability.can('create', 'Bed')"
-        class="h-grid cols-3"
-        style="margin-bottom:16px"
+        #actions
       >
-        <HSelect
-          v-model="assignmentForm.patient_id"
-          :items="patients"
-          item-title="full_name"
-          item-value="id"
-          label="Patient"
-        />
-        <HSelect
-          v-model="assignmentForm.facility_id"
-          :items="availableBeds"
-          item-title="name"
-          item-value="id"
-          label="Bed"
-        />
-        <div style="display:flex;align-items:flex-end">
-          <HButton
-            :disabled="!assignmentForm.patient_id || !assignmentForm.facility_id"
-            @click="assignBed"
-          >
-            Assign bed
-          </HButton>
-        </div>
-      </div>
+        <HButton
+          size="sm"
+          @click="openAssignment"
+        >
+          <HIcon name="plus" />
+          Assign bed
+        </HButton>
+      </template>
       <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
@@ -349,9 +343,11 @@ const headers = [
       </HTable>
     </HCard>
 
-    <HDialog
-      v-model="statusDialog"
+    <HModal
+      v-model="statusOpen"
       title="Update unit status"
+      :error="formError"
+      :persistent="saving"
     >
       <div class="h-stack">
         <HSelect
@@ -372,14 +368,97 @@ const headers = [
       <template #actions>
         <HButton
           variant="ghost"
-          @click="statusDialog = false"
+          :disabled="saving"
+          @click="statusOpen = false"
         >
           Cancel
         </HButton>
-        <HButton @click="saveStatus">
+        <HButton
+          :disabled="saving"
+          @click="saveStatus"
+        >
           Save
         </HButton>
       </template>
-    </HDialog>
+    </HModal>
+
+    <HModal
+      v-model="orderOpen"
+      title="Add order"
+      :error="formError"
+      :persistent="saving"
+    >
+      <div class="h-stack">
+        <HSelect
+          v-model="orderForm.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+        />
+        <HInput
+          v-model="orderForm.item_name"
+          label="Test / item"
+        />
+        <HTextarea
+          v-model="orderForm.notes"
+          label="Notes"
+        />
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="orderOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving || !orderForm.patient_id || !orderForm.item_name"
+          @click="createOrder"
+        >
+          Add order
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      v-model="assignmentOpen"
+      title="Assign bed"
+      :error="formError"
+      :persistent="saving"
+    >
+      <div class="h-stack">
+        <HSelect
+          v-model="assignmentForm.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+        />
+        <HSelect
+          v-model="assignmentForm.facility_id"
+          :items="availableBeds"
+          item-title="name"
+          item-value="id"
+          label="Bed"
+        />
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="assignmentOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving || !assignmentForm.patient_id || !assignmentForm.facility_id"
+          @click="assignBed"
+        >
+          Assign bed
+        </HButton>
+      </template>
+    </HModal>
   </div>
 </template>

@@ -12,6 +12,10 @@ const ability = useAbility()
 const patients = ref([])
 const encounters = ref([])
 const staff = ref([])
+const patientOpen = ref(false)
+const visitOpen = ref(false)
+const saving = ref(false)
+const formError = ref('')
 const patientForm = ref({
   first_name: '',
   last_name: '',
@@ -39,17 +43,34 @@ const load = async () => {
   encounters.value = [...asList(opd), ...asList(emergency)].sort((a, b) => b.id - a.id)
 }
 
-const registerPatient = async () => {
-  const patient = await $api('/patients', { method: 'POST', body: patientForm.value })
+const openPatient = () => {
+  formError.value = ''
   patientForm.value = { first_name: '', last_name: '', sex: null, phone: '' }
-  visitForm.value.patient_id = patient.id
-  await load()
+  patientOpen.value = true
+}
+
+const openVisit = () => {
+  formError.value = ''
+  visitForm.value = { patient_id: null, type: 'opd', chief_complaint: '', clinician_id: null }
+  visitOpen.value = true
+}
+
+const registerPatient = async () => {
+  await wrapSave(saving, formError, async () => {
+    const patient = await $api('/patients', { method: 'POST', body: patientForm.value })
+    patientOpen.value = false
+    visitForm.value = { patient_id: patient.id, type: 'opd', chief_complaint: '', clinician_id: null }
+    await load()
+    visitOpen.value = true
+  })
 }
 
 const createVisit = async () => {
-  await $api('/encounters', { method: 'POST', body: visitForm.value })
-  visitForm.value = { patient_id: null, type: 'opd', chief_complaint: '', clinician_id: null }
-  await load()
+  await wrapSave(saving, formError, async () => {
+    await $api('/encounters', { method: 'POST', body: visitForm.value })
+    visitOpen.value = false
+    await load()
+  })
 }
 
 await withPageLoad(load)
@@ -60,83 +81,24 @@ await withPageLoad(load)
     <HPage
       title="Reception"
       subtitle="Register patients and open OPD or emergency visits"
-    />
-
-    <div class="h-grid cols-2">
-      <HCard title="Register patient">
-        <div class="h-stack">
-          <HInput
-            v-model="patientForm.first_name"
-            label="First name"
-          />
-          <HInput
-            v-model="patientForm.last_name"
-            label="Last name"
-          />
-          <HSelect
-            v-model="patientForm.sex"
-            :items="['male', 'female', 'other']"
-            label="Sex"
-          />
-          <HInput
-            v-model="patientForm.phone"
-            label="Phone"
-          />
-          <HButton
-            class="is-block"
-            :disabled="!patientForm.first_name || !patientForm.last_name"
-            @click="registerPatient"
-          >
-            Save patient
-          </HButton>
-        </div>
-      </HCard>
-
-      <HCard title="Open visit">
-        <div class="h-stack">
-          <HSelect
-            v-model="visitForm.patient_id"
-            :items="patients"
-            item-title="full_name"
-            item-value="id"
-            label="Patient"
-          />
-          <HSelect
-            v-model="visitForm.type"
-            :items="[
-              { title: 'OPD', value: 'opd' },
-              { title: 'Emergency', value: 'emergency' },
-            ]"
-            item-title="title"
-            item-value="value"
-            label="Visit type"
-          />
-          <HInput
-            v-model="visitForm.chief_complaint"
-            label="Chief complaint"
-          />
-          <HSelect
-            v-model="visitForm.clinician_id"
-            :items="staff"
-            item-title="name"
-            item-value="id"
-            label="Clinician"
-          />
-          <HButton
-            class="is-block"
-            :disabled="!visitForm.patient_id"
-            @click="createVisit"
-          >
-            Open visit
-          </HButton>
-        </div>
-      </HCard>
-    </div>
-
-    <HCard
-      title="Today's visits"
-      style="margin-top:18px"
     >
+      <HButton
+        v-if="ability.can('create', 'Patient')"
+        variant="ghost"
+        @click="openPatient"
+      >
+        <HIcon name="plus" />
+        Register patient
+      </HButton>
+      <HButton
+        v-if="ability.can('create', 'Opd') || ability.can('create', 'Emergency')"
+        @click="openVisit"
+      >
+        Open visit
+      </HButton>
+    </HPage>
+
+    <HCard title="Today's visits">
       <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
@@ -157,5 +119,100 @@ await withPageLoad(load)
         </template>
       </HTable>
     </HCard>
+
+    <HModal
+      v-model="patientOpen"
+      title="Register patient"
+      :error="formError"
+      :persistent="saving"
+    >
+      <div class="h-stack">
+        <HInput
+          v-model="patientForm.first_name"
+          label="First name"
+        />
+        <HInput
+          v-model="patientForm.last_name"
+          label="Last name"
+        />
+        <HSelect
+          v-model="patientForm.sex"
+          :items="['male', 'female', 'other']"
+          label="Sex"
+        />
+        <HInput
+          v-model="patientForm.phone"
+          label="Phone"
+        />
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="patientOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving || !patientForm.first_name || !patientForm.last_name"
+          @click="registerPatient"
+        >
+          Save patient
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      v-model="visitOpen"
+      title="Open visit"
+      :error="formError"
+      :persistent="saving"
+    >
+      <div class="h-stack">
+        <HSelect
+          v-model="visitForm.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+        />
+        <HSelect
+          v-model="visitForm.type"
+          :items="[
+            { title: 'OPD', value: 'opd' },
+            { title: 'Emergency', value: 'emergency' },
+          ]"
+          item-title="title"
+          item-value="value"
+          label="Visit type"
+        />
+        <HInput
+          v-model="visitForm.chief_complaint"
+          label="Chief complaint"
+        />
+        <HSelect
+          v-model="visitForm.clinician_id"
+          :items="staff"
+          item-title="name"
+          item-value="id"
+          label="Clinician"
+        />
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="visitOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving || !visitForm.patient_id"
+          @click="createVisit"
+        >
+          Open visit
+        </HButton>
+      </template>
+    </HModal>
   </div>
 </template>

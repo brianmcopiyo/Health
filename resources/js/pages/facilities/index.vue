@@ -14,7 +14,9 @@ const types = ref([])
 const search = ref('')
 const status = ref(null)
 const typeId = ref(null)
-const isDialogVisible = ref(false)
+const formOpen = ref(false)
+const saving = ref(false)
+const formError = ref('')
 const editing = ref(null)
 const form = ref({
   name: '',
@@ -57,6 +59,7 @@ const load = async () => {
 }
 
 const openCreate = () => {
+  formError.value = ''
   editing.value = null
   form.value = {
     name: '',
@@ -69,10 +72,11 @@ const openCreate = () => {
     resource_notes: '',
     notes: '',
   }
-  isDialogVisible.value = true
+  formOpen.value = true
 }
 
 const openEdit = item => {
+  formError.value = ''
   editing.value = item
   form.value = {
     name: item.name,
@@ -85,18 +89,20 @@ const openEdit = item => {
     resource_notes: item.resource_notes,
     notes: item.notes,
   }
-  isDialogVisible.value = true
+  formOpen.value = true
 }
 
 const save = async () => {
-  const payload = { ...form.value }
-  if (editing.value)
-    await $api(`/facilities/${editing.value.id}`, { method: 'PUT', body: payload })
-  else
-    await $api('/facilities', { method: 'POST', body: payload })
+  await wrapSave(saving, formError, async () => {
+    const payload = { ...form.value }
+    if (editing.value)
+      await $api(`/facilities/${editing.value.id}`, { method: 'PUT', body: payload })
+    else
+      await $api('/facilities', { method: 'POST', body: payload })
 
-  isDialogVisible.value = false
-  await load()
+    formOpen.value = false
+    await load()
+  })
 }
 
 await withPageLoad(load)
@@ -177,9 +183,12 @@ await withPageLoad(load)
       </HTable>
     </HCard>
 
-    <HDialog
-      v-model="isDialogVisible"
+    <HOffcanvas
+      v-model="formOpen"
       :title="editing ? 'Update facility' : 'Add facility'"
+      size="lg"
+      :error="formError"
+      :persistent="saving"
     >
       <div class="h-stack">
         <HInput
@@ -224,14 +233,18 @@ await withPageLoad(load)
       <template #actions>
         <HButton
           variant="ghost"
-          @click="isDialogVisible = false"
+          :disabled="saving"
+          @click="formOpen = false"
         >
           Cancel
         </HButton>
-        <HButton @click="save">
+        <HButton
+          :disabled="saving"
+          @click="save"
+        >
           Save
         </HButton>
       </template>
-    </HDialog>
+    </HOffcanvas>
   </div>
 </template>

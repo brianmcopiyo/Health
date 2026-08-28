@@ -385,34 +385,88 @@ img { max-width: 100%; }
   color: var(--muted);
 }
 
-.h-dialog-backdrop {
+.h-overlay-open { overflow: hidden; }
+
+.h-overlay {
   position: fixed;
   inset: 0;
   background: rgba(16, 42, 50, 0.42);
   display: grid;
   place-items: center;
   padding: 20px;
-  z-index: 50;
+  z-index: 60;
 }
 
-.h-dialog {
-  width: min(720px, 100%);
-  max-height: calc(100vh - 40px);
-  overflow: auto;
+.h-overlay.is-drawer {
+  place-items: stretch end;
+  padding: 0;
+}
+
+.h-modal,
+.h-offcanvas {
   background: var(--surface);
-  border-radius: 20px;
   box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 40px);
 }
 
-.h-dialog-head,
-.h-dialog-foot {
+.h-modal {
+  width: min(520px, 100%);
+  border-radius: 20px;
+  animation: h-modal-in 0.18s ease;
+}
+
+.h-modal.is-md { width: min(560px, 100%); }
+.h-modal.is-lg { width: min(760px, 100%); }
+
+.h-offcanvas {
+  width: min(480px, 100%);
+  height: 100vh;
+  max-height: 100vh;
+  border-left: 1px solid var(--line);
+  animation: h-drawer-in 0.2s ease;
+}
+
+.h-offcanvas.is-md { width: min(520px, 100%); }
+.h-offcanvas.is-lg { width: min(640px, 100%); }
+
+.h-overlay-head,
+.h-overlay-foot {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
   padding: 18px 20px;
+  flex: none;
 }
-.h-dialog-body { padding: 0 20px 18px; }
+
+.h-overlay-head h3 {
+  margin: 0;
+  font-family: var(--display);
+  font-size: 1.35rem;
+  font-weight: 560;
+}
+
+.h-overlay-sub {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.h-overlay-body {
+  padding: 0 20px 18px;
+  overflow: auto;
+  flex: 1;
+}
+
+.h-overlay-body .h-alert { margin-bottom: 12px; }
+
+.h-overlay-foot {
+  border-top: 1px solid var(--line);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
 
 .h-stat {
   padding: 18px 20px;
@@ -571,6 +625,16 @@ img { max-width: 100%; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+@keyframes h-modal-in {
+  from { transform: translateY(10px); opacity: 0.7; }
+  to { transform: none; opacity: 1; }
+}
+
+@keyframes h-drawer-in {
+  from { transform: translateX(28px); opacity: 0.7; }
+  to { transform: none; opacity: 1; }
+}
+
 @media (max-width: 1080px) {
   .h-grid.cols-4, .h-grid.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -598,4 +662,7 @@ img { max-width: 100%; }
   .h-auth { grid-template-columns: 1fr; }
   .h-auth-art { display: none; }
   .hms-content { padding: 18px; }
+  .h-offcanvas,
+  .h-offcanvas.is-md,
+  .h-offcanvas.is-lg { width: 100%; }
 }

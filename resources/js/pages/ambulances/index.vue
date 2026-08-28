@@ -14,6 +14,8 @@ const trips = ref([])
 const hospitals = ref([])
 const isVehicleDialogVisible = ref(false)
 const dispatching = ref(null)
+const saving = ref(false)
+const formError = ref('')
 const form = ref({
   vehicle_code: '',
   vehicle_type: 'van',
@@ -54,6 +56,7 @@ const load = async () => {
 }
 
 const openCreate = () => {
+  formError.value = ''
   form.value = {
     vehicle_code: '',
     vehicle_type: 'van',
@@ -65,12 +68,15 @@ const openCreate = () => {
 }
 
 const saveVehicle = async () => {
-  await $api('/ambulances', { method: 'POST', body: form.value })
-  isVehicleDialogVisible.value = false
-  await load()
+  await wrapSave(saving, formError, async () => {
+    await $api('/ambulances', { method: 'POST', body: form.value })
+    isVehicleDialogVisible.value = false
+    await load()
+  })
 }
 
 const openDispatch = async item => {
+  formError.value = ''
   hospitals.value = asList(await $api('/network/hospitals'))
   dispatching.value = item
   dispatchForm.value = {
@@ -82,12 +88,14 @@ const openDispatch = async item => {
 }
 
 const dispatch = async () => {
-  await $api(`/ambulances/${dispatching.value.id}/dispatch`, {
-    method: 'POST',
-    body: dispatchForm.value,
+  await wrapSave(saving, formError, async () => {
+    await $api(`/ambulances/${dispatching.value.id}/dispatch`, {
+      method: 'POST',
+      body: dispatchForm.value,
+    })
+    dispatching.value = null
+    await load()
   })
-  dispatching.value = null
-  await load()
 }
 
 const updateTrip = async (trip, status) => {
@@ -192,9 +200,11 @@ await withPageLoad(load)
       </HTable>
     </HCard>
 
-    <HDialog
+    <HModal
       v-model="isVehicleDialogVisible"
       title="Add ambulance"
+      :error="formError"
+      :persistent="saving"
     >
       <div class="h-stack">
         <HInput
@@ -219,19 +229,25 @@ await withPageLoad(load)
       <template #actions>
         <HButton
           variant="ghost"
+          :disabled="saving"
           @click="isVehicleDialogVisible = false"
         >
           Cancel
         </HButton>
-        <HButton @click="saveVehicle">
+        <HButton
+          :disabled="saving"
+          @click="saveVehicle"
+        >
           Save
         </HButton>
       </template>
-    </HDialog>
+    </HModal>
 
-    <HDialog
+    <HModal
       :model-value="Boolean(dispatching)"
       title="Dispatch ambulance"
+      :error="formError"
+      :persistent="saving"
       @update:model-value="val => { if (!val) dispatching = null }"
     >
       <div
@@ -261,14 +277,18 @@ await withPageLoad(load)
       <template #actions>
         <HButton
           variant="ghost"
+          :disabled="saving"
           @click="dispatching = null"
         >
           Cancel
         </HButton>
-        <HButton @click="dispatch">
+        <HButton
+          :disabled="saving"
+          @click="dispatch"
+        >
           Dispatch
         </HButton>
       </template>
-    </HDialog>
+    </HModal>
   </div>
 </template>

@@ -13,6 +13,9 @@ const ability = useAbility()
 const board = ref(null)
 const patients = ref([])
 const staff = ref([])
+const visitOpen = ref(false)
+const saving = ref(false)
+const formError = ref('')
 const form = ref({
   patient_id: null,
   chief_complaint: '',
@@ -28,16 +31,24 @@ const load = async () => {
   staff.value = asList(await $api('/users/directory'))
 }
 
-const startVisit = async () => {
-  await $api('/encounters', {
-    method: 'POST',
-    body: {
-      type: 'emergency',
-      ...form.value,
-    },
-  })
+const openVisit = () => {
+  formError.value = ''
   form.value = { patient_id: null, chief_complaint: '', clinician_id: null }
-  await load()
+  visitOpen.value = true
+}
+
+const startVisit = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api('/encounters', {
+      method: 'POST',
+      body: {
+        type: 'emergency',
+        ...form.value,
+      },
+    })
+    visitOpen.value = false
+    await load()
+  })
 }
 
 const updateVisit = async (encounter, status) => {
@@ -72,31 +83,18 @@ onBeforeUnmount(() => {
       title="Emergency queue"
       style="margin-top:18px"
     >
-      <div
+      <template
         v-if="ability.can('create', 'Emergency')"
-        class="h-grid cols-3"
-        style="margin-bottom:16px"
+        #actions
       >
-        <HSelect
-          v-model="form.patient_id"
-          :items="patients"
-          item-title="full_name"
-          item-value="id"
-          label="Patient"
-        />
-        <HInput
-          v-model="form.chief_complaint"
-          label="Chief complaint"
-        />
-        <div style="display:flex;align-items:flex-end">
-          <HButton
-            :disabled="!form.patient_id"
-            @click="startVisit"
-          >
-            Register visit
-          </HButton>
-        </div>
-      </div>
+        <HButton
+          size="sm"
+          @click="openVisit"
+        >
+          <HIcon name="plus" />
+          Register visit
+        </HButton>
+      </template>
       <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
@@ -136,5 +134,48 @@ onBeforeUnmount(() => {
         </template>
       </HTable>
     </HCard>
+
+    <HModal
+      v-model="visitOpen"
+      title="Register emergency visit"
+      :error="formError"
+      :persistent="saving"
+    >
+      <div class="h-stack">
+        <HSelect
+          v-model="form.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+        />
+        <HInput
+          v-model="form.chief_complaint"
+          label="Chief complaint"
+        />
+        <HSelect
+          v-model="form.clinician_id"
+          :items="staff"
+          item-title="name"
+          item-value="id"
+          label="Clinician"
+        />
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="visitOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving || !form.patient_id"
+          @click="startVisit"
+        >
+          Register visit
+        </HButton>
+      </template>
+    </HModal>
   </div>
 </template>

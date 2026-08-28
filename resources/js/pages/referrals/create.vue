@@ -10,6 +10,8 @@ const router = useRouter()
 const types = ref([])
 const matches = ref([])
 const searching = ref(false)
+const saving = ref(false)
+const formError = ref('')
 const form = ref({
   patient_name: '',
   patient_reference: '',
@@ -45,11 +47,13 @@ const selectHospital = hospital => {
 }
 
 const submit = async () => {
-  await $api('/referrals', {
-    method: 'POST',
-    body: form.value,
+  await wrapSave(saving, formError, async () => {
+    await $api('/referrals', {
+      method: 'POST',
+      body: form.value,
+    })
+    router.push({ name: 'referrals' })
   })
-  router.push({ name: 'referrals' })
 }
 
 await withPageLoad(async () => {
@@ -75,6 +79,13 @@ await withPageLoad(async () => {
     </HPage>
 
     <HCard>
+      <div
+        v-if="formError"
+        class="h-alert"
+        style="margin-bottom:14px"
+      >
+        {{ formError }}
+      </div>
       <div class="h-grid cols-2">
         <HInput
           v-model="form.patient_name"
@@ -158,7 +169,7 @@ await withPageLoad(async () => {
           Cancel
         </HButton>
         <HButton
-          :disabled="!form.to_hospital_id || !form.patient_name || !form.reason"
+          :disabled="saving || !form.to_hospital_id || !form.patient_name || !form.reason"
           @click="submit"
         >
           Create referral

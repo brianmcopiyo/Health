@@ -2,43 +2,27 @@
 defineProps({
   modelValue: Boolean,
   title: String,
+  error: String,
   wide: Boolean,
 })
+
 const emit = defineEmits(['update:modelValue'])
 </script>
 
 <template>
-  <div
-    v-if="modelValue"
-    class="h-dialog-backdrop"
-    @click.self="emit('update:modelValue', false)"
+  <HModal
+    :model-value="modelValue"
+    :title="title"
+    :error="error"
+    :size="wide ? 'lg' : 'md'"
+    @update:model-value="emit('update:modelValue', $event)"
   >
-    <div
-      class="h-dialog"
-      :style="wide ? 'width:min(860px,100%)' : ''"
+    <slot />
+    <template
+      v-if="$slots.actions"
+      #actions
     >
-      <div class="h-dialog-head">
-        <h3>{{ title }}</h3>
-        <HButton
-          variant="ghost"
-          size="icon"
-          @click="emit('update:modelValue', false)"
-        >
-          <HIcon name="x" />
-        </HButton>
-      </div>
-      <div class="h-dialog-body">
-        <slot />
-      </div>
-      <div
-        v-if="$slots.actions"
-        class="h-dialog-foot"
-      >
-        <span />
-        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-          <slot name="actions" />
-        </div>
-      </div>
-    </div>
-  </div>
+      <slot name="actions" />
+    </template>
+  </HModal>
 </template>

@@ -14,6 +14,8 @@ const referrals = ref([])
 const status = ref(null)
 const direction = ref('all')
 const selected = ref(null)
+const saving = ref(false)
+const formError = ref('')
 const responseNotes = ref('')
 const destinationFacilityId = ref(null)
 
@@ -40,16 +42,18 @@ const isDestination = item => userData.value?.hospitalId === item.to_hospital_id
 const isOrigin = item => userData.value?.hospitalId === item.from_hospital_id
 
 const updateStatus = async nextStatus => {
-  await $api(`/referrals/${selected.value.id}/status`, {
-    method: 'PATCH',
-    body: {
-      status: nextStatus,
-      response_notes: responseNotes.value,
-      destination_facility_id: destinationFacilityId.value,
-    },
+  await wrapSave(saving, formError, async () => {
+    await $api(`/referrals/${selected.value.id}/status`, {
+      method: 'PATCH',
+      body: {
+        status: nextStatus,
+        response_notes: responseNotes.value,
+        destination_facility_id: destinationFacilityId.value,
+      },
+    })
+    selected.value = null
+    await load()
   })
-  selected.value = null
-  await load()
 }
 
 const setDirection = value => {
@@ -111,7 +115,7 @@ await withPageLoad(load)
           <HButton
             variant="ghost"
             size="sm"
-            @click="selected = item"
+            @click="formError = ''; selected = item"
           >
             Manage
           </HButton>
@@ -119,9 +123,11 @@ await withPageLoad(load)
       </HTable>
     </HCard>
 
-    <HDialog
+    <HModal
       :model-value="Boolean(selected)"
       :title="selected?.patient_name || 'Referral'"
+      :error="formError"
+      :persistent="saving"
       @update:model-value="val => { if (!val) selected = null }"
     >
       <div v-if="selected">
@@ -139,6 +145,7 @@ await withPageLoad(load)
         <HButton
           v-if="selected && isOrigin(selected) && selected.status === 'pending'"
           variant="ghost"
+          :disabled="saving"
           @click="updateStatus('cancelled')"
         >
           Cancel
@@ -146,6 +153,7 @@ await withPageLoad(load)
         <HButton
           v-if="selected && isDestination(selected) && selected.status === 'pending' && ability.can('respond', 'Referral')"
           variant="danger"
+          :disabled="saving"
           @click="updateStatus('declined')"
         >
           Decline
@@ -153,12 +161,14 @@ await withPageLoad(load)
         <HButton
           v-if="selected && isDestination(selected) && selected.status === 'pending' && ability.can('respond', 'Referral')"
           variant="ok"
+          :disabled="saving"
           @click="updateStatus('accepted')"
         >
           Accept
         </HButton>
         <HButton
           v-if="selected && selected.status === 'accepted'"
+          :disabled="saving"
           @click="updateStatus('in_transit')"
         >
           Mark in transit
@@ -166,11 +176,12 @@ await withPageLoad(load)
         <HButton
           v-if="selected && ['accepted', 'in_transit'].includes(selected.status)"
           variant="ok"
+          :disabled="saving"
           @click="updateStatus('completed')"
         >
           Complete
         </HButton>
       </template>
-    </HDialog>
+    </HModal>
   </div>
 </template>

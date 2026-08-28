@@ -59,6 +59,7 @@ declare global {
   const referralStatuses: typeof import('./resources/js/utils/status.js')['referralStatuses']
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveHomeRoute: typeof import('./resources/js/utils/session.js')['resolveHomeRoute']
+  const saveError: typeof import('./resources/js/composables/usePageLoad.js')['saveError']
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
   const shallowRef: typeof import('vue')['shallowRef']
@@ -75,6 +76,7 @@ declare global {
   const useCookie: typeof import('./resources/js/composables/useCookie.js')['useCookie']
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
+  const useOverlay: typeof import('./resources/js/composables/useOverlay.js')['useOverlay']
   const useRoute: typeof import('vue-router/auto')['useRoute']
   const useRouter: typeof import('vue-router/auto')['useRouter']
   const useSlots: typeof import('vue')['useSlots']
@@ -83,6 +85,7 @@ declare global {
   const watchPostEffect: typeof import('vue')['watchPostEffect']
   const watchSyncEffect: typeof import('vue')['watchSyncEffect']
   const withPageLoad: typeof import('./resources/js/composables/usePageLoad.js')['withPageLoad']
+  const wrapSave: typeof import('./resources/js/composables/usePageLoad.js')['wrapSave']
   const writeStored: typeof import('./resources/js/composables/useCookie.js')['writeStored']
 }
 // for type re-export
@@ -150,6 +153,7 @@ declare module 'vue' {
     readonly referralStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['referralStatuses']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
+    readonly saveError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['saveError']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
@@ -166,6 +170,7 @@ declare module 'vue' {
     readonly useCookie: UnwrapRef<typeof import('./resources/js/composables/useCookie.js')['useCookie']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
     readonly useRoute: UnwrapRef<typeof import('vue-router/auto')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
@@ -174,6 +179,7 @@ declare module 'vue' {
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>
     readonly watchSyncEffect: UnwrapRef<typeof import('vue')['watchSyncEffect']>
     readonly withPageLoad: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['withPageLoad']>
+    readonly wrapSave: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['wrapSave']>
     readonly writeStored: UnwrapRef<typeof import('./resources/js/composables/useCookie.js')['writeStored']>
   }
 }
@@ -234,6 +240,7 @@ declare module '@vue/runtime-core' {
     readonly referralStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['referralStatuses']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
+    readonly saveError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['saveError']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
@@ -250,6 +257,7 @@ declare module '@vue/runtime-core' {
     readonly useCookie: UnwrapRef<typeof import('./resources/js/composables/useCookie.js')['useCookie']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
     readonly useRoute: UnwrapRef<typeof import('vue-router/auto')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
@@ -258,6 +266,7 @@ declare module '@vue/runtime-core' {
     readonly watchPostEffect: UnwrapRef<typeof import('vue')['watchPostEffect']>
     readonly watchSyncEffect: UnwrapRef<typeof import('vue')['watchSyncEffect']>
     readonly withPageLoad: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['withPageLoad']>
+    readonly wrapSave: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['wrapSave']>
     readonly writeStored: UnwrapRef<typeof import('./resources/js/composables/useCookie.js')['writeStored']>
   }
 }

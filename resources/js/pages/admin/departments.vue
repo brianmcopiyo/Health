@@ -9,7 +9,9 @@ definePage({
 const ability = useAbility()
 const departments = ref([])
 const catalog = ref([])
-const isDialogVisible = ref(false)
+const formOpen = ref(false)
+const saving = ref(false)
+const formError = ref('')
 const editing = ref(null)
 const form = ref({
   name: '',
@@ -23,25 +25,29 @@ const load = async () => {
 }
 
 const openCreate = () => {
+  formError.value = ''
   editing.value = null
   form.value = { name: '', module_key: catalog.value[0]?.key || 'reception', is_active: true }
-  isDialogVisible.value = true
+  formOpen.value = true
 }
 
 const openEdit = item => {
+  formError.value = ''
   editing.value = item
   form.value = { name: item.name, module_key: item.module_key, is_active: item.is_active }
-  isDialogVisible.value = true
+  formOpen.value = true
 }
 
 const save = async () => {
-  if (editing.value)
-    await $api(`/departments/${editing.value.id}`, { method: 'PUT', body: form.value })
-  else
-    await $api('/departments', { method: 'POST', body: form.value })
+  await wrapSave(saving, formError, async () => {
+    if (editing.value)
+      await $api(`/departments/${editing.value.id}`, { method: 'PUT', body: form.value })
+    else
+      await $api('/departments', { method: 'POST', body: form.value })
 
-  isDialogVisible.value = false
-  await load()
+    formOpen.value = false
+    await load()
+  })
 }
 
 await withPageLoad(load)
@@ -90,9 +96,11 @@ await withPageLoad(load)
       </HTable>
     </HCard>
 
-    <HDialog
-      v-model="isDialogVisible"
+    <HModal
+      v-model="formOpen"
       :title="editing ? 'Update department' : 'Add department'"
+      :error="formError"
+      :persistent="saving"
     >
       <div class="h-stack">
         <HInput
@@ -117,14 +125,18 @@ await withPageLoad(load)
       <template #actions>
         <HButton
           variant="ghost"
-          @click="isDialogVisible = false"
+          :disabled="saving"
+          @click="formOpen = false"
         >
           Cancel
         </HButton>
-        <HButton @click="save">
+        <HButton
+          :disabled="saving"
+          @click="save"
+        >
           Save
         </HButton>
       </template>
-    </HDialog>
+    </HModal>
   </div>
 </template>
