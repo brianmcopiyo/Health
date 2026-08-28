@@ -36,91 +36,76 @@ const saveStatus = async () => {
 
 <template>
   <div>
-    <div class="d-flex align-center mb-6">
-      <VBtn
-        variant="text"
+    <HPage
+      :title="facility?.name || 'Facility'"
+      :subtitle="facility ? `${facility.type?.name || ''} · ${facility.code}` : ''"
+    >
+      <HButton
+        variant="ghost"
         :to="{ name: 'facilities' }"
-        prepend-icon="tabler-arrow-left"
       >
+        <HIcon name="back" />
         Back
-      </VBtn>
-    </div>
+      </HButton>
+    </HPage>
 
-    <VAlert
+    <div
       v-if="!facility"
-      type="warning"
-      variant="tonal"
+      class="h-alert"
     >
       This facility could not be loaded.
-    </VAlert>
+    </div>
 
-    <VRow v-else>
-      <VCol
-        cols="12"
-        md="8"
+    <div
+      v-else
+      class="h-grid cols-2"
+    >
+      <HCard>
+        <HBadge :tone="statusColor(facility.status)">
+          {{ labelize(facility.status) }}
+        </HBadge>
+        <div class="h-metric">
+          <span>Capacity</span>
+          <strong>{{ facility.capacity }}</strong>
+        </div>
+        <div class="h-metric">
+          <span>In use</span>
+          <strong>{{ facility.current_utilization }}</strong>
+        </div>
+        <div class="h-metric">
+          <span>Remaining</span>
+          <strong>{{ facility.remaining_capacity }}</strong>
+        </div>
+        <p>{{ facility.resource_notes || 'No resource notes yet.' }}</p>
+      </HCard>
+
+      <HCard
+        v-if="ability.can('update', 'Facility')"
+        title="Update status"
       >
-        <VCard>
-          <VCardItem>
-            <VCardTitle>{{ facility.name }}</VCardTitle>
-            <VCardSubtitle>{{ facility.type?.name }} · {{ facility.code }}</VCardSubtitle>
-          </VCardItem>
-          <VCardText>
-            <VChip
-              :color="statusColor(facility.status)"
-              class="text-capitalize mb-4"
-            >
-              {{ labelize(facility.status) }}
-            </VChip>
-            <div class="mb-2">
-              Capacity: <strong>{{ facility.capacity }}</strong>
-            </div>
-            <div class="mb-2">
-              In use: <strong>{{ facility.current_utilization }}</strong>
-            </div>
-            <div class="mb-2">
-              Remaining: <strong>{{ facility.remaining_capacity }}</strong>
-            </div>
-            <div class="text-body-1">
-              {{ facility.resource_notes || 'No resource notes yet.' }}
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-      <VCol
-        cols="12"
-        md="4"
-      >
-        <VCard v-if="ability.can('update', 'Facility')">
-          <VCardItem>
-            <VCardTitle>Update status</VCardTitle>
-          </VCardItem>
-          <VCardText>
-            <AppSelect
-              v-model="statusForm.status"
-              :items="facilityStatuses"
-              label="Status"
-              class="mb-4"
-            />
-            <AppTextField
-              v-model.number="statusForm.current_utilization"
-              type="number"
-              label="Current utilization"
-              class="mb-4"
-            />
-            <AppTextarea
-              v-model="statusForm.resource_notes"
-              label="Resource availability"
-              class="mb-4"
-            />
-            <VBtn
-              block
-              @click="saveStatus"
-            >
-              Save
-            </VBtn>
-          </VCardText>
-        </VCard>
-      </VCol>
-    </VRow>
+        <div class="h-stack">
+          <HSelect
+            v-model="statusForm.status"
+            :items="facilityStatuses"
+            label="Status"
+          />
+          <HInput
+            v-model="statusForm.current_utilization"
+            type="number"
+            label="Current utilization"
+          />
+          <HTextarea
+            v-model="statusForm.resource_notes"
+            label="Resource availability"
+          />
+          <HButton
+            class="is-block"
+            @click="saveStatus"
+          >
+            Save
+          </HButton>
+        </div>
+      </HCard>
+    </div>
   </div>
 </template>

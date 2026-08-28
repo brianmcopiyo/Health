@@ -52,7 +52,7 @@ await withPageLoad(load)
 
 let timer
 onMounted(() => {
-  timer = setInterval(() => { withPageLoad(load) }, 15000)
+  timer = setInterval(() => { withPageLoad(load, { silent: true }) }, 15000)
 })
 onBeforeUnmount(() => {
   if (timer)
@@ -68,77 +68,73 @@ onBeforeUnmount(() => {
       subject="Emergency"
     />
 
-    <VCard class="mt-6">
-      <VCardItem>
-        <VCardTitle>Emergency queue</VCardTitle>
-      </VCardItem>
-      <VCardText v-if="ability.can('create', 'Emergency')">
-        <VRow>
-          <VCol md="4">
-            <AppSelect
-              v-model="form.patient_id"
-              :items="patients"
-              item-title="full_name"
-              item-value="id"
-              label="Patient"
-            />
-          </VCol>
-          <VCol md="4">
-            <AppTextField
-              v-model="form.chief_complaint"
-              label="Chief complaint"
-            />
-          </VCol>
-          <VCol md="4">
-            <VBtn
-              :disabled="!form.patient_id"
-              @click="startVisit"
-            >
-              Register visit
-            </VBtn>
-          </VCol>
-        </VRow>
-      </VCardText>
-      <VDataTable
+    <HCard
+      title="Emergency queue"
+      style="margin-top:18px"
+    >
+      <div
+        v-if="ability.can('create', 'Emergency')"
+        class="h-grid cols-3"
+        style="margin-bottom:16px"
+      >
+        <HSelect
+          v-model="form.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+        />
+        <HInput
+          v-model="form.chief_complaint"
+          label="Chief complaint"
+        />
+        <div style="display:flex;align-items:flex-end">
+          <HButton
+            :disabled="!form.patient_id"
+            @click="startVisit"
+          >
+            Register visit
+          </HButton>
+        </div>
+      </div>
+      <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Complaint', key: 'chief_complaint' },
           { title: 'Status', key: 'status' },
-          { title: 'Actions', key: 'actions', sortable: false },
+          { title: 'Actions', key: 'actions' },
         ]"
         :items="encounters"
+        empty="No active emergency visits"
       >
-        <template #item.patient.first_name="{ item }">
+        <template #cell-patient.first_name="{ item }">
           {{ item.patient?.first_name }} {{ item.patient?.last_name }}
         </template>
-        <template #item.status="{ item }">
-          <VChip
-            size="small"
-            :color="statusColor(item.status)"
-            class="text-capitalize"
-          >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
-          </VChip>
+          </HBadge>
         </template>
-        <template #item.actions="{ item }">
-          <VBtn
-            v-if="ability.can('update', 'Emergency') && item.status === 'waiting'"
-            size="small"
-            class="me-2"
-            @click="updateVisit(item, 'in_progress')"
-          >
-            Start
-          </VBtn>
-          <VBtn
-            v-if="ability.can('update', 'Emergency') && item.status !== 'completed'"
-            size="small"
-            variant="tonal"
-            @click="updateVisit(item, 'completed')"
-          >
-            Complete
-          </VBtn>
+        <template #cell-actions="{ item }">
+          <div class="h-actions">
+            <HButton
+              v-if="ability.can('update', 'Emergency') && item.status === 'waiting'"
+              size="sm"
+              @click="updateVisit(item, 'in_progress')"
+            >
+              Start
+            </HButton>
+            <HButton
+              v-if="ability.can('update', 'Emergency') && item.status !== 'completed'"
+              variant="ghost"
+              size="sm"
+              @click="updateVisit(item, 'completed')"
+            >
+              Complete
+            </HButton>
+          </div>
         </template>
-      </VDataTable>
-    </VCard>
+      </HTable>
+    </HCard>
   </div>
 </template>

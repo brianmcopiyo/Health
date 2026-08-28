@@ -60,119 +60,110 @@ await withPageLoad(async () => {
 </script>
 
 <template>
-  <VCard>
-    <VCardItem>
-      <VCardTitle>Create referral</VCardTitle>
-    </VCardItem>
-    <VCardText>
-      <VRow>
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <AppTextField
-            v-model="form.patient_name"
-            label="Patient name"
-          />
-        </VCol>
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <AppTextField
-            v-model="form.patient_reference"
-            label="Patient reference"
-          />
-        </VCol>
-        <VCol cols="12">
-          <AppTextarea
-            v-model="form.reason"
-            label="Clinical reason"
-          />
-        </VCol>
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <AppSelect
-            v-model="form.required_facility_type_id"
-            :items="types"
-            item-title="name"
-            item-value="id"
-            label="Required facility"
-            @update:model-value="searchHospitals"
-          />
-        </VCol>
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <AppTextField
-            v-model.number="form.required_capacity"
-            type="number"
-            label="Required capacity"
-            @update:model-value="searchHospitals"
-          />
-        </VCol>
-      </VRow>
+  <div>
+    <HPage
+      title="Create referral"
+      subtitle="Find a hospital with the required remaining capacity"
+    >
+      <HButton
+        variant="ghost"
+        :to="{ name: 'referrals' }"
+      >
+        <HIcon name="back" />
+        Back
+      </HButton>
+    </HPage>
 
-      <h5 class="text-h5 mt-6 mb-4">
-        Eligible destination hospitals
-      </h5>
-      <VProgressLinear
-        v-if="searching"
-        indeterminate
+    <HCard>
+      <div class="h-grid cols-2">
+        <HInput
+          v-model="form.patient_name"
+          label="Patient name"
+        />
+        <HInput
+          v-model="form.patient_reference"
+          label="Patient reference"
+        />
+      </div>
+      <HTextarea
+        v-model="form.reason"
+        label="Clinical reason"
+        style="margin-top:12px"
       />
-      <VAlert
+      <div
+        class="h-grid cols-2"
+        style="margin-top:12px"
+      >
+        <HSelect
+          v-model="form.required_facility_type_id"
+          :items="types"
+          item-title="name"
+          item-value="id"
+          label="Required facility"
+          @update:model-value="searchHospitals"
+        />
+        <HInput
+          v-model="form.required_capacity"
+          type="number"
+          label="Required capacity"
+          @update:model-value="searchHospitals"
+        />
+      </div>
+
+      <h3 style="margin:24px 0 12px;font-family:var(--display)">
+        Eligible destination hospitals
+      </h3>
+      <div
+        v-if="searching"
+        class="h-spinner"
+      />
+      <div
         v-else-if="!matches.length"
-        type="warning"
-        variant="tonal"
+        class="h-alert"
       >
         No hospitals currently have the required available capacity.
-      </VAlert>
-      <VRow>
-        <VCol
+      </div>
+      <div
+        v-else
+        class="h-grid cols-2"
+      >
+        <div
           v-for="hospital in matches"
           :key="hospital.id"
-          cols="12"
-          md="6"
+          class="h-pick"
+          :class="{ 'is-on': form.to_hospital_id === hospital.id }"
+          @click="selectHospital(hospital)"
         >
-          <VCard
-            :color="form.to_hospital_id === hospital.id ? 'primary' : undefined"
-            :variant="form.to_hospital_id === hospital.id ? 'tonal' : 'outlined'"
-            class="cursor-pointer"
-            @click="selectHospital(hospital)"
+          <strong>{{ hospital.name }}</strong>
+          <div style="color:var(--muted);margin:4px 0 10px">
+            {{ hospital.city }} · {{ hospital.code }}
+          </div>
+          <div
+            v-for="facility in hospital.available_facilities"
+            :key="facility.id"
           >
-            <VCardItem>
-              <VCardTitle>{{ hospital.name }}</VCardTitle>
-              <VCardSubtitle>{{ hospital.city }} · {{ hospital.code }}</VCardSubtitle>
-            </VCardItem>
-            <VCardText>
-              <div
-                v-for="facility in hospital.available_facilities"
-                :key="facility.id"
-              >
-                {{ facility.name }} · remaining {{ facility.remaining_capacity }}
-              </div>
-            </VCardText>
-          </VCard>
-        </VCol>
-      </VRow>
+            {{ facility.name }} · remaining {{ facility.remaining_capacity }}
+          </div>
+        </div>
+      </div>
 
-      <div class="d-flex justify-end gap-4 mt-6">
-        <VBtn
-          variant="tonal"
+      <div
+        class="h-actions"
+        style="margin-top:20px;justify-content:flex-end"
+      >
+        <HButton
+          variant="ghost"
           :to="{ name: 'referrals' }"
         >
           Cancel
-        </VBtn>
-        <VBtn
+        </HButton>
+        <HButton
           :disabled="!form.to_hospital_id || !form.patient_name || !form.reason"
           @click="submit"
         >
           Create referral
-        </VBtn>
+        </HButton>
       </div>
-    </VCardText>
-  </VCard>
+    </HCard>
+  </div>
 </template>

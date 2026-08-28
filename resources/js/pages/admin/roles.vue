@@ -75,115 +75,106 @@ await withPageLoad(load)
 
 <template>
   <div>
-    <div class="d-flex justify-space-between mb-6">
-      <h4 class="text-h4">
-        Roles
-      </h4>
-      <VBtn
+    <HPage
+      title="Roles"
+      subtitle="Permissions and default workspaces"
+    >
+      <HButton
         v-if="ability.can('manage', 'Role')"
-        prepend-icon="tabler-plus"
         @click="openCreate"
       >
+        <HIcon name="plus" />
         Add role
-      </VBtn>
-    </div>
+      </HButton>
+    </HPage>
 
-    <VRow>
-      <VCol
+    <div class="h-grid cols-3">
+      <HCard
         v-for="role in roles"
         :key="role.id"
-        cols="12"
-        md="6"
-        lg="4"
+        :title="role.name"
       >
-        <VCard>
-          <VCardItem>
-            <VCardTitle>{{ role.name }}</VCardTitle>
-            <VCardSubtitle>{{ role.workspace }} · {{ role.description }}</VCardSubtitle>
-          </VCardItem>
-          <VCardText>
-            <VChip
-              v-for="permission in role.permissions.slice(0, 6)"
-              :key="permission.id"
-              size="small"
-              class="me-1 mb-1"
-            >
-              {{ permission.name }}
-            </VChip>
-            <div
-              v-if="role.permissions.length > 6"
-              class="text-sm mt-2"
-            >
-              +{{ role.permissions.length - 6 }} more
-            </div>
-          </VCardText>
-          <VCardActions v-if="ability.can('manage', 'Role')">
-            <VBtn
-              variant="text"
-              @click="openEdit(role)"
-            >
-              Edit
-            </VBtn>
-          </VCardActions>
-        </VCard>
-      </VCol>
-    </VRow>
-  </div>
+        <p style="color:var(--muted);margin-top:0">
+          {{ role.workspace }} · {{ role.description }}
+        </p>
+        <div class="h-actions">
+          <HBadge
+            v-for="permission in (role.permissions || []).slice(0, 6)"
+            :key="permission.id"
+          >
+            {{ permission.name }}
+          </HBadge>
+        </div>
+        <p
+          v-if="(role.permissions || []).length > 6"
+          style="color:var(--muted);font-size:0.85rem"
+        >
+          +{{ role.permissions.length - 6 }} more
+        </p>
+        <HButton
+          v-if="ability.can('manage', 'Role')"
+          variant="ghost"
+          size="sm"
+          style="margin-top:10px"
+          @click="openEdit(role)"
+        >
+          Edit
+        </HButton>
+      </HCard>
+    </div>
 
-  <VDialog
-    v-model="isDialogVisible"
-    max-width="720"
-  >
-    <VCard :title="editing ? 'Update role' : 'Add role'">
-      <VCardText>
-        <AppTextField
+    <HDialog
+      v-model="isDialogVisible"
+      :title="editing ? 'Update role' : 'Add role'"
+      wide
+    >
+      <div class="h-stack">
+        <HInput
           v-model="form.name"
           label="Name"
-          class="mb-4"
         />
-        <AppTextarea
+        <HTextarea
           v-model="form.description"
           label="Description"
-          class="mb-4"
         />
-        <AppSelect
+        <HSelect
           v-model="form.workspace"
           :items="workspaces"
           item-title="title"
           item-value="value"
           label="Workspace"
-          class="mb-4"
         />
         <div
           v-for="(group, name) in groupedPermissions"
           :key="name"
-          class="mb-4"
+          class="h-perm-group"
         >
-          <div class="text-subtitle-1 mb-2">
-            {{ name }}
-          </div>
-          <VCheckbox
+          <h4>{{ name }}</h4>
+          <label
             v-for="permission in group"
             :key="permission.id"
-            v-model="form.permission_ids"
-            :label="permission.name"
-            :value="permission.id"
-            multiple
-          />
+            class="h-check"
+          >
+            <input
+              v-model="form.permission_ids"
+              type="checkbox"
+              :value="permission.id"
+            >
+            {{ permission.name }}
+          </label>
         </div>
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="isDialogVisible = false"
         >
           Cancel
-        </VBtn>
-        <VBtn @click="save">
+        </HButton>
+        <HButton @click="save">
           Save
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

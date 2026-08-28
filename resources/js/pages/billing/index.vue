@@ -43,118 +43,116 @@ await withPageLoad(load)
 </script>
 
 <template>
-  <VCard>
-    <VCardItem>
-      <VCardTitle>Billing</VCardTitle>
-      <template #append>
-        <VBtn
-          v-if="ability.can('create', 'Invoice')"
-          prepend-icon="tabler-plus"
-          @click="isDialogVisible = true"
-        >
-          New invoice
-        </VBtn>
-      </template>
-    </VCardItem>
-    <VDataTable
-      :headers="[
-        { title: 'Number', key: 'number' },
-        { title: 'Patient', key: 'patient.first_name' },
-        { title: 'Total', key: 'total' },
-        { title: 'Status', key: 'status' },
-        { title: 'Actions', key: 'actions', sortable: false },
-      ]"
-      :items="invoices"
+  <div>
+    <HPage
+      title="Billing"
+      subtitle="Invoices and payment status"
     >
-      <template #item.patient.first_name="{ item }">
-        {{ item.patient?.first_name }} {{ item.patient?.last_name }}
-      </template>
-      <template #item.status="{ item }">
-        <VChip
-          size="small"
-          :color="statusColor(item.status)"
-          class="text-capitalize"
-        >
-          {{ labelize(item.status) }}
-        </VChip>
-      </template>
-      <template #item.actions="{ item }">
-        <VBtn
-          v-if="ability.can('update', 'Invoice') && item.status === 'draft'"
-          size="small"
-          class="me-2"
-          @click="updateStatus(item, 'issued')"
-        >
-          Issue
-        </VBtn>
-        <VBtn
-          v-if="ability.can('update', 'Invoice') && item.status !== 'paid'"
-          size="small"
-          variant="tonal"
-          @click="updateStatus(item, 'paid')"
-        >
-          Mark paid
-        </VBtn>
-      </template>
-    </VDataTable>
-  </VCard>
+      <HButton
+        v-if="ability.can('create', 'Invoice')"
+        @click="isDialogVisible = true"
+      >
+        <HIcon name="plus" />
+        New invoice
+      </HButton>
+    </HPage>
 
-  <VDialog
-    v-model="isDialogVisible"
-    max-width="720"
-  >
-    <VCard title="Create invoice">
-      <VCardText>
-        <AppSelect
-          v-model="form.patient_id"
-          :items="patients"
-          item-title="full_name"
-          item-value="id"
-          label="Patient"
-          class="mb-4"
+    <HCard>
+      <HTable
+        :headers="[
+          { title: 'Number', key: 'number' },
+          { title: 'Patient', key: 'patient.first_name' },
+          { title: 'Total', key: 'total' },
+          { title: 'Status', key: 'status' },
+          { title: 'Actions', key: 'actions' },
+        ]"
+        :items="invoices"
+        empty="No invoices yet"
+      >
+        <template #cell-patient.first_name="{ item }">
+          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+        </template>
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
+            {{ labelize(item.status) }}
+          </HBadge>
+        </template>
+        <template #cell-actions="{ item }">
+          <div class="h-actions">
+            <HButton
+              v-if="ability.can('update', 'Invoice') && item.status === 'draft'"
+              size="sm"
+              @click="updateStatus(item, 'issued')"
+            >
+              Issue
+            </HButton>
+            <HButton
+              v-if="ability.can('update', 'Invoice') && item.status !== 'paid'"
+              variant="ghost"
+              size="sm"
+              @click="updateStatus(item, 'paid')"
+            >
+              Mark paid
+            </HButton>
+          </div>
+        </template>
+      </HTable>
+    </HCard>
+
+    <HDialog
+      v-model="isDialogVisible"
+      title="Create invoice"
+      wide
+    >
+      <HSelect
+        v-model="form.patient_id"
+        :items="patients"
+        item-title="full_name"
+        item-value="id"
+        label="Patient"
+      />
+      <div
+        v-for="(item, index) in form.items"
+        :key="index"
+        class="h-grid cols-3"
+        style="margin-top:12px"
+      >
+        <HInput
+          v-model="item.description"
+          label="Description"
         />
-        <div
-          v-for="(item, index) in form.items"
-          :key="index"
-          class="d-flex gap-4 mb-4"
-        >
-          <AppTextField
-            v-model="item.description"
-            label="Description"
-          />
-          <AppTextField
-            v-model.number="item.quantity"
-            type="number"
-            label="Qty"
-          />
-          <AppTextField
-            v-model.number="item.unit_amount"
-            type="number"
-            label="Unit amount"
-          />
-        </div>
-        <VBtn
-          variant="tonal"
-          @click="addItem"
-        >
-          Add line
-        </VBtn>
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+        <HInput
+          v-model="item.quantity"
+          type="number"
+          label="Qty"
+        />
+        <HInput
+          v-model="item.unit_amount"
+          type="number"
+          label="Unit amount"
+        />
+      </div>
+      <HButton
+        variant="ghost"
+        style="margin-top:12px"
+        @click="addItem"
+      >
+        Add line
+      </HButton>
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="isDialogVisible = false"
         >
           Cancel
-        </VBtn>
-        <VBtn
+        </HButton>
+        <HButton
           :disabled="!form.patient_id"
           @click="save"
         >
           Save
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

@@ -23,7 +23,7 @@ const headers = [
   { title: 'To', key: 'to_hospital.name' },
   { title: 'Need', key: 'required_facility_type.name' },
   { title: 'Status', key: 'status' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: 'Actions', key: 'actions' },
 ]
 
 const load = async () => {
@@ -52,144 +52,125 @@ const updateStatus = async nextStatus => {
   await load()
 }
 
+const setDirection = value => {
+  direction.value = value
+  load()
+}
+
 await withPageLoad(load)
 </script>
 
 <template>
-  <VCard>
-    <VCardItem>
-      <VCardTitle>Patient referrals</VCardTitle>
-      <template #append>
-        <VBtn
-          v-if="ability.can('create', 'Referral')"
-          prepend-icon="tabler-plus"
-          :to="{ name: 'referrals-create' }"
-        >
-          New referral
-        </VBtn>
-      </template>
-    </VCardItem>
-    <VCardText>
-      <VRow>
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <VBtnToggle
-            v-model="direction"
-            mandatory
-            divided
-            @update:model-value="load"
-          >
-            <VBtn value="all">
-              All
-            </VBtn>
-            <VBtn value="incoming">
-              Incoming
-            </VBtn>
-            <VBtn value="outgoing">
-              Outgoing
-            </VBtn>
-          </VBtnToggle>
-        </VCol>
-        <VCol
-          cols="12"
-          md="6"
-        >
-          <AppSelect
-            v-model="status"
-            :items="[{ value: null, title: 'All statuses' }, ...referralStatuses.map(item => ({ value: item, title: labelize(item) }))]"
-            item-title="title"
-            item-value="value"
-            label="Status"
-            @update:model-value="load"
-          />
-        </VCol>
-      </VRow>
-    </VCardText>
-    <VDataTable
-      :headers="headers"
-      :items="referrals"
+  <div>
+    <HPage
+      title="Patient referrals"
+      subtitle="Incoming and outgoing hospital transfers"
     >
-      <template #item.status="{ item }">
-        <VChip
-          size="small"
-          :color="statusColor(item.status)"
-          class="text-capitalize"
-        >
-          {{ labelize(item.status) }}
-        </VChip>
-      </template>
-      <template #item.actions="{ item }">
-        <VBtn
-          size="small"
-          variant="tonal"
-          @click="selected = item"
-        >
-          Manage
-        </VBtn>
-      </template>
-    </VDataTable>
-  </VCard>
+      <HButton
+        v-if="ability.can('create', 'Referral')"
+        :to="{ name: 'referrals-create' }"
+      >
+        <HIcon name="plus" />
+        New referral
+      </HButton>
+    </HPage>
 
-  <VDialog
-    :model-value="Boolean(selected)"
-    max-width="640"
-    @update:model-value="val => { if (!val) selected = null }"
-  >
-    <VCard v-if="selected">
-      <VCardItem>
-        <VCardTitle>{{ selected.patient_name }}</VCardTitle>
-        <VCardSubtitle>{{ selected.from_hospital?.name }} → {{ selected.to_hospital?.name }}</VCardSubtitle>
-      </VCardItem>
-      <VCardText>
-        <p>{{ selected.reason }}</p>
-        <p class="mb-0">
-          Need: {{ selected.required_facility_type?.name }} · {{ selected.required_capacity }}
+    <HCard>
+      <div
+        class="h-grid cols-2"
+        style="margin-bottom:16px"
+      >
+        <HSegmented
+          :model-value="direction"
+          :options="[
+            { value: 'all', title: 'All' },
+            { value: 'incoming', title: 'Incoming' },
+            { value: 'outgoing', title: 'Outgoing' },
+          ]"
+          @update:model-value="setDirection"
+        />
+        <HSelect
+          v-model="status"
+          :items="referralStatuses"
+          label="Status"
+          placeholder="All statuses"
+          @update:model-value="load"
+        />
+      </div>
+      <HTable
+        :headers="headers"
+        :items="referrals"
+        empty="No referrals in this view"
+      >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
+            {{ labelize(item.status) }}
+          </HBadge>
+        </template>
+        <template #cell-actions="{ item }">
+          <HButton
+            variant="ghost"
+            size="sm"
+            @click="selected = item"
+          >
+            Manage
+          </HButton>
+        </template>
+      </HTable>
+    </HCard>
+
+    <HDialog
+      :model-value="Boolean(selected)"
+      :title="selected?.patient_name || 'Referral'"
+      @update:model-value="val => { if (!val) selected = null }"
+    >
+      <div v-if="selected">
+        <p style="color:var(--muted);margin-top:0">
+          {{ selected.from_hospital?.name }} → {{ selected.to_hospital?.name }}
         </p>
-        <AppTextarea
+        <p>{{ selected.reason }}</p>
+        <p>Need: {{ selected.required_facility_type?.name }} · {{ selected.required_capacity }}</p>
+        <HTextarea
           v-model="responseNotes"
-          class="mt-4"
           label="Notes"
         />
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          v-if="isOrigin(selected) && selected.status === 'pending'"
-          color="secondary"
+      </div>
+      <template #actions>
+        <HButton
+          v-if="selected && isOrigin(selected) && selected.status === 'pending'"
+          variant="ghost"
           @click="updateStatus('cancelled')"
         >
           Cancel
-        </VBtn>
-        <VBtn
-          v-if="isDestination(selected) && selected.status === 'pending' && ability.can('respond', 'Referral')"
-          color="error"
+        </HButton>
+        <HButton
+          v-if="selected && isDestination(selected) && selected.status === 'pending' && ability.can('respond', 'Referral')"
+          variant="danger"
           @click="updateStatus('declined')"
         >
           Decline
-        </VBtn>
-        <VBtn
-          v-if="isDestination(selected) && selected.status === 'pending' && ability.can('respond', 'Referral')"
-          color="success"
+        </HButton>
+        <HButton
+          v-if="selected && isDestination(selected) && selected.status === 'pending' && ability.can('respond', 'Referral')"
+          variant="ok"
           @click="updateStatus('accepted')"
         >
           Accept
-        </VBtn>
-        <VBtn
-          v-if="selected.status === 'accepted'"
+        </HButton>
+        <HButton
+          v-if="selected && selected.status === 'accepted'"
           @click="updateStatus('in_transit')"
         >
           Mark in transit
-        </VBtn>
-        <VBtn
-          v-if="['accepted', 'in_transit'].includes(selected.status)"
-          color="success"
+        </HButton>
+        <HButton
+          v-if="selected && ['accepted', 'in_transit'].includes(selected.status)"
+          variant="ok"
           @click="updateStatus('completed')"
         >
           Complete
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

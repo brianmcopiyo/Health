@@ -30,7 +30,7 @@ await withPageLoad(load)
 
 let timer
 onMounted(() => {
-  timer = setInterval(() => { withPageLoad(load) }, 15000)
+  timer = setInterval(() => { withPageLoad(load, { silent: true }) }, 15000)
 })
 onBeforeUnmount(() => {
   if (timer)
@@ -46,51 +46,49 @@ onBeforeUnmount(() => {
       subject="Opd"
     />
 
-    <VCard class="mt-6">
-      <VCardItem>
-        <VCardTitle>Consultation queue</VCardTitle>
-      </VCardItem>
-      <VDataTable
+    <HCard
+      title="Consultation queue"
+      style="margin-top:18px"
+    >
+      <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Complaint', key: 'chief_complaint' },
           { title: 'Clinician', key: 'clinician.name' },
           { title: 'Status', key: 'status' },
-          { title: 'Actions', key: 'actions', sortable: false },
+          { title: 'Actions', key: 'actions' },
         ]"
         :items="encounters"
+        empty="No patients waiting in OPD"
       >
-        <template #item.patient.first_name="{ item }">
+        <template #cell-patient.first_name="{ item }">
           {{ item.patient?.first_name }} {{ item.patient?.last_name }}
         </template>
-        <template #item.status="{ item }">
-          <VChip
-            size="small"
-            :color="statusColor(item.status)"
-            class="text-capitalize"
-          >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
-          </VChip>
+          </HBadge>
         </template>
-        <template #item.actions="{ item }">
-          <VBtn
-            v-if="ability.can('update', 'Opd') && item.status === 'waiting'"
-            size="small"
-            class="me-2"
-            @click="updateVisit(item, 'in_progress')"
-          >
-            Start consult
-          </VBtn>
-          <VBtn
-            v-if="ability.can('update', 'Opd') && item.status !== 'completed'"
-            size="small"
-            variant="tonal"
-            @click="updateVisit(item, 'completed')"
-          >
-            Complete
-          </VBtn>
+        <template #cell-actions="{ item }">
+          <div class="h-actions">
+            <HButton
+              v-if="ability.can('update', 'Opd') && item.status === 'waiting'"
+              size="sm"
+              @click="updateVisit(item, 'in_progress')"
+            >
+              Start consult
+            </HButton>
+            <HButton
+              v-if="ability.can('update', 'Opd') && item.status !== 'completed'"
+              variant="ghost"
+              size="sm"
+              @click="updateVisit(item, 'completed')"
+            >
+              Complete
+            </HButton>
+          </div>
         </template>
-      </VDataTable>
-    </VCard>
+      </HTable>
+    </HCard>
   </div>
 </template>

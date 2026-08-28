@@ -26,7 +26,7 @@ const headers = [
   { title: 'City', key: 'city' },
   { title: 'Region', key: 'region' },
   { title: 'Active', key: 'is_active' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: 'Actions', key: 'actions' },
 ]
 
 const load = async () => {
@@ -68,96 +68,92 @@ await withPageLoad(load)
 </script>
 
 <template>
-  <VCard>
-    <VCardItem>
-      <VCardTitle>Hospitals</VCardTitle>
-      <template #append>
-        <VBtn
-          prepend-icon="tabler-plus"
-          @click="openCreate"
-        >
-          Add hospital
-        </VBtn>
-      </template>
-    </VCardItem>
-    <VDataTable
-      :headers="headers"
-      :items="hospitals"
+  <div>
+    <HPage
+      title="Hospitals"
+      subtitle="Network hospital registry"
     >
-      <template #item.is_active="{ item }">
-        <VChip
-          size="small"
-          :color="item.is_active ? 'success' : 'secondary'"
-        >
-          {{ item.is_active ? 'Active' : 'Inactive' }}
-        </VChip>
-      </template>
-      <template #item.actions="{ item }">
-        <IconBtn @click="openEdit(item)">
-          <VIcon icon="tabler-edit" />
-        </IconBtn>
-      </template>
-    </VDataTable>
-  </VCard>
+      <HButton @click="openCreate">
+        <HIcon name="plus" />
+        Add hospital
+      </HButton>
+    </HPage>
 
-  <VDialog
-    v-model="isDialogVisible"
-    max-width="640"
-  >
-    <VCard :title="editing ? 'Update hospital' : 'Add hospital'">
-      <VCardText>
-        <AppTextField
+    <HCard>
+      <HTable
+        :headers="headers"
+        :items="hospitals"
+        empty="No hospitals registered"
+      >
+        <template #cell-is_active="{ item }">
+          <HBadge :tone="item.is_active ? 'success' : 'secondary'">
+            {{ item.is_active ? 'Active' : 'Inactive' }}
+          </HBadge>
+        </template>
+        <template #cell-actions="{ item }">
+          <HButton
+            variant="ghost"
+            size="icon"
+            @click="openEdit(item)"
+          >
+            <HIcon name="edit" />
+          </HButton>
+        </template>
+      </HTable>
+    </HCard>
+
+    <HDialog
+      v-model="isDialogVisible"
+      :title="editing ? 'Update hospital' : 'Add hospital'"
+    >
+      <div class="h-stack">
+        <HInput
           v-model="form.name"
           label="Name"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.code"
           label="Code"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.city"
           label="City"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.region"
           label="Region"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.phone"
           label="Phone"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.email"
           label="Email"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.address"
           label="Address"
-          class="mb-4"
         />
-        <VSwitch
-          v-model="form.is_active"
-          label="Active"
-        />
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+        <label class="h-check">
+          <input
+            v-model="form.is_active"
+            type="checkbox"
+          >
+          Active
+        </label>
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="isDialogVisible = false"
         >
           Cancel
-        </VBtn>
-        <VBtn @click="save">
+        </HButton>
+        <HButton @click="save">
           Save
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

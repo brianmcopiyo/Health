@@ -140,7 +140,7 @@ await withPageLoad(load)
 let timer
 onMounted(() => {
   timer = setInterval(() => {
-    withPageLoad(load)
+    withPageLoad(load, { silent: true })
   }, 15000)
 })
 onBeforeUnmount(() => {
@@ -155,299 +155,231 @@ const headers = [
   { title: 'Capacity', key: 'capacity' },
   { title: 'In use', key: 'current_utilization' },
   { title: 'Remaining', key: 'remaining_capacity' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: 'Actions', key: 'actions' },
 ]
 </script>
 
 <template>
   <div>
-    <div class="d-flex align-center justify-space-between mb-6">
-      <div>
-        <h4 class="text-h4">
-          {{ title }}
-        </h4>
-        <div class="text-body-1">
-          Live capacity, availability, and utilization
-        </div>
-      </div>
-      <VBtn
-        variant="tonal"
-        prepend-icon="tabler-refresh"
+    <HPage
+      :title="title"
+      subtitle="Live capacity, availability, and utilization"
+    >
+      <HButton
+        variant="ghost"
         @click="load"
       >
+        <HIcon name="refresh" />
         Refresh
-      </VBtn>
+      </HButton>
+    </HPage>
+
+    <div class="h-grid cols-4">
+      <HStat
+        title="Available"
+        :value="board.stats.available"
+      />
+      <HStat
+        title="Occupied"
+        :value="board.stats.occupied"
+      />
+      <HStat
+        title="Remaining capacity"
+        :value="board.stats.remaining"
+      />
+      <HStat
+        title="Utilization"
+        :value="utilization"
+      />
     </div>
 
-    <VRow class="mb-6">
-      <VCol
-        cols="12"
-        sm="6"
-        md="3"
-      >
-        <VCard>
-          <VCardText>
-            <div class="text-body-2 mb-1">
-              Available
-            </div>
-            <div class="text-h5">
-              {{ board.stats.available }}
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-      <VCol
-        cols="12"
-        sm="6"
-        md="3"
-      >
-        <VCard>
-          <VCardText>
-            <div class="text-body-2 mb-1">
-              Occupied
-            </div>
-            <div class="text-h5">
-              {{ board.stats.occupied }}
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-      <VCol
-        cols="12"
-        sm="6"
-        md="3"
-      >
-        <VCard>
-          <VCardText>
-            <div class="text-body-2 mb-1">
-              Remaining capacity
-            </div>
-            <div class="text-h5">
-              {{ board.stats.remaining }}
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-      <VCol
-        cols="12"
-        sm="6"
-        md="3"
-      >
-        <VCard>
-          <VCardText>
-            <div class="text-body-2 mb-1">
-              Utilization
-            </div>
-            <div class="text-h5">
-              {{ utilization }}
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-    </VRow>
-
-    <VCard>
-      <VCardItem>
-        <VCardTitle>Operational units</VCardTitle>
-      </VCardItem>
-      <VDataTable
+    <HCard
+      title="Operational units"
+      style="margin-top:18px"
+    >
+      <HTable
         :headers="headers"
         :items="board.facilities"
+        empty="No operational units in this module"
       >
-        <template #item.status="{ item }">
-          <VChip
-            size="small"
-            :color="statusColor(item.status)"
-            class="text-capitalize"
-          >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
-          </VChip>
+          </HBadge>
         </template>
-        <template #item.actions="{ item }">
-          <IconBtn
+        <template #cell-actions="{ item }">
+          <HButton
             v-if="ability.can('update', subject)"
+            variant="ghost"
+            size="icon"
             @click="openStatus(item)"
           >
-            <VIcon icon="tabler-edit" />
-          </IconBtn>
+            <HIcon name="edit" />
+          </HButton>
         </template>
-      </VDataTable>
-    </VCard>
+      </HTable>
+    </HCard>
 
-    <VCard
+    <HCard
       v-if="board.orders"
-      class="mt-6"
+      title="Orders"
+      style="margin-top:18px"
     >
-      <VCardItem>
-        <VCardTitle>Orders</VCardTitle>
-      </VCardItem>
-      <VCardText v-if="ability.can('create', subject)">
-        <VRow>
-          <VCol md="4">
-            <AppSelect
-              v-model="orderForm.patient_id"
-              :items="patients"
-              item-title="full_name"
-              item-value="id"
-              label="Patient"
-            />
-          </VCol>
-          <VCol md="4">
-            <AppTextField
-              v-model="orderForm.item_name"
-              label="Test / item"
-            />
-          </VCol>
-          <VCol md="4">
-            <VBtn
-              :disabled="!orderForm.patient_id || !orderForm.item_name"
-              @click="createOrder"
-            >
-              Add order
-            </VBtn>
-          </VCol>
-        </VRow>
-      </VCardText>
-      <VDataTable
+      <div
+        v-if="ability.can('create', subject)"
+        class="h-grid cols-3"
+        style="margin-bottom:16px"
+      >
+        <HSelect
+          v-model="orderForm.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+        />
+        <HInput
+          v-model="orderForm.item_name"
+          label="Test / item"
+        />
+        <div style="display:flex;align-items:flex-end">
+          <HButton
+            :disabled="!orderForm.patient_id || !orderForm.item_name"
+            @click="createOrder"
+          >
+            Add order
+          </HButton>
+        </div>
+      </div>
+      <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Item', key: 'item_name' },
           { title: 'Status', key: 'status' },
-          { title: 'Actions', key: 'actions', sortable: false },
+          { title: 'Actions', key: 'actions' },
         ]"
         :items="board.orders"
+        empty="No orders yet"
       >
-        <template #item.patient.first_name="{ item }">
+        <template #cell-patient.first_name="{ item }">
           {{ item.patient?.first_name }} {{ item.patient?.last_name }}
         </template>
-        <template #item.status="{ item }">
-          <VChip
-            size="small"
-            :color="statusColor(item.status)"
-            class="text-capitalize"
-          >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
-          </VChip>
+          </HBadge>
         </template>
-        <template #item.actions="{ item }">
-          <VBtn
-            v-if="ability.can('update', subject) && item.status === 'pending'"
-            size="small"
-            variant="tonal"
-            class="me-2"
-            @click="updateOrder(item, 'in_progress')"
-          >
-            Start
-          </VBtn>
-          <VBtn
-            v-if="ability.can('update', subject) && item.status !== 'completed'"
-            size="small"
-            @click="updateOrder(item, 'completed')"
-          >
-            Complete
-          </VBtn>
-        </template>
-      </VDataTable>
-    </VCard>
-
-    <VCard
-      v-if="board.assignments"
-      class="mt-6"
-    >
-      <VCardItem>
-        <VCardTitle>Bed assignments</VCardTitle>
-      </VCardItem>
-      <VCardText v-if="ability.can('create', 'Bed')">
-        <VRow>
-          <VCol md="4">
-            <AppSelect
-              v-model="assignmentForm.patient_id"
-              :items="patients"
-              item-title="full_name"
-              item-value="id"
-              label="Patient"
-            />
-          </VCol>
-          <VCol md="4">
-            <AppSelect
-              v-model="assignmentForm.facility_id"
-              :items="availableBeds"
-              item-title="name"
-              item-value="id"
-              label="Bed"
-            />
-          </VCol>
-          <VCol md="4">
-            <VBtn
-              :disabled="!assignmentForm.patient_id || !assignmentForm.facility_id"
-              @click="assignBed"
+        <template #cell-actions="{ item }">
+          <div class="h-actions">
+            <HButton
+              v-if="ability.can('update', subject) && item.status === 'pending'"
+              variant="ghost"
+              size="sm"
+              @click="updateOrder(item, 'in_progress')"
             >
-              Assign bed
-            </VBtn>
-          </VCol>
-        </VRow>
-      </VCardText>
-      <VDataTable
+              Start
+            </HButton>
+            <HButton
+              v-if="ability.can('update', subject) && item.status !== 'completed'"
+              size="sm"
+              @click="updateOrder(item, 'completed')"
+            >
+              Complete
+            </HButton>
+          </div>
+        </template>
+      </HTable>
+    </HCard>
+
+    <HCard
+      v-if="board.assignments"
+      title="Bed assignments"
+      style="margin-top:18px"
+    >
+      <div
+        v-if="ability.can('create', 'Bed')"
+        class="h-grid cols-3"
+        style="margin-bottom:16px"
+      >
+        <HSelect
+          v-model="assignmentForm.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+        />
+        <HSelect
+          v-model="assignmentForm.facility_id"
+          :items="availableBeds"
+          item-title="name"
+          item-value="id"
+          label="Bed"
+        />
+        <div style="display:flex;align-items:flex-end">
+          <HButton
+            :disabled="!assignmentForm.patient_id || !assignmentForm.facility_id"
+            @click="assignBed"
+          >
+            Assign bed
+          </HButton>
+        </div>
+      </div>
+      <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Bed', key: 'facility.name' },
           { title: 'Status', key: 'status' },
-          { title: 'Actions', key: 'actions', sortable: false },
+          { title: 'Actions', key: 'actions' },
         ]"
         :items="board.assignments"
+        empty="No bed assignments"
       >
-        <template #item.patient.first_name="{ item }">
+        <template #cell-patient.first_name="{ item }">
           {{ item.patient?.first_name }} {{ item.patient?.last_name }}
         </template>
-        <template #item.actions="{ item }">
-          <VBtn
+        <template #cell-actions="{ item }">
+          <HButton
             v-if="ability.can('update', 'Bed')"
-            size="small"
-            variant="tonal"
+            variant="ghost"
+            size="sm"
             @click="discharge(item)"
           >
             Discharge
-          </VBtn>
+          </HButton>
         </template>
-      </VDataTable>
-    </VCard>
+      </HTable>
+    </HCard>
 
-    <VDialog
+    <HDialog
       v-model="statusDialog"
-      max-width="520"
+      title="Update unit status"
     >
-      <VCard title="Update unit status">
-        <VCardText>
-          <AppSelect
-            v-model="form.status"
-            :items="facilityStatuses"
-            label="Status"
-            class="mb-4"
-          />
-          <AppTextField
-            v-model.number="form.current_utilization"
-            type="number"
-            label="Current utilization"
-            class="mb-4"
-          />
-          <AppTextarea
-            v-model="form.resource_notes"
-            label="Resource notes"
-          />
-        </VCardText>
-        <VCardActions>
-          <VSpacer />
-          <VBtn
-            variant="tonal"
-            @click="statusDialog = false"
-          >
-            Cancel
-          </VBtn>
-          <VBtn @click="saveStatus">
-            Save
-          </VBtn>
-        </VCardActions>
-      </VCard>
-    </VDialog>
+      <div class="h-stack">
+        <HSelect
+          v-model="form.status"
+          :items="facilityStatuses"
+          label="Status"
+        />
+        <HInput
+          v-model="form.current_utilization"
+          type="number"
+          label="Current utilization"
+        />
+        <HTextarea
+          v-model="form.resource_notes"
+          label="Resource notes"
+        />
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          @click="statusDialog = false"
+        >
+          Cancel
+        </HButton>
+        <HButton @click="saveStatus">
+          Save
+        </HButton>
+      </template>
+    </HDialog>
   </div>
 </template>

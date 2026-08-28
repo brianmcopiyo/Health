@@ -18,80 +18,70 @@ await withPageLoad(async () => {
 
 <template>
   <div>
-    <VBtn
-      variant="text"
-      class="mb-6"
-      :to="{ name: 'ambulances' }"
-      prepend-icon="tabler-arrow-left"
+    <HPage
+      :title="ambulance?.vehicle_code || 'Ambulance'"
+      :subtitle="ambulance?.vehicle_type || ''"
     >
-      Back
-    </VBtn>
+      <HButton
+        variant="ghost"
+        :to="{ name: 'ambulances' }"
+      >
+        <HIcon name="back" />
+        Back
+      </HButton>
+    </HPage>
 
-    <VAlert
+    <div
       v-if="!ambulance"
-      type="warning"
-      variant="tonal"
+      class="h-alert"
     >
       This ambulance could not be loaded.
-    </VAlert>
+    </div>
 
     <template v-else>
-    <VCard class="mb-6">
-      <VCardItem>
-        <VCardTitle>{{ ambulance.vehicle_code }}</VCardTitle>
-        <VCardSubtitle>{{ ambulance.vehicle_type }}</VCardSubtitle>
-      </VCardItem>
-      <VCardText>
-        <VChip
-          :color="statusColor(ambulance.status)"
-          class="text-capitalize mb-4"
-        >
+      <HCard>
+        <HBadge :tone="statusColor(ambulance.status)">
           {{ labelize(ambulance.status) }}
-        </VChip>
-        <div>Capacity: {{ ambulance.capacity }}</div>
-        <div class="mt-4">
-          <strong>Crew</strong>
-          <div
-            v-for="member in ambulance.staff"
-            :key="member.id"
-          >
-            {{ member.user?.name }} · {{ member.assignment_role }}
-          </div>
-          <div v-if="!ambulance.staff?.length">
-            No crew assigned.
-          </div>
+        </HBadge>
+        <p>Capacity: {{ ambulance.capacity }}</p>
+        <h3 style="font-family:var(--display);margin:18px 0 8px">
+          Crew
+        </h3>
+        <div
+          v-for="member in ambulance.staff"
+          :key="member.id"
+        >
+          {{ member.user?.name }} · {{ member.assignment_role }}
         </div>
-      </VCardText>
-    </VCard>
+        <div
+          v-if="!ambulance.staff?.length"
+          style="color:var(--muted)"
+        >
+          No crew assigned.
+        </div>
+      </HCard>
 
-    <VCard>
-      <VCardItem>
-        <VCardTitle>Trip history</VCardTitle>
-      </VCardItem>
-      <VTable>
-        <thead>
-          <tr>
-            <th>Origin</th>
-            <th>Destination</th>
-            <th>Status</th>
-            <th>Dispatched</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="trip in ambulance.trips"
-            :key="trip.id"
-          >
-            <td>{{ trip.origin }}</td>
-            <td>{{ trip.destination }}</td>
-            <td class="text-capitalize">
-              {{ labelize(trip.status) }}
-            </td>
-            <td>{{ trip.dispatched_at }}</td>
-          </tr>
-        </tbody>
-      </VTable>
-    </VCard>
+      <HCard
+        title="Trip history"
+        style="margin-top:18px"
+      >
+        <HTable
+          :headers="[
+            { title: 'Origin', key: 'origin' },
+            { title: 'Destination', key: 'destination' },
+            { title: 'Status', key: 'status' },
+            { title: 'Dispatched', key: 'dispatched_at' },
+          ]"
+          :items="asList(ambulance.trips)"
+          empty="No trips for this vehicle"
+        >
+          <template #cell-status="{ item }">
+            <HBadge :tone="statusColor(item.status)">
+              {{ labelize(item.status) }}
+            </HBadge>
+          </template>
+        </HTable>
+      </HCard>
     </template>
   </div>
 </template>

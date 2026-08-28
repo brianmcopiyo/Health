@@ -57,114 +57,87 @@ await withPageLoad(load)
 
 <template>
   <div>
-    <div class="mb-6">
-      <h4 class="text-h4">
-        Reception
-      </h4>
-      <div class="text-body-1">
-        Register patients and open OPD or emergency visits
-      </div>
+    <HPage
+      title="Reception"
+      subtitle="Register patients and open OPD or emergency visits"
+    />
+
+    <div class="h-grid cols-2">
+      <HCard title="Register patient">
+        <div class="h-stack">
+          <HInput
+            v-model="patientForm.first_name"
+            label="First name"
+          />
+          <HInput
+            v-model="patientForm.last_name"
+            label="Last name"
+          />
+          <HSelect
+            v-model="patientForm.sex"
+            :items="['male', 'female', 'other']"
+            label="Sex"
+          />
+          <HInput
+            v-model="patientForm.phone"
+            label="Phone"
+          />
+          <HButton
+            class="is-block"
+            :disabled="!patientForm.first_name || !patientForm.last_name"
+            @click="registerPatient"
+          >
+            Save patient
+          </HButton>
+        </div>
+      </HCard>
+
+      <HCard title="Open visit">
+        <div class="h-stack">
+          <HSelect
+            v-model="visitForm.patient_id"
+            :items="patients"
+            item-title="full_name"
+            item-value="id"
+            label="Patient"
+          />
+          <HSelect
+            v-model="visitForm.type"
+            :items="[
+              { title: 'OPD', value: 'opd' },
+              { title: 'Emergency', value: 'emergency' },
+            ]"
+            item-title="title"
+            item-value="value"
+            label="Visit type"
+          />
+          <HInput
+            v-model="visitForm.chief_complaint"
+            label="Chief complaint"
+          />
+          <HSelect
+            v-model="visitForm.clinician_id"
+            :items="staff"
+            item-title="name"
+            item-value="id"
+            label="Clinician"
+          />
+          <HButton
+            class="is-block"
+            :disabled="!visitForm.patient_id"
+            @click="createVisit"
+          >
+            Open visit
+          </HButton>
+        </div>
+      </HCard>
     </div>
 
-    <VRow>
-      <VCol
-        cols="12"
-        md="6"
-      >
-        <VCard>
-          <VCardItem>
-            <VCardTitle>Register patient</VCardTitle>
-          </VCardItem>
-          <VCardText>
-            <AppTextField
-              v-model="patientForm.first_name"
-              label="First name"
-              class="mb-4"
-            />
-            <AppTextField
-              v-model="patientForm.last_name"
-              label="Last name"
-              class="mb-4"
-            />
-            <AppSelect
-              v-model="patientForm.sex"
-              :items="['male', 'female', 'other']"
-              label="Sex"
-              class="mb-4"
-            />
-            <AppTextField
-              v-model="patientForm.phone"
-              label="Phone"
-              class="mb-4"
-            />
-            <VBtn
-              block
-              :disabled="!patientForm.first_name || !patientForm.last_name"
-              @click="registerPatient"
-            >
-              Save patient
-            </VBtn>
-          </VCardText>
-        </VCard>
-      </VCol>
-      <VCol
-        cols="12"
-        md="6"
-      >
-        <VCard>
-          <VCardItem>
-            <VCardTitle>Open visit</VCardTitle>
-          </VCardItem>
-          <VCardText>
-            <AppSelect
-              v-model="visitForm.patient_id"
-              :items="patients"
-              item-title="full_name"
-              item-value="id"
-              label="Patient"
-              class="mb-4"
-            />
-            <AppSelect
-              v-model="visitForm.type"
-              :items="[
-                { title: 'OPD', value: 'opd' },
-                { title: 'Emergency', value: 'emergency' },
-              ]"
-              item-title="title"
-              item-value="value"
-              label="Visit type"
-              class="mb-4"
-            />
-            <AppTextField
-              v-model="visitForm.chief_complaint"
-              label="Chief complaint"
-              class="mb-4"
-            />
-            <AppSelect
-              v-model="visitForm.clinician_id"
-              :items="staff"
-              item-title="name"
-              item-value="id"
-              label="Clinician"
-              class="mb-4"
-            />
-            <VBtn
-              block
-              :disabled="!visitForm.patient_id"
-              @click="createVisit"
-            >
-              Open visit
-            </VBtn>
-          </VCardText>
-        </VCard>
-      </VCol>
-    </VRow>
-
-    <VCard class="mt-6">
-      <VCardItem>
-        <VCardTitle>Today's visits</VCardTitle>
-      </VCardItem>
-      <VDataTable
+    <HCard
+      title="Today's visits"
+      style="margin-top:18px"
+    >
+      <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Type', key: 'type' },
@@ -172,20 +145,17 @@ await withPageLoad(load)
           { title: 'Status', key: 'status' },
         ]"
         :items="encounters"
+        empty="No visits opened yet"
       >
-        <template #item.patient.first_name="{ item }">
+        <template #cell-patient.first_name="{ item }">
           {{ item.patient?.first_name }} {{ item.patient?.last_name }}
         </template>
-        <template #item.status="{ item }">
-          <VChip
-            size="small"
-            :color="statusColor(item.status)"
-            class="text-capitalize"
-          >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
-          </VChip>
+          </HBadge>
         </template>
-      </VDataTable>
-    </VCard>
+      </HTable>
+    </HCard>
   </div>
 </template>

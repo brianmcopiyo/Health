@@ -27,7 +27,7 @@ const headers = [
   { title: 'Email', key: 'email' },
   { title: 'Role', key: 'role.name' },
   { title: 'Hospital', key: 'hospital.name' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: 'Actions', key: 'actions' },
 ]
 
 const load = async () => {
@@ -72,7 +72,8 @@ const save = async () => {
     if (!payload.password)
       delete payload.password
     await $api(`/users/${editing.value.id}`, { method: 'PUT', body: payload })
-  } else {
+  }
+  else {
     await $api('/users', { method: 'POST', body: payload })
   }
   isDialogVisible.value = false
@@ -83,90 +84,88 @@ await withPageLoad(load)
 </script>
 
 <template>
-  <VCard>
-    <VCardItem>
-      <VCardTitle>Users</VCardTitle>
-      <template #append>
-        <VBtn
-          v-if="ability.can('manage', 'User')"
-          prepend-icon="tabler-plus"
-          @click="openCreate"
-        >
-          Add user
-        </VBtn>
-      </template>
-    </VCardItem>
-    <VDataTable
-      :headers="headers"
-      :items="users"
+  <div>
+    <HPage
+      title="Users"
+      subtitle="Hospital access and role assignment"
     >
-      <template #item.actions="{ item }">
-        <IconBtn
-          v-if="ability.can('manage', 'User')"
-          @click="openEdit(item)"
-        >
-          <VIcon icon="tabler-edit" />
-        </IconBtn>
-      </template>
-    </VDataTable>
-  </VCard>
+      <HButton
+        v-if="ability.can('manage', 'User')"
+        @click="openCreate"
+      >
+        <HIcon name="plus" />
+        Add user
+      </HButton>
+    </HPage>
 
-  <VDialog
-    v-model="isDialogVisible"
-    max-width="640"
-  >
-    <VCard :title="editing ? 'Update user' : 'Add user'">
-      <VCardText>
-        <AppTextField
+    <HCard>
+      <HTable
+        :headers="headers"
+        :items="users"
+        empty="No users in this hospital"
+      >
+        <template #cell-actions="{ item }">
+          <HButton
+            v-if="ability.can('manage', 'User')"
+            variant="ghost"
+            size="icon"
+            @click="openEdit(item)"
+          >
+            <HIcon name="edit" />
+          </HButton>
+        </template>
+      </HTable>
+    </HCard>
+
+    <HDialog
+      v-model="isDialogVisible"
+      :title="editing ? 'Update user' : 'Add user'"
+    >
+      <div class="h-stack">
+        <HInput
           v-model="form.name"
           label="Name"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.email"
           label="Email"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.password"
           :label="editing ? 'New password' : 'Password'"
           type="password"
-          class="mb-4"
         />
-        <AppSelect
+        <HSelect
           v-model="form.role_id"
           :items="roles"
           item-title="name"
           item-value="id"
           label="Role"
-          class="mb-4"
         />
-        <AppSelect
+        <HSelect
           v-if="ability.can('manage', 'Hospital')"
           v-model="form.hospital_id"
           :items="hospitals"
           item-title="name"
           item-value="id"
           label="Hospital"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.job_title"
           label="Job title"
         />
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="isDialogVisible = false"
         >
           Cancel
-        </VBtn>
-        <VBtn @click="save">
+        </HButton>
+        <HButton @click="save">
           Save
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

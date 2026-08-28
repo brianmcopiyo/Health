@@ -1,54 +1,55 @@
 <script setup>
-import pages401 from '@images/pages/401.png'
-import miscMaskDark from '@images/pages/misc-mask-dark.png'
-import miscMaskLight from '@images/pages/misc-mask-light.png'
-import { useGenerateImageVariant } from '@core/composable/useGenerateImageVariant'
+import { clearSession, resolveHomeRoute } from '@/utils/session'
 
 definePage({
-  alias: '/pages/misc/not-authorized',
   meta: {
     layout: 'blank',
     public: true,
   },
 })
 
-const authThemeMask = useGenerateImageVariant(miscMaskLight, miscMaskDark)
+const router = useRouter()
+const ability = useAbility()
+const userData = useCookie('userData')
+const home = computed(() => resolveHomeRoute(userData.value))
+
+const signOut = async () => {
+  try {
+    await $api('/auth/logout', { method: 'POST' })
+  }
+  catch {}
+  clearSession(ability)
+  await router.push({ name: 'login' })
+}
 </script>
 
 <template>
-  <div class="misc-wrapper">
-    <ErrorHeader
-      status-code="401"
-      title="You are not authorized! 🔐"
-      description="You don’t have permission to access this page. Go Home!."
-    />
-
-    <VBtn
-      class="mb-11"
-      to="/"
-    >
-      Back To Home
-    </VBtn>
-
-    <!-- 👉 Image -->
-    <div class="misc-avatar w-100 text-center">
-      <VImg
-        :src="pages401"
-        alt="not autorized"
-        :max-height="$vuetify.display.smAndDown ? 350 : 500"
-        class="mx-auto"
-      />
+  <div class="blank-state">
+    <p class="hms-kicker">
+      Caregrid
+    </p>
+    <h1>You do not have access to this workspace.</h1>
+    <p>Ask your hospital administrator if you need a different role.</p>
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap">
+      <HButton
+        v-if="userData && home.name !== 'not-authorized'"
+        :to="home"
+      >
+        Open workspace
+      </HButton>
+      <HButton
+        v-else
+        :to="{ name: 'login' }"
+      >
+        Sign in
+      </HButton>
+      <HButton
+        v-if="userData"
+        variant="ghost"
+        @click="signOut"
+      >
+        Sign out
+      </HButton>
     </div>
-
-    <img
-      class="misc-footer-img d-none d-md-block"
-      :src="authThemeMask"
-      alt="misc-footer-img"
-      height="320"
-    >
   </div>
 </template>
-
-<style lang="scss">
-@use "@core-scss/template/pages/misc.scss";
-</style>

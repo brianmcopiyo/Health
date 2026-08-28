@@ -1,5 +1,5 @@
 <script setup>
-import { assistanceStatuses, assistanceTypes, labelize, statusColor } from '@/utils/status'
+import { assistanceTypes, labelize, statusColor } from '@/utils/status'
 
 definePage({
   meta: {
@@ -29,7 +29,7 @@ const headers = [
   { title: 'From', key: 'from_hospital.name' },
   { title: 'To', key: 'to_hospital.name' },
   { title: 'Status', key: 'status' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: 'Actions', key: 'actions' },
 ]
 
 const load = async () => {
@@ -66,160 +66,149 @@ const updateStatus = async status => {
   await load()
 }
 
+const setDirection = value => {
+  direction.value = value
+  load()
+}
+
 await withPageLoad(load)
 </script>
 
 <template>
-  <VCard>
-    <VCardItem>
-      <VCardTitle>Inter-hospital assistance</VCardTitle>
-      <template #append>
-        <VBtn
-          v-if="ability.can('create', 'AssistanceRequest')"
-          prepend-icon="tabler-plus"
-          @click="openCreate"
-        >
-          Request support
-        </VBtn>
-      </template>
-    </VCardItem>
-    <VCardText>
-      <VBtnToggle
-        v-model="direction"
-        mandatory
-        divided
-        @update:model-value="load"
-      >
-        <VBtn value="all">
-          All
-        </VBtn>
-        <VBtn value="incoming">
-          Incoming
-        </VBtn>
-        <VBtn value="outgoing">
-          Outgoing
-        </VBtn>
-      </VBtnToggle>
-    </VCardText>
-    <VDataTable
-      :headers="headers"
-      :items="items"
+  <div>
+    <HPage
+      title="Inter-hospital assistance"
+      subtitle="Staff, beds, equipment, and supply requests"
     >
-      <template #item.type="{ item }">
-        <span class="text-capitalize">{{ labelize(item.type) }}</span>
-      </template>
-      <template #item.status="{ item }">
-        <VChip
-          size="small"
-          :color="statusColor(item.status)"
-          class="text-capitalize"
-        >
-          {{ labelize(item.status) }}
-        </VChip>
-      </template>
-      <template #item.actions="{ item }">
-        <VBtn
-          size="small"
-          variant="tonal"
-          @click="selected = item"
-        >
-          Manage
-        </VBtn>
-      </template>
-    </VDataTable>
-  </VCard>
+      <HButton
+        v-if="ability.can('create', 'AssistanceRequest')"
+        @click="openCreate"
+      >
+        <HIcon name="plus" />
+        Request support
+      </HButton>
+    </HPage>
 
-  <VDialog
-    v-model="isCreateVisible"
-    max-width="640"
-  >
-    <VCard title="Request assistance">
-      <VCardText>
-        <AppSelect
+    <HCard>
+      <div style="margin-bottom:16px">
+        <HSegmented
+          :model-value="direction"
+          :options="[
+            { value: 'all', title: 'All' },
+            { value: 'incoming', title: 'Incoming' },
+            { value: 'outgoing', title: 'Outgoing' },
+          ]"
+          @update:model-value="setDirection"
+        />
+      </div>
+      <HTable
+        :headers="headers"
+        :items="items"
+        empty="No assistance requests yet"
+      >
+        <template #cell-type="{ item }">
+          {{ labelize(item.type) }}
+        </template>
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
+            {{ labelize(item.status) }}
+          </HBadge>
+        </template>
+        <template #cell-actions="{ item }">
+          <HButton
+            variant="ghost"
+            size="sm"
+            @click="selected = item"
+          >
+            Manage
+          </HButton>
+        </template>
+      </HTable>
+    </HCard>
+
+    <HDialog
+      v-model="isCreateVisible"
+      title="Request assistance"
+    >
+      <div class="h-stack">
+        <HSelect
           v-model="form.to_hospital_id"
           :items="hospitals"
           item-title="name"
           item-value="id"
           label="Destination hospital"
-          class="mb-4"
         />
-        <AppSelect
+        <HSelect
           v-model="form.type"
           :items="assistanceTypes"
           label="Type"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.title"
           label="Title"
-          class="mb-4"
         />
-        <AppTextarea
+        <HTextarea
           v-model="form.description"
           label="Details"
         />
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="isCreateVisible = false"
         >
           Cancel
-        </VBtn>
-        <VBtn @click="create">
+        </HButton>
+        <HButton @click="create">
           Submit
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
 
-  <VDialog
-    :model-value="Boolean(selected)"
-    max-width="640"
-    @update:model-value="val => { if (!val) selected = null }"
-  >
-    <VCard v-if="selected">
-      <VCardItem>
-        <VCardTitle>{{ selected.title }}</VCardTitle>
-        <VCardSubtitle>{{ selected.from_hospital?.name }} → {{ selected.to_hospital?.name }}</VCardSubtitle>
-      </VCardItem>
-      <VCardText>
+    <HDialog
+      :model-value="Boolean(selected)"
+      :title="selected?.title || 'Assistance'"
+      @update:model-value="val => { if (!val) selected = null }"
+    >
+      <div v-if="selected">
+        <p style="color:var(--muted);margin-top:0">
+          {{ selected.from_hospital?.name }} → {{ selected.to_hospital?.name }}
+        </p>
         <p>{{ selected.description }}</p>
-        <AppTextarea
+        <HTextarea
           v-model="responseNotes"
           label="Response notes"
         />
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          v-if="userData?.hospitalId === selected.from_hospital_id && selected.status === 'pending'"
+      </div>
+      <template #actions>
+        <HButton
+          v-if="selected && userData?.hospitalId === selected.from_hospital_id && selected.status === 'pending'"
+          variant="ghost"
           @click="updateStatus('cancelled')"
         >
           Cancel
-        </VBtn>
-        <VBtn
-          v-if="userData?.hospitalId === selected.to_hospital_id && selected.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
-          color="error"
+        </HButton>
+        <HButton
+          v-if="selected && userData?.hospitalId === selected.to_hospital_id && selected.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
+          variant="danger"
           @click="updateStatus('declined')"
         >
           Decline
-        </VBtn>
-        <VBtn
-          v-if="userData?.hospitalId === selected.to_hospital_id && selected.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
-          color="success"
+        </HButton>
+        <HButton
+          v-if="selected && userData?.hospitalId === selected.to_hospital_id && selected.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
+          variant="ok"
           @click="updateStatus('accepted')"
         >
           Accept
-        </VBtn>
-        <VBtn
-          v-if="userData?.hospitalId === selected.to_hospital_id && selected.status === 'accepted'"
+        </HButton>
+        <HButton
+          v-if="selected && userData?.hospitalId === selected.to_hospital_id && selected.status === 'accepted'"
           @click="updateStatus('fulfilled')"
         >
           Mark fulfilled
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

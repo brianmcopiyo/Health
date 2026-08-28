@@ -33,7 +33,7 @@ const headers = [
   { title: 'Type', key: 'vehicle_type' },
   { title: 'Status', key: 'status' },
   { title: 'Capacity', key: 'capacity' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: 'Actions', key: 'actions' },
 ]
 
 const tripHeaders = [
@@ -41,7 +41,7 @@ const tripHeaders = [
   { title: 'Origin', key: 'origin' },
   { title: 'Destination', key: 'destination' },
   { title: 'Status', key: 'status' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: 'Actions', key: 'actions' },
 ]
 
 const load = async () => {
@@ -103,184 +103,172 @@ await withPageLoad(load)
 
 <template>
   <div>
-    <VCard class="mb-6">
-      <VCardItem>
-        <VCardTitle>Ambulance fleet</VCardTitle>
-        <template #append>
-          <VBtn
-            v-if="ability.can('create', 'Ambulance')"
-            prepend-icon="tabler-plus"
-            @click="openCreate"
-          >
-            Add vehicle
-          </VBtn>
-        </template>
-      </VCardItem>
-      <VDataTable
+    <HPage
+      title="Ambulance fleet"
+      subtitle="Vehicles, dispatch, and trip status"
+    >
+      <HButton
+        v-if="ability.can('create', 'Ambulance')"
+        @click="openCreate"
+      >
+        <HIcon name="plus" />
+        Add vehicle
+      </HButton>
+    </HPage>
+
+    <HCard title="Vehicles">
+      <HTable
         :headers="headers"
         :items="ambulances"
+        empty="No ambulances registered"
       >
-        <template #item.status="{ item }">
-          <VChip
-            size="small"
-            :color="statusColor(item.status)"
-            class="text-capitalize"
-          >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
-          </VChip>
+          </HBadge>
         </template>
-        <template #item.actions="{ item }">
-          <IconBtn :to="{ name: 'ambulances-id', params: { id: item.id } }">
-            <VIcon icon="tabler-eye" />
-          </IconBtn>
-          <VBtn
-            v-if="ability.can('dispatch', 'Ambulance') && item.status === 'available'"
-            size="small"
-            class="ms-2"
-            @click="openDispatch(item)"
-          >
-            Dispatch
-          </VBtn>
+        <template #cell-actions="{ item }">
+          <div class="h-actions">
+            <HButton
+              variant="ghost"
+              size="icon"
+              :to="{ name: 'ambulances-id', params: { id: item.id } }"
+            >
+              <HIcon name="eye" />
+            </HButton>
+            <HButton
+              v-if="ability.can('dispatch', 'Ambulance') && item.status === 'available'"
+              size="sm"
+              @click="openDispatch(item)"
+            >
+              Dispatch
+            </HButton>
+          </div>
         </template>
-      </VDataTable>
-    </VCard>
+      </HTable>
+    </HCard>
 
-    <VCard>
-      <VCardItem>
-        <VCardTitle>Trips</VCardTitle>
-      </VCardItem>
-      <VDataTable
+    <HCard
+      title="Trips"
+      style="margin-top:18px"
+    >
+      <HTable
         :headers="tripHeaders"
         :items="trips"
+        empty="No trips recorded"
       >
-        <template #item.status="{ item }">
-          <VChip
-            size="small"
-            :color="statusColor(item.status)"
-            class="text-capitalize"
-          >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
-          </VChip>
+          </HBadge>
         </template>
-        <template #item.actions="{ item }">
-          <VBtn
-            v-if="item.status === 'dispatched' && ability.can('dispatch', 'Ambulance')"
-            size="small"
-            class="me-2"
-            @click="updateTrip(item, 'en_route')"
-          >
-            En route
-          </VBtn>
-          <VBtn
-            v-if="['dispatched', 'en_route'].includes(item.status) && ability.can('dispatch', 'Ambulance')"
-            size="small"
-            class="me-2"
-            @click="updateTrip(item, 'arrived')"
-          >
-            Arrived
-          </VBtn>
-          <VBtn
-            v-if="['dispatched', 'en_route', 'arrived'].includes(item.status) && ability.can('dispatch', 'Ambulance')"
-            size="small"
-            color="success"
-            @click="updateTrip(item, 'completed')"
-          >
-            Complete
-          </VBtn>
+        <template #cell-actions="{ item }">
+          <div class="h-actions">
+            <HButton
+              v-if="item.status === 'dispatched' && ability.can('dispatch', 'Ambulance')"
+              size="sm"
+              @click="updateTrip(item, 'en_route')"
+            >
+              En route
+            </HButton>
+            <HButton
+              v-if="['dispatched', 'en_route'].includes(item.status) && ability.can('dispatch', 'Ambulance')"
+              variant="ghost"
+              size="sm"
+              @click="updateTrip(item, 'arrived')"
+            >
+              Arrived
+            </HButton>
+            <HButton
+              v-if="['dispatched', 'en_route', 'arrived'].includes(item.status) && ability.can('dispatch', 'Ambulance')"
+              variant="ok"
+              size="sm"
+              @click="updateTrip(item, 'completed')"
+            >
+              Complete
+            </HButton>
+          </div>
         </template>
-      </VDataTable>
-    </VCard>
-  </div>
+      </HTable>
+    </HCard>
 
-  <VDialog
-    v-model="isVehicleDialogVisible"
-    max-width="560"
-  >
-    <VCard title="Add ambulance">
-      <VCardText>
-        <AppTextField
+    <HDialog
+      v-model="isVehicleDialogVisible"
+      title="Add ambulance"
+    >
+      <div class="h-stack">
+        <HInput
           v-model="form.vehicle_code"
           label="Vehicle code"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="form.vehicle_type"
           label="Vehicle type"
-          class="mb-4"
         />
-        <AppSelect
+        <HSelect
           v-model="form.status"
           :items="ambulanceStatuses"
           label="Status"
-          class="mb-4"
         />
-        <AppTextField
-          v-model.number="form.capacity"
+        <HInput
+          v-model="form.capacity"
           type="number"
           label="Capacity"
         />
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="isVehicleDialogVisible = false"
         >
           Cancel
-        </VBtn>
-        <VBtn @click="saveVehicle">
+        </HButton>
+        <HButton @click="saveVehicle">
           Save
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
 
-  <VDialog
-    :model-value="Boolean(dispatching)"
-    max-width="560"
-    @update:model-value="val => { if (!val) dispatching = null }"
-  >
-    <VCard
-      v-if="dispatching"
+    <HDialog
+      :model-value="Boolean(dispatching)"
       title="Dispatch ambulance"
+      @update:model-value="val => { if (!val) dispatching = null }"
     >
-      <VCardText>
-        <AppTextField
+      <div
+        v-if="dispatching"
+        class="h-stack"
+      >
+        <HInput
           v-model="dispatchForm.origin"
           label="Origin"
-          class="mb-4"
         />
-        <AppTextField
+        <HInput
           v-model="dispatchForm.destination"
           label="Destination"
-          class="mb-4"
         />
-        <AppSelect
+        <HSelect
           v-model="dispatchForm.destination_hospital_id"
           :items="hospitals"
           item-title="name"
           item-value="id"
           label="Destination hospital"
-          clearable
-          class="mb-4"
         />
-        <AppTextarea
+        <HTextarea
           v-model="dispatchForm.notes"
           label="Notes"
         />
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="dispatching = null"
         >
           Cancel
-        </VBtn>
-        <VBtn @click="dispatch">
+        </HButton>
+        <HButton @click="dispatch">
           Dispatch
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

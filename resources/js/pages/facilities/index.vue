@@ -35,11 +35,8 @@ const headers = [
   { title: 'Capacity', key: 'capacity' },
   { title: 'In use', key: 'current_utilization' },
   { title: 'Remaining', key: 'remaining_capacity' },
-  { title: 'Actions', key: 'actions', sortable: false },
+  { title: 'Actions', key: 'actions' },
 ]
-
-const typeItems = computed(() => [{ id: null, name: 'All types' }, ...(Array.isArray(types.value) ? types.value : [])])
-const statusItems = computed(() => [{ value: null, title: 'All statuses' }, ...facilityStatuses.map(item => ({ value: item, title: labelize(item) }))])
 
 const load = async () => {
   const query = {}
@@ -106,173 +103,135 @@ await withPageLoad(load)
 </script>
 
 <template>
-  <VCard>
-    <VCardItem>
-      <VCardTitle>Facilities</VCardTitle>
-      <template #append>
-        <VBtn
-          v-if="ability.can('create', 'Facility')"
-          prepend-icon="tabler-plus"
-          @click="openCreate"
-        >
-          Add facility
-        </VBtn>
-      </template>
-    </VCardItem>
+  <div>
+    <HPage
+      title="Facilities"
+      subtitle="Capacity and live unit status"
+    >
+      <HButton
+        v-if="ability.can('create', 'Facility')"
+        @click="openCreate"
+      >
+        <HIcon name="plus" />
+        Add facility
+      </HButton>
+    </HPage>
 
-    <VCardText>
-      <VRow>
-        <VCol
-          cols="12"
-          md="4"
-        >
-          <AppTextField
-            v-model="search"
-            placeholder="Search facilities"
-            prepend-inner-icon="tabler-search"
-            @update:model-value="load"
+    <HCard>
+      <div
+        class="h-grid cols-3"
+        style="margin-bottom:16px"
+      >
+        <HInput
+          v-model="search"
+          label="Search"
+          placeholder="Search facilities"
+          @update:model-value="load"
+        />
+        <HSelect
+          v-model="typeId"
+          :items="types"
+          item-title="name"
+          item-value="id"
+          label="Type"
+          placeholder="All types"
+          @update:model-value="load"
+        />
+        <HSelect
+          v-model="status"
+          :items="facilityStatuses"
+          label="Status"
+          placeholder="All statuses"
+          @update:model-value="load"
+        />
+      </div>
+      <HTable
+        :headers="headers"
+        :items="facilities"
+        empty="No facilities match these filters"
+      >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
+            {{ labelize(item.status) }}
+          </HBadge>
+        </template>
+        <template #cell-actions="{ item }">
+          <div class="h-actions">
+            <HButton
+              variant="ghost"
+              size="icon"
+              :to="{ name: 'facilities-id', params: { id: item.id } }"
+            >
+              <HIcon name="eye" />
+            </HButton>
+            <HButton
+              v-if="ability.can('update', 'Facility')"
+              variant="ghost"
+              size="icon"
+              @click="openEdit(item)"
+            >
+              <HIcon name="edit" />
+            </HButton>
+          </div>
+        </template>
+      </HTable>
+    </HCard>
+
+    <HDialog
+      v-model="isDialogVisible"
+      :title="editing ? 'Update facility' : 'Add facility'"
+    >
+      <div class="h-stack">
+        <HInput
+          v-model="form.name"
+          label="Name"
+        />
+        <div class="h-grid cols-2">
+          <HInput
+            v-model="form.code"
+            label="Code"
           />
-        </VCol>
-        <VCol
-          cols="12"
-          md="4"
-        >
-          <AppSelect
-            v-model="typeId"
-            :items="typeItems"
+          <HSelect
+            v-model="form.facility_type_id"
+            :items="types"
             item-title="name"
             item-value="id"
             label="Type"
-            @update:model-value="load"
           />
-        </VCol>
-        <VCol
-          cols="12"
-          md="4"
-        >
-          <AppSelect
-            v-model="status"
-            :items="statusItems"
-            item-title="title"
-            item-value="value"
+        </div>
+        <div class="h-grid cols-3">
+          <HSelect
+            v-model="form.status"
+            :items="facilityStatuses"
             label="Status"
-            @update:model-value="load"
           />
-        </VCol>
-      </VRow>
-    </VCardText>
-
-    <VDataTable
-      :headers="headers"
-      :items="facilities"
-    >
-      <template #item.status="{ item }">
-        <VChip
-          size="small"
-          :color="statusColor(item.status)"
-          class="text-capitalize"
-        >
-          {{ labelize(item.status) }}
-        </VChip>
-      </template>
-      <template #item.actions="{ item }">
-        <IconBtn :to="{ name: 'facilities-id', params: { id: item.id } }">
-          <VIcon icon="tabler-eye" />
-        </IconBtn>
-        <IconBtn
-          v-if="ability.can('update', 'Facility')"
-          @click="openEdit(item)"
-        >
-          <VIcon icon="tabler-edit" />
-        </IconBtn>
-      </template>
-    </VDataTable>
-  </VCard>
-
-  <VDialog
-    v-model="isDialogVisible"
-    max-width="640"
-  >
-    <VCard :title="editing ? 'Update facility' : 'Add facility'">
-      <VCardText>
-        <VRow>
-          <VCol cols="12">
-            <AppTextField
-              v-model="form.name"
-              label="Name"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            md="6"
-          >
-            <AppTextField
-              v-model="form.code"
-              label="Code"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            md="6"
-          >
-            <AppSelect
-              v-model="form.facility_type_id"
-              :items="types"
-              item-title="name"
-              item-value="id"
-              label="Type"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            md="4"
-          >
-            <AppSelect
-              v-model="form.status"
-              :items="facilityStatuses"
-              label="Status"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            md="4"
-          >
-            <AppTextField
-              v-model.number="form.capacity"
-              type="number"
-              label="Capacity"
-            />
-          </VCol>
-          <VCol
-            cols="12"
-            md="4"
-          >
-            <AppTextField
-              v-model.number="form.current_utilization"
-              type="number"
-              label="Current utilization"
-            />
-          </VCol>
-          <VCol cols="12">
-            <AppTextarea
-              v-model="form.resource_notes"
-              label="Resource availability"
-            />
-          </VCol>
-        </VRow>
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+          <HInput
+            v-model="form.capacity"
+            type="number"
+            label="Capacity"
+          />
+          <HInput
+            v-model="form.current_utilization"
+            type="number"
+            label="Current utilization"
+          />
+        </div>
+        <HTextarea
+          v-model="form.resource_notes"
+          label="Resource availability"
+        />
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="isDialogVisible = false"
         >
           Cancel
-        </VBtn>
-        <VBtn @click="save">
+        </HButton>
+        <HButton @click="save">
           Save
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

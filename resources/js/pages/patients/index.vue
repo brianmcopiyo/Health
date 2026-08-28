@@ -68,115 +68,99 @@ await withPageLoad(load)
 </script>
 
 <template>
-  <VCard>
-    <VCardItem>
-      <VCardTitle>Patients</VCardTitle>
-      <template #append>
-        <VBtn
-          v-if="ability.can('create', 'Patient')"
-          prepend-icon="tabler-plus"
-          @click="openCreate"
-        >
-          Register patient
-        </VBtn>
-      </template>
-    </VCardItem>
-    <VDataTable
-      :headers="[
-        { title: 'MRN', key: 'mrn' },
-        { title: 'Name', key: 'full_name' },
-        { title: 'Sex', key: 'sex' },
-        { title: 'Phone', key: 'phone' },
-        { title: 'Status', key: 'status' },
-        { title: 'Actions', key: 'actions', sortable: false },
-      ]"
-      :items="patients"
+  <div>
+    <HPage
+      title="Patients"
+      subtitle="Hospital patient register"
     >
-      <template #item.status="{ item }">
-        <VChip
-          size="small"
-          :color="statusColor(item.status)"
-          class="text-capitalize"
-        >
-          {{ labelize(item.status) }}
-        </VChip>
-      </template>
-      <template #item.actions="{ item }">
-        <IconBtn
-          v-if="ability.can('update', 'Patient')"
-          @click="openEdit(item)"
-        >
-          <VIcon icon="tabler-edit" />
-        </IconBtn>
-      </template>
-    </VDataTable>
-  </VCard>
+      <HButton
+        v-if="ability.can('create', 'Patient')"
+        @click="openCreate"
+      >
+        <HIcon name="plus" />
+        Register patient
+      </HButton>
+    </HPage>
 
-  <VDialog
-    v-model="isDialogVisible"
-    max-width="640"
-  >
-    <VCard :title="editing ? 'Update patient' : 'Register patient'">
-      <VCardText>
-        <VRow>
-          <VCol md="6">
-            <AppTextField
-              v-model="form.first_name"
-              label="First name"
-            />
-          </VCol>
-          <VCol md="6">
-            <AppTextField
-              v-model="form.last_name"
-              label="Last name"
-            />
-          </VCol>
-          <VCol md="6">
-            <AppSelect
-              v-model="form.sex"
-              :items="['male', 'female', 'other']"
-              label="Sex"
-            />
-          </VCol>
-          <VCol md="6">
-            <AppTextField
-              v-model="form.date_of_birth"
-              type="date"
-              label="Date of birth"
-            />
-          </VCol>
-          <VCol md="6">
-            <AppTextField
-              v-model="form.phone"
-              label="Phone"
-            />
-          </VCol>
-          <VCol md="6">
-            <AppTextField
-              v-model="form.mrn"
-              label="MRN (optional)"
-            />
-          </VCol>
-          <VCol cols="12">
-            <AppTextField
-              v-model="form.address"
-              label="Address"
-            />
-          </VCol>
-        </VRow>
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+    <HCard>
+      <HTable
+        :headers="[
+          { title: 'MRN', key: 'mrn' },
+          { title: 'Name', key: 'full_name' },
+          { title: 'Sex', key: 'sex' },
+          { title: 'Phone', key: 'phone' },
+          { title: 'Status', key: 'status' },
+          { title: 'Actions', key: 'actions' },
+        ]"
+        :items="patients"
+        empty="No patients registered yet"
+      >
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
+            {{ labelize(item.status) }}
+          </HBadge>
+        </template>
+        <template #cell-actions="{ item }">
+          <HButton
+            v-if="ability.can('update', 'Patient')"
+            variant="ghost"
+            size="icon"
+            @click="openEdit(item)"
+          >
+            <HIcon name="edit" />
+          </HButton>
+        </template>
+      </HTable>
+    </HCard>
+
+    <HDialog
+      v-model="isDialogVisible"
+      :title="editing ? 'Update patient' : 'Register patient'"
+    >
+      <div class="h-grid cols-2">
+        <HInput
+          v-model="form.first_name"
+          label="First name"
+        />
+        <HInput
+          v-model="form.last_name"
+          label="Last name"
+        />
+        <HSelect
+          v-model="form.sex"
+          :items="['male', 'female', 'other']"
+          label="Sex"
+        />
+        <HInput
+          v-model="form.date_of_birth"
+          type="date"
+          label="Date of birth"
+        />
+        <HInput
+          v-model="form.phone"
+          label="Phone"
+        />
+        <HInput
+          v-model="form.mrn"
+          label="MRN (optional)"
+        />
+      </div>
+      <HInput
+        v-model="form.address"
+        label="Address"
+        style="margin-top:12px"
+      />
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="isDialogVisible = false"
         >
           Cancel
-        </VBtn>
-        <VBtn @click="save">
+        </HButton>
+        <HButton @click="save">
           Save
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

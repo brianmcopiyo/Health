@@ -1,17 +1,14 @@
 import { createApp } from 'vue'
+import { abilitiesPlugin } from '@casl/vue'
 import App from '@/App.vue'
-import { registerPlugins } from '@core/utils/plugins'
+import { router } from '@/plugins/router'
+import { ability, hydrateAbility } from '@/plugins/ability'
+import '@/../css/hms.css'
 
-// Styles
-import '@core-scss/template/index.scss'
-import '@styles/styles.scss'
+hydrateAbility()
 
-// Create vue app
 const app = createApp(App)
 
-
-// Register plugins
-registerPlugins(app)
-
-// Mount vue app
+app.use(abilitiesPlugin, ability, { useGlobalProperties: true })
+app.use(router)
 app.mount('#app')

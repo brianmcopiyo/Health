@@ -48,75 +48,83 @@ await withPageLoad(load)
 </script>
 
 <template>
-  <VCard>
-    <VCardItem>
-      <VCardTitle>Departments</VCardTitle>
-      <template #append>
-        <VBtn
-          v-if="ability.can('manage', 'Department')"
-          prepend-icon="tabler-plus"
-          @click="openCreate"
-        >
-          Add department
-        </VBtn>
-      </template>
-    </VCardItem>
-    <VDataTable
-      :headers="[
-        { title: 'Name', key: 'name' },
-        { title: 'Module', key: 'module_key' },
-        { title: 'Active', key: 'is_active' },
-        { title: 'Facilities', key: 'facilities_count' },
-        { title: 'Actions', key: 'actions', sortable: false },
-      ]"
-      :items="departments"
+  <div>
+    <HPage
+      title="Departments"
+      subtitle="Map hospital departments to modules"
     >
-      <template #item.is_active="{ item }">
-        {{ item.is_active ? 'Yes' : 'No' }}
-      </template>
-      <template #item.actions="{ item }">
-        <IconBtn
-          v-if="ability.can('manage', 'Department')"
-          @click="openEdit(item)"
-        >
-          <VIcon icon="tabler-edit" />
-        </IconBtn>
-      </template>
-    </VDataTable>
-  </VCard>
+      <HButton
+        v-if="ability.can('manage', 'Department')"
+        @click="openCreate"
+      >
+        <HIcon name="plus" />
+        Add department
+      </HButton>
+    </HPage>
 
-  <VDialog
-    v-model="isDialogVisible"
-    max-width="520"
-  >
-    <VCard :title="editing ? 'Update department' : 'Add department'">
-      <VCardText>
-        <AppTextField
+    <HCard>
+      <HTable
+        :headers="[
+          { title: 'Name', key: 'name' },
+          { title: 'Module', key: 'module_key' },
+          { title: 'Active', key: 'is_active' },
+          { title: 'Facilities', key: 'facilities_count' },
+          { title: 'Actions', key: 'actions' },
+        ]"
+        :items="departments"
+        empty="No departments configured"
+      >
+        <template #cell-is_active="{ item }">
+          {{ item.is_active ? 'Yes' : 'No' }}
+        </template>
+        <template #cell-actions="{ item }">
+          <HButton
+            v-if="ability.can('manage', 'Department')"
+            variant="ghost"
+            size="icon"
+            @click="openEdit(item)"
+          >
+            <HIcon name="edit" />
+          </HButton>
+        </template>
+      </HTable>
+    </HCard>
+
+    <HDialog
+      v-model="isDialogVisible"
+      :title="editing ? 'Update department' : 'Add department'"
+    >
+      <div class="h-stack">
+        <HInput
           v-model="form.name"
           label="Name"
-          class="mb-4"
         />
-        <AppSelect
+        <HSelect
           v-model="form.module_key"
           :items="catalog"
           item-title="title"
           item-value="key"
           label="Module"
-          class="mb-4"
         />
-      </VCardText>
-      <VCardActions>
-        <VSpacer />
-        <VBtn
-          variant="tonal"
+        <label class="h-check">
+          <input
+            v-model="form.is_active"
+            type="checkbox"
+          >
+          Active
+        </label>
+      </div>
+      <template #actions>
+        <HButton
+          variant="ghost"
           @click="isDialogVisible = false"
         >
           Cancel
-        </VBtn>
-        <VBtn @click="save">
+        </HButton>
+        <HButton @click="save">
           Save
-        </VBtn>
-      </VCardActions>
-    </VCard>
-  </VDialog>
+        </HButton>
+      </template>
+    </HDialog>
+  </div>
 </template>

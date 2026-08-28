@@ -2,8 +2,7 @@
   "include": [
     "./vite.config.*",
     "./resources/js/**/*",
-    "./resources/js/**/*.vue",
-    "./themeConfig.js"
+    "./resources/js/**/*.vue"
   ],
   "exclude": [
     "./dist",
@@ -14,48 +13,13 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "node",
-    "jsx": "preserve",
     "paths": {
       "@/*": [
         "./resources/js/*"
-      ],
-      "@themeConfig": [
-        "./themeConfig.js"
-      ],
-      "@layouts/*": [
-        "./resources/js/@layouts/*"
-      ],
-      "@layouts": [
-        "./resources/js/@layouts"
-      ],
-      "@core/*": [
-        "./resources/js/@core/*"
-      ],
-      "@core": [
-        "./resources/js/@core"
-      ],
-      "@images/*": [
-        "./resources/images/*"
-      ],
-      "@styles/*": [
-        "./resources/styles/*"
-      ],
-      "@validators": [
-        "./resources/js/@core/utils/validators"
-      ],
-      "@db/*": [
-        "./resources/js/plugins/fake-api/handlers/*"
-      ],
-      "@api-utils/*": [
-        "./resources/js/plugins/fake-api/utils/*"
-      ],
-      "@core-scss/*": [
-        "resources/styles/@core/*"
       ]
     },
     "types": [
-      "vite/client",
-      "vite-plugin-vue-layouts/client"
+      "vite/client"
     ]
   }
 }

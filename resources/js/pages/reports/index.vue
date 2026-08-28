@@ -1,7 +1,4 @@
 <script setup>
-import CardStatisticsHorizontal from '@core/components/cards/CardStatisticsHorizontal.vue'
-import { statusColor } from '@/utils/status'
-
 definePage({
   meta: {
     action: 'read',
@@ -49,179 +46,97 @@ const utilization = computed(() => {
 
 <template>
   <div>
-    <div class="d-flex align-center justify-space-between mb-6">
-      <div>
-        <h4 class="text-h4">
-          Reports
-        </h4>
-        <div class="text-body-1">
-          {{ stats.hospital?.name }}
-        </div>
-      </div>
-      <VBtn
-        variant="tonal"
-        prepend-icon="tabler-refresh"
+    <HPage
+      title="Reports"
+      :subtitle="stats.hospital?.name || 'Operational utilization'"
+    >
+      <HButton
+        variant="ghost"
         @click="load"
       >
+        <HIcon name="refresh" />
         Refresh
-      </VBtn>
+      </HButton>
+    </HPage>
+
+    <div class="h-grid cols-4">
+      <HStat
+        title="Available facilities"
+        :value="stats.facilities.available"
+      />
+      <HStat
+        title="Active patients"
+        :value="stats.patients.active"
+      />
+      <HStat
+        title="Capacity used"
+        :value="utilization"
+      />
+      <HStat
+        title="Ambulances ready"
+        :value="stats.ambulances.available"
+      />
     </div>
 
-    <VRow>
-      <VCol
-        cols="12"
-        sm="6"
-        md="3"
-      >
-        <CardStatisticsHorizontal
-          title="Available facilities"
-          :stats="String(stats.facilities.available)"
-          color="success"
-          icon="tabler-building-hospital"
-        />
-      </VCol>
-      <VCol
-        cols="12"
-        sm="6"
-        md="3"
-      >
-        <CardStatisticsHorizontal
-          title="Active patients"
-          :stats="String(stats.patients.active)"
-          color="primary"
-          icon="tabler-users"
-        />
-      </VCol>
-      <VCol
-        cols="12"
-        sm="6"
-        md="3"
-      >
-        <CardStatisticsHorizontal
-          title="Capacity used"
-          :stats="utilization"
-          color="warning"
-          icon="tabler-chart-donut"
-        />
-      </VCol>
-      <VCol
-        cols="12"
-        sm="6"
-        md="3"
-      >
-        <CardStatisticsHorizontal
-          title="Ambulances ready"
-          :stats="String(stats.ambulances.available)"
-          color="info"
-          icon="tabler-ambulance"
-        />
-      </VCol>
-    </VRow>
+    <div
+      class="h-grid cols-3"
+      style="margin-top:18px"
+    >
+      <HCard title="Referrals">
+        <div class="h-metric">
+          <span>Pending incoming</span>
+          <HBadge tone="warning">
+            {{ stats.referrals.incoming }}
+          </HBadge>
+        </div>
+        <div class="h-metric">
+          <span>Accepted</span>
+          <strong>{{ stats.referrals.accepted }}</strong>
+        </div>
+        <div class="h-metric">
+          <span>In transit</span>
+          <strong>{{ stats.referrals.in_transit }}</strong>
+        </div>
+      </HCard>
+      <HCard title="Assistance">
+        <div class="h-metric">
+          <span>Open requests</span>
+          <HBadge tone="warning">
+            {{ stats.assistance.pending }}
+          </HBadge>
+        </div>
+        <div class="h-metric">
+          <span>Accepted</span>
+          <strong>{{ stats.assistance.accepted }}</strong>
+        </div>
+      </HCard>
+      <HCard title="Clinical activity">
+        <div class="h-metric">
+          <span>OPD waiting</span>
+          <strong>{{ stats.encounters.opd }}</strong>
+        </div>
+        <div class="h-metric">
+          <span>Emergency active</span>
+          <strong>{{ stats.encounters.emergency }}</strong>
+        </div>
+      </HCard>
+    </div>
 
-    <VRow>
-      <VCol
-        cols="12"
-        md="4"
-      >
-        <VCard>
-          <VCardItem>
-            <VCardTitle>Referrals</VCardTitle>
-          </VCardItem>
-          <VCardText>
-            <div class="d-flex justify-space-between mb-2">
-              <span>Pending incoming</span>
-              <VChip
-                size="small"
-                :color="statusColor('pending')"
-              >
-                {{ stats.referrals.incoming }}
-              </VChip>
-            </div>
-            <div class="d-flex justify-space-between mb-2">
-              <span>Accepted</span>
-              <strong>{{ stats.referrals.accepted }}</strong>
-            </div>
-            <div class="d-flex justify-space-between">
-              <span>In transit</span>
-              <strong>{{ stats.referrals.in_transit }}</strong>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-      <VCol
-        cols="12"
-        md="4"
-      >
-        <VCard>
-          <VCardItem>
-            <VCardTitle>Assistance</VCardTitle>
-          </VCardItem>
-          <VCardText>
-            <div class="d-flex justify-space-between mb-2">
-              <span>Open requests</span>
-              <VChip
-                size="small"
-                color="warning"
-              >
-                {{ stats.assistance.pending }}
-              </VChip>
-            </div>
-            <div class="d-flex justify-space-between">
-              <span>Accepted</span>
-              <strong>{{ stats.assistance.accepted }}</strong>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-      <VCol
-        cols="12"
-        md="4"
-      >
-        <VCard>
-          <VCardItem>
-            <VCardTitle>Clinical activity</VCardTitle>
-          </VCardItem>
-          <VCardText>
-            <div class="d-flex justify-space-between mb-2">
-              <span>OPD waiting</span>
-              <strong>{{ stats.encounters.opd }}</strong>
-            </div>
-            <div class="d-flex justify-space-between">
-              <span>Emergency active</span>
-              <strong>{{ stats.encounters.emergency }}</strong>
-            </div>
-          </VCardText>
-        </VCard>
-      </VCol>
-    </VRow>
-
-    <VCard class="mt-6">
-      <VCardItem>
-        <VCardTitle>Facility utilization by type</VCardTitle>
-      </VCardItem>
-      <VTable>
-        <thead>
-          <tr>
-            <th>Type</th>
-            <th>Units</th>
-            <th>Capacity</th>
-            <th>In use</th>
-            <th>Remaining</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="row in stats.facilitiesByType"
-            :key="row.facility_type_id"
-          >
-            <td>{{ row.type?.name }}</td>
-            <td>{{ row.total }}</td>
-            <td>{{ row.capacity }}</td>
-            <td>{{ row.utilization }}</td>
-            <td>{{ Math.max(0, row.capacity - row.utilization) }}</td>
-          </tr>
-        </tbody>
-      </VTable>
-    </VCard>
+    <HCard
+      title="Facility utilization by type"
+      style="margin-top:18px"
+    >
+      <HTable
+        :headers="[
+          { title: 'Type', key: 'type.name' },
+          { title: 'Units', key: 'total' },
+          { title: 'Capacity', key: 'capacity' },
+          { title: 'In use', key: 'utilization' },
+          { title: 'Remaining', key: 'remaining' },
+        ]"
+        :items="stats.facilitiesByType.map(row => ({ ...row, remaining: Math.max(0, row.capacity - row.utilization) }))"
+        empty="No facility utilization yet"
+      />
+    </HCard>
   </div>
 </template>
