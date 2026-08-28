@@ -10,21 +10,37 @@ class ServiceOrder extends Model
 {
     use BelongsToHospital;
 
-    public const STATUSES = ['pending', 'in_progress', 'completed', 'cancelled'];
+    public const STATUSES = ['requested', 'collected', 'scheduled', 'processing', 'completed', 'cancelled'];
 
     protected $fillable = [
         'hospital_id',
         'patient_id',
         'encounter_id',
         'facility_id',
+        'service_id',
         'ordered_by',
         'completed_by',
         'module_key',
+        'order_type',
         'item_name',
         'status',
         'result',
         'notes',
+        'requested_at',
+        'collected_at',
+        'scheduled_at',
+        'completed_at',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'requested_at' => 'datetime',
+            'collected_at' => 'datetime',
+            'scheduled_at' => 'datetime',
+            'completed_at' => 'datetime',
+        ];
+    }
 
     public function hospital(): BelongsTo
     {
@@ -44,6 +60,11 @@ class ServiceOrder extends Model
     public function facility(): BelongsTo
     {
         return $this->belongsTo(Facility::class);
+    }
+
+    public function service(): BelongsTo
+    {
+        return $this->belongsTo(ClinicalService::class, 'service_id');
     }
 
     public function orderedBy(): BelongsTo

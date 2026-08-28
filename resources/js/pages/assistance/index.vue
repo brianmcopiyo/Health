@@ -12,6 +12,9 @@ const ability = useAbility()
 const userData = useCookie('userData')
 const items = ref([])
 const hospitals = ref([])
+const patients = ref([])
+const encounters = ref([])
+const types = ref([])
 const direction = ref('all')
 const isCreateVisible = ref(false)
 const selected = ref(null)
@@ -23,10 +26,20 @@ const form = ref({
   type: 'staff',
   title: '',
   description: '',
+  patient_id: null,
+  encounter_id: null,
+  facility_type_id: null,
+  quantity: 1,
 })
+
+const encounterOptions = computed(() => encounters.value.map(item => ({
+  title: `${labelize(item.type)} · ${item.chief_complaint || labelize(item.status)}`,
+  value: item.id,
+})))
 
 const headers = [
   { title: 'Request', key: 'title' },
+  { title: 'Patient', key: 'patient.full_name' },
   { title: 'Type', key: 'type' },
   { title: 'From', key: 'from_hospital.name' },
   { title: 'To', key: 'to_hospital.name' },
@@ -42,13 +55,29 @@ const load = async () => {
 const openCreate = async () => {
   formError.value = ''
   hospitals.value = asList(await $api('/network/hospitals'))
+  patients.value = asList(await $api('/patients').catch(() => []))
+  types.value = asList(await $api('/facility-types').catch(() => []))
+  encounters.value = []
   form.value = {
     to_hospital_id: hospitals.value[0]?.id ?? null,
     type: 'staff',
     title: '',
     description: '',
+    patient_id: null,
+    encounter_id: null,
+    facility_type_id: null,
+    quantity: 1,
   }
   isCreateVisible.value = true
+}
+
+const onAssistancePatient = async id => {
+  form.value.encounter_id = null
+  if (!id) {
+    encounters.value = []
+    return
+  }
+  encounters.value = asList(await $api('/encounters', { query: { patient_id: id } }).catch(() => []))
 }
 
 const create = async () => {
@@ -113,6 +142,9 @@ await withPageLoad(load)
         :items="items"
         empty="No assistance requests yet"
       >
+        <template #cell-patient.full_name="{ item }">
+          {{ item.patient?.full_name || '—' }}
+        </template>
         <template #cell-type="{ item }">
           {{ labelize(item.type) }}
         </template>
@@ -152,6 +184,27 @@ await withPageLoad(load)
           :items="assistanceTypes"
           label="Type"
         />
+        <HSelect
+          v-model="form.facility_type_id"
+          :items="types"
+          item-title="name"
+          item-value="id"
+          label="Requested resource"
+        />
+        <HSelect
+          v-model="form.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+          @update:model-value="onAssistancePatient"
+        />
+        <HSelect
+          v-if="encounterOptions.length"
+          v-model="form.encounter_id"
+          :items="encounterOptions"
+          label="Encounter"
+        />
         <HInput
           v-model="form.title"
           label="Title"
@@ -190,6 +243,9 @@ await withPageLoad(load)
           {{ selected.from_hospital?.name }} → {{ selected.to_hospital?.name }}
         </p>
         <p>{{ selected.description }}</p>
+        <p v-if="selected.patient">
+          Patient: {{ selected.patient.full_name }}
+        </p>
         <HTextarea
           v-model="responseNotes"
           label="Response notes"

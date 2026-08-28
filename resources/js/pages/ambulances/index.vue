@@ -12,8 +12,13 @@ const ability = useAbility()
 const ambulances = ref([])
 const trips = ref([])
 const hospitals = ref([])
+const patients = ref([])
+const referrals = ref([])
+const encounters = ref([])
 const isVehicleDialogVisible = ref(false)
 const dispatching = ref(null)
+const completing = ref(null)
+const handoverNotes = ref('')
 const saving = ref(false)
 const formError = ref('')
 const form = ref({
@@ -26,7 +31,11 @@ const form = ref({
 const dispatchForm = ref({
   origin: '',
   destination: '',
+  pickup_location: '',
   destination_hospital_id: null,
+  patient_id: null,
+  encounter_id: null,
+  referral_id: null,
   notes: '',
 })
 
@@ -40,11 +49,22 @@ const headers = [
 
 const tripHeaders = [
   { title: 'Vehicle', key: 'ambulance.vehicle_code' },
+  { title: 'Patient', key: 'patient.first_name' },
   { title: 'Origin', key: 'origin' },
   { title: 'Destination', key: 'destination' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions' },
 ]
+
+const encounterOptions = computed(() => encounters.value.map(item => ({
+  title: `${labelize(item.type)} · ${item.chief_complaint || labelize(item.status)}`,
+  value: item.id,
+})))
+
+const referralOptions = computed(() => referrals.value.map(item => ({
+  title: `${item.patient?.full_name || item.patient_name} · ${item.to_hospital?.name}`,
+  value: item.id,
+})))
 
 const load = async () => {
   const [fleet, history] = await Promise.all([
@@ -78,13 +98,42 @@ const saveVehicle = async () => {
 const openDispatch = async item => {
   formError.value = ''
   hospitals.value = asList(await $api('/network/hospitals'))
+  patients.value = asList(await $api('/patients').catch(() => []))
+  referrals.value = asList(await $api('/referrals', { query: { direction: 'outgoing' } }).catch(() => []))
+    .filter(row => ['accepted', 'in_transit', 'pending'].includes(row.status))
+  encounters.value = []
   dispatching.value = item
   dispatchForm.value = {
     origin: '',
     destination: '',
+    pickup_location: '',
     destination_hospital_id: null,
+    patient_id: null,
+    encounter_id: null,
+    referral_id: null,
     notes: '',
   }
+}
+
+const onDispatchPatient = async id => {
+  dispatchForm.value.encounter_id = null
+  if (!id) {
+    encounters.value = []
+    return
+  }
+  encounters.value = asList(await $api('/encounters', { query: { patient_id: id } }).catch(() => []))
+}
+
+const onDispatchReferral = id => {
+  const referral = referrals.value.find(item => item.id === id)
+  if (!referral)
+    return
+  dispatchForm.value.patient_id = referral.patient_id
+  dispatchForm.value.encounter_id = referral.encounter_id
+  dispatchForm.value.destination_hospital_id = referral.to_hospital_id
+  dispatchForm.value.destination = referral.to_hospital?.name || dispatchForm.value.destination
+  if (referral.patient_id)
+    onDispatchPatient(referral.patient_id)
 }
 
 const dispatch = async () => {
@@ -99,11 +148,28 @@ const dispatch = async () => {
 }
 
 const updateTrip = async (trip, status) => {
+  if (status === 'completed') {
+    formError.value = ''
+    completing.value = trip
+    handoverNotes.value = ''
+    return
+  }
   await $api(`/ambulance-trips/${trip.id}/status`, {
     method: 'PATCH',
     body: { status },
   })
   await load()
+}
+
+const completeTrip = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/ambulance-trips/${completing.value.id}/status`, {
+      method: 'PATCH',
+      body: { status: 'completed', handover_notes: handoverNotes.value },
+    })
+    completing.value = null
+    await load()
+  })
 }
 
 await withPageLoad(load)
@@ -165,6 +231,9 @@ await withPageLoad(load)
         :items="trips"
         empty="No trips recorded"
       >
+        <template #cell-patient.first_name="{ item }">
+          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+        </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
@@ -254,9 +323,33 @@ await withPageLoad(load)
         v-if="dispatching"
         class="h-stack"
       >
+        <HSelect
+          v-model="dispatchForm.referral_id"
+          :items="referralOptions"
+          label="Linked referral"
+          @update:model-value="onDispatchReferral"
+        />
+        <HSelect
+          v-model="dispatchForm.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+          @update:model-value="onDispatchPatient"
+        />
+        <HSelect
+          v-if="encounterOptions.length"
+          v-model="dispatchForm.encounter_id"
+          :items="encounterOptions"
+          label="Encounter"
+        />
         <HInput
           v-model="dispatchForm.origin"
           label="Origin"
+        />
+        <HInput
+          v-model="dispatchForm.pickup_location"
+          label="Pickup location"
         />
         <HInput
           v-model="dispatchForm.destination"
@@ -287,6 +380,34 @@ await withPageLoad(load)
           @click="dispatch"
         >
           Dispatch
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      :model-value="Boolean(completing)"
+      title="Handover"
+      :error="formError"
+      :persistent="saving"
+      @update:model-value="val => { if (!val) completing = null }"
+    >
+      <HTextarea
+        v-model="handoverNotes"
+        label="Handover notes"
+      />
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="completing = null"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving"
+          @click="completeTrip"
+        >
+          Complete trip
         </HButton>
       </template>
     </HModal>

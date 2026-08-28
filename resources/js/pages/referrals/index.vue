@@ -21,6 +21,7 @@ const destinationFacilityId = ref(null)
 
 const headers = [
   { title: 'Patient', key: 'patient_name' },
+  { title: 'Encounter', key: 'encounter.type' },
   { title: 'From', key: 'from_hospital.name' },
   { title: 'To', key: 'to_hospital.name' },
   { title: 'Need', key: 'required_facility_type.name' },
@@ -106,6 +107,12 @@ await withPageLoad(load)
         :items="referrals"
         empty="No referrals in this view"
       >
+        <template #cell-patient_name="{ item }">
+          {{ item.patient?.full_name || item.patient_name }}
+        </template>
+        <template #cell-encounter.type="{ item }">
+          {{ item.encounter ? labelize(item.encounter.type) : '—' }}
+        </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
@@ -134,8 +141,15 @@ await withPageLoad(load)
         <p style="color:var(--muted);margin-top:0">
           {{ selected.from_hospital?.name }} → {{ selected.to_hospital?.name }}
         </p>
+        <p>{{ selected.patient?.full_name || selected.patient_name }} · {{ selected.patient_reference }}</p>
+        <p v-if="selected.encounter">
+          Encounter: {{ labelize(selected.encounter.type) }} · {{ selected.encounter.chief_complaint }}
+        </p>
         <p>{{ selected.reason }}</p>
         <p>Need: {{ selected.required_facility_type?.name }} · {{ selected.required_capacity }}</p>
+        <p v-if="selected.response_notes">
+          Response: {{ selected.response_notes }}
+        </p>
         <HTextarea
           v-model="responseNotes"
           label="Notes"
@@ -152,6 +166,14 @@ await withPageLoad(load)
         </HButton>
         <HButton
           v-if="selected && isDestination(selected) && selected.status === 'pending' && ability.can('respond', 'Referral')"
+          variant="ghost"
+          :disabled="saving"
+          @click="updateStatus('more_info')"
+        >
+          Request more information
+        </HButton>
+        <HButton
+          v-if="selected && isDestination(selected) && ['pending', 'more_info'].includes(selected.status) && ability.can('respond', 'Referral')"
           variant="danger"
           :disabled="saving"
           @click="updateStatus('declined')"
@@ -159,7 +181,7 @@ await withPageLoad(load)
           Decline
         </HButton>
         <HButton
-          v-if="selected && isDestination(selected) && selected.status === 'pending' && ability.can('respond', 'Referral')"
+          v-if="selected && isDestination(selected) && ['pending', 'more_info'].includes(selected.status) && ability.can('respond', 'Referral')"
           variant="ok"
           :disabled="saving"
           @click="updateStatus('accepted')"

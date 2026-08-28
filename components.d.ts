@@ -7,6 +7,7 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    EncounterChart: typeof import('./resources/js/components/hms/EncounterChart.vue')['default']
     FacilityBoard: typeof import('./resources/js/components/hms/FacilityBoard.vue')['default']
     HBadge: typeof import('./resources/js/components/ui/HBadge.vue')['default']
     HButton: typeof import('./resources/js/components/ui/HButton.vue')['default']

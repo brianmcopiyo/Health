@@ -1,5 +1,5 @@
-export const facilityStatuses = ['available', 'occupied', 'unavailable', 'maintenance', 'reserved']
-export const referralStatuses = ['pending', 'accepted', 'declined', 'in_transit', 'completed', 'cancelled']
+export const facilityStatuses = ['available', 'occupied', 'unavailable', 'maintenance', 'reserved', 'cleaning']
+export const referralStatuses = ['pending', 'more_info', 'accepted', 'declined', 'in_transit', 'completed', 'cancelled']
 export const assistanceStatuses = ['pending', 'accepted', 'declined', 'fulfilled', 'cancelled']
 export const ambulanceStatuses = ['available', 'on_trip', 'maintenance', 'unavailable']
 export const tripStatuses = ['dispatched', 'en_route', 'arrived', 'completed', 'cancelled']
@@ -12,6 +12,7 @@ export const statusColor = status => {
     unavailable: 'secondary',
     maintenance: 'info',
     reserved: 'primary',
+    cleaning: 'info',
     pending: 'warning',
     accepted: 'success',
     declined: 'error',
@@ -22,6 +23,7 @@ export const statusColor = status => {
     on_trip: 'info',
     dispatched: 'primary',
     en_route: 'info',
+    arrived: 'info',
     issued: 'info',
     paid: 'success',
     draft: 'secondary',
@@ -29,6 +31,15 @@ export const statusColor = status => {
     in_progress: 'info',
     active: 'success',
     discharged: 'secondary',
+    requested: 'warning',
+    collected: 'info',
+    scheduled: 'info',
+    processing: 'primary',
+    verified: 'info',
+    dispensed: 'success',
+    transferred: 'primary',
+    admitted: 'warning',
+    more_info: 'info',
   }
 
   return map[status] || 'secondary'

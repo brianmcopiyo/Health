@@ -20,6 +20,9 @@ class User extends Authenticatable
         'role_id',
         'phone',
         'job_title',
+        'department_id',
+        'specialty',
+        'license_number',
     ];
 
     protected $hidden = [
@@ -48,6 +51,21 @@ class User extends Authenticatable
     public function memberships()
     {
         return $this->hasMany(HospitalMembership::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function staffAssignments()
+    {
+        return $this->hasMany(StaffAssignment::class);
+    }
+
+    public function encounters()
+    {
+        return $this->hasMany(Encounter::class, 'clinician_id');
     }
 
     public function isPlatformAdmin(): bool

@@ -1,4 +1,5 @@
 <script setup>
+import EncounterChart from '@/components/hms/EncounterChart.vue'
 import FacilityBoard from '@/components/hms/FacilityBoard.vue'
 import { labelize, statusColor } from '@/utils/status'
 
@@ -14,6 +15,8 @@ const board = ref(null)
 const patients = ref([])
 const staff = ref([])
 const visitOpen = ref(false)
+const chartOpen = ref(false)
+const encounterId = ref(null)
 const saving = ref(false)
 const formError = ref('')
 const form = ref({
@@ -51,12 +54,9 @@ const startVisit = async () => {
   })
 }
 
-const updateVisit = async (encounter, status) => {
-  await $api(`/encounters/${encounter.id}`, {
-    method: 'PATCH',
-    body: { status },
-  })
-  await load()
+const openChart = id => {
+  encounterId.value = id
+  chartOpen.value = true
 }
 
 await withPageLoad(load)
@@ -116,19 +116,11 @@ onBeforeUnmount(() => {
         <template #cell-actions="{ item }">
           <div class="h-actions">
             <HButton
-              v-if="ability.can('update', 'Emergency') && item.status === 'waiting'"
+              v-if="ability.can('update', 'Emergency')"
               size="sm"
-              @click="updateVisit(item, 'in_progress')"
+              @click="openChart(item.id)"
             >
-              Start
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Emergency') && item.status !== 'completed'"
-              variant="ghost"
-              size="sm"
-              @click="updateVisit(item, 'completed')"
-            >
-              Complete
+              Open chart
             </HButton>
           </div>
         </template>
@@ -177,5 +169,11 @@ onBeforeUnmount(() => {
         </HButton>
       </template>
     </HModal>
+
+    <EncounterChart
+      v-model="chartOpen"
+      :encounter-id="encounterId"
+      @saved="load"
+    />
   </div>
 </template>

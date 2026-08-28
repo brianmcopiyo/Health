@@ -12,10 +12,12 @@ use App\Http\Controllers\Api\HospitalController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ModuleBoardController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ServiceOrderController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/auth/login', [AuthController::class, 'login']);
@@ -24,6 +26,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/switch-hospital', [AuthController::class, 'switchHospital']);
+
+    Route::get('/workspace', [WorkspaceController::class, 'show']);
+    Route::get('/clinical-services', [PrescriptionController::class, 'services']);
+    Route::get('/medications', [PrescriptionController::class, 'medications']);
 
     Route::get('/dashboard', [DashboardController::class, 'show'])->middleware('permission:read,Report');
     Route::get('/reports', [DashboardController::class, 'show'])->middleware('permission:read,Report');
@@ -73,7 +79,15 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/encounters', [EncounterController::class, 'index']);
     Route::post('/encounters', [EncounterController::class, 'store']);
+    Route::get('/encounters/{encounter}', [EncounterController::class, 'show']);
     Route::patch('/encounters/{encounter}', [EncounterController::class, 'update']);
+    Route::post('/encounters/{encounter}/vitals', [EncounterController::class, 'storeVitals']);
+    Route::post('/encounters/{encounter}/notes', [EncounterController::class, 'storeNote']);
+    Route::post('/encounters/{encounter}/diagnoses', [EncounterController::class, 'storeDiagnosis']);
+    Route::post('/encounters/{encounter}/care-plans', [EncounterController::class, 'storeCarePlan']);
+    Route::post('/encounters/{encounter}/admit', [EncounterController::class, 'admit']);
+    Route::post('/encounters/{encounter}/discharge', [EncounterController::class, 'discharge']);
+    Route::get('/encounters/{encounter}/invoice', [EncounterController::class, 'invoice']);
 
     Route::get('/bed-assignments', [BedAssignmentController::class, 'index'])->middleware('permission:read,Bed');
     Route::post('/bed-assignments', [BedAssignmentController::class, 'store'])->middleware('permission:create,Bed');
@@ -83,10 +97,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/service-orders', [ServiceOrderController::class, 'store']);
     Route::patch('/service-orders/{serviceOrder}', [ServiceOrderController::class, 'update']);
 
+    Route::get('/prescriptions', [PrescriptionController::class, 'index']);
+    Route::post('/prescriptions', [PrescriptionController::class, 'store']);
+    Route::patch('/prescriptions/{prescription}/status', [PrescriptionController::class, 'updateStatus']);
+
     Route::get('/invoices', [InvoiceController::class, 'index'])->middleware('permission:read,Invoice');
     Route::post('/invoices', [InvoiceController::class, 'store'])->middleware('permission:create,Invoice');
     Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->middleware('permission:read,Invoice');
     Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->middleware('permission:update,Invoice');
+    Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'pay'])->middleware('permission:update,Invoice');
 
     Route::get('/referrals/eligible-hospitals', [ReferralController::class, 'eligibleHospitals'])->middleware('permission:create,Referral');
     Route::get('/referrals', [ReferralController::class, 'index'])->middleware('permission:read,Referral');

@@ -74,8 +74,17 @@ class ModuleBoardController extends Controller
 
         if (! empty($catalog['orders'])) {
             $payload['orders'] = ServiceOrder::query()
-                ->with(['patient', 'facility', 'orderedBy'])
+                ->with(['patient', 'facility', 'orderedBy', 'encounter'])
                 ->where('module_key', $catalog['key'])
+                ->latest()
+                ->limit(50)
+                ->get();
+        }
+
+        if ($catalog['key'] === 'pharmacy') {
+            $payload['prescriptions'] = \App\Models\Prescription::query()
+                ->with(['patient', 'encounter', 'items.medication', 'prescribedBy'])
+                ->whereIn('status', ['pending', 'verified'])
                 ->latest()
                 ->limit(50)
                 ->get();
@@ -83,7 +92,7 @@ class ModuleBoardController extends Controller
 
         if (! empty($catalog['assignments'])) {
             $payload['assignments'] = BedAssignment::query()
-                ->with(['patient', 'facility', 'assignedBy'])
+                ->with(['patient', 'facility', 'assignedBy', 'encounter', 'nurse'])
                 ->where('status', 'active')
                 ->latest()
                 ->get();
@@ -91,7 +100,7 @@ class ModuleBoardController extends Controller
 
         if (! empty($catalog['encounter_type'])) {
             $payload['encounters'] = Encounter::query()
-                ->with(['patient', 'clinician', 'facility', 'department'])
+                ->with(['patient', 'clinician', 'facility', 'department', 'diagnoses', 'orders'])
                 ->where('type', $catalog['encounter_type'])
                 ->whereIn('status', ['waiting', 'in_progress'])
                 ->latest()

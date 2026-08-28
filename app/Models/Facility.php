@@ -11,7 +11,7 @@ class Facility extends Model
 {
     use BelongsToHospital;
 
-    public const STATUSES = ['available', 'occupied', 'unavailable', 'maintenance', 'reserved'];
+    public const STATUSES = ['available', 'occupied', 'unavailable', 'maintenance', 'reserved', 'cleaning'];
 
     protected $fillable = [
         'hospital_id',

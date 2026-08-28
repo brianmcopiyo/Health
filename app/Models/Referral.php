@@ -10,19 +10,25 @@ class Referral extends Model
 {
     use VisibleOnHospitalNetwork;
 
-    public const STATUSES = ['pending', 'accepted', 'declined', 'in_transit', 'completed', 'cancelled'];
+    public const STATUSES = ['pending', 'more_info', 'accepted', 'declined', 'in_transit', 'completed', 'cancelled'];
 
     protected $fillable = [
         'from_hospital_id',
         'to_hospital_id',
         'patient_id',
+        'encounter_id',
+        'referring_clinician_id',
+        'receiving_patient_id',
+        'receiving_encounter_id',
         'patient_name',
         'patient_reference',
         'reason',
         'required_facility_type_id',
+        'required_service_id',
         'required_capacity',
         'destination_facility_id',
         'ambulance_trip_id',
+        'counter_referral_id',
         'status',
         'created_by',
         'reviewed_by',
@@ -51,6 +57,31 @@ class Referral extends Model
     public function patient(): BelongsTo
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function encounter(): BelongsTo
+    {
+        return $this->belongsTo(Encounter::class);
+    }
+
+    public function referringClinician(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'referring_clinician_id');
+    }
+
+    public function receivingPatient(): BelongsTo
+    {
+        return $this->belongsTo(Patient::class, 'receiving_patient_id');
+    }
+
+    public function receivingEncounter(): BelongsTo
+    {
+        return $this->belongsTo(Encounter::class, 'receiving_encounter_id');
+    }
+
+    public function requiredService(): BelongsTo
+    {
+        return $this->belongsTo(ClinicalService::class, 'required_service_id');
     }
 
     public function requiredFacilityType(): BelongsTo

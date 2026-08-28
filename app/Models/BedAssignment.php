@@ -17,7 +17,9 @@ class BedAssignment extends Model
         'patient_id',
         'encounter_id',
         'facility_id',
+        'ward_id',
         'assigned_by',
+        'nurse_id',
         'status',
         'assigned_at',
         'discharged_at',
@@ -49,6 +51,16 @@ class BedAssignment extends Model
     public function facility(): BelongsTo
     {
         return $this->belongsTo(Facility::class);
+    }
+
+    public function ward(): BelongsTo
+    {
+        return $this->belongsTo(Facility::class, 'ward_id');
+    }
+
+    public function nurse(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'nurse_id');
     }
 
     public function assignedBy(): BelongsTo

@@ -1,4 +1,5 @@
 <script setup>
+import EncounterChart from '@/components/hms/EncounterChart.vue'
 import { facilityStatuses, labelize, statusColor } from '@/utils/status'
 
 const props = defineProps({
@@ -52,10 +53,16 @@ const form = ref({
 
 const orderForm = ref({
   patient_id: null,
+  encounter_id: null,
   item_name: '',
   notes: '',
 })
+const resultOpen = ref(false)
+const resultForm = ref({ id: null, result: '' })
 const patients = ref([])
+const orderEncounters = ref([])
+const chartOpen = ref(false)
+const encounterId = ref(null)
 const assignmentForm = ref({
   patient_id: null,
   facility_id: null,
@@ -69,6 +76,25 @@ const utilization = computed(() => {
 })
 
 const availableBeds = computed(() => board.value.facilities.filter(item => item.status === 'available' && item.remaining_capacity > 0))
+
+const encounterOptions = computed(() => orderEncounters.value.map(item => ({
+  title: `${labelize(item.type)} · ${item.chief_complaint || labelize(item.status)}`,
+  value: item.id,
+})))
+
+watch(() => orderForm.value.patient_id, async id => {
+  orderForm.value.encounter_id = null
+  if (!id) {
+    orderEncounters.value = []
+    return
+  }
+  try {
+    orderEncounters.value = asList(await $api('/encounters', { query: { patient_id: id, open: true } }))
+  }
+  catch {
+    orderEncounters.value = []
+  }
+})
 
 const load = async () => {
   const payload = await $api(`/modules/${props.moduleKey}`)
@@ -99,7 +125,7 @@ const openStatus = item => {
 
 const openOrder = () => {
   formError.value = ''
-  orderForm.value = { patient_id: null, item_name: '', notes: '' }
+  orderForm.value = { patient_id: null, encounter_id: null, item_name: '', notes: '' }
   orderOpen.value = true
 }
 
@@ -134,12 +160,32 @@ const createOrder = async () => {
   })
 }
 
-const updateOrder = async (order, status) => {
+const updateOrder = async (order, status, result = null) => {
+  const body = { status }
+  if (result !== null)
+    body.result = result
   await $api(`/service-orders/${order.id}`, {
     method: 'PATCH',
-    body: { status },
+    body,
   })
   await load()
+}
+
+const openResult = order => {
+  formError.value = ''
+  resultForm.value = { id: order.id, result: order.result || '' }
+  resultOpen.value = true
+}
+
+const saveResult = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/service-orders/${resultForm.value.id}`, {
+      method: 'PATCH',
+      body: { status: 'completed', result: resultForm.value.result },
+    })
+    resultOpen.value = false
+    await load()
+  })
 }
 
 const assignBed = async () => {
@@ -156,6 +202,12 @@ const assignBed = async () => {
 const discharge = async assignment => {
   await $api(`/bed-assignments/${assignment.id}/discharge`, { method: 'PATCH' })
   await load()
+}
+
+const openChart = item => {
+  encounterId.value = item.encounter_id || item.encounter?.id
+  if (encounterId.value)
+    chartOpen.value = true
 }
 
 await withPageLoad(load)
@@ -264,6 +316,7 @@ const headers = [
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Item', key: 'item_name' },
+          { title: 'Encounter', key: 'encounter.type' },
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
         ]"
@@ -281,17 +334,33 @@ const headers = [
         <template #cell-actions="{ item }">
           <div class="h-actions">
             <HButton
-              v-if="ability.can('update', subject) && item.status === 'pending'"
+              v-if="ability.can('update', subject) && item.status === 'requested' && moduleKey === 'laboratory'"
               variant="ghost"
               size="sm"
-              @click="updateOrder(item, 'in_progress')"
+              @click="updateOrder(item, 'collected')"
             >
-              Start
+              Collect
             </HButton>
             <HButton
-              v-if="ability.can('update', subject) && item.status !== 'completed'"
+              v-if="ability.can('update', subject) && item.status === 'requested' && moduleKey === 'imaging'"
+              variant="ghost"
               size="sm"
-              @click="updateOrder(item, 'completed')"
+              @click="updateOrder(item, 'scheduled')"
+            >
+              Schedule
+            </HButton>
+            <HButton
+              v-if="ability.can('update', subject) && ['requested', 'collected', 'scheduled'].includes(item.status)"
+              variant="ghost"
+              size="sm"
+              @click="updateOrder(item, 'processing')"
+            >
+              Process
+            </HButton>
+            <HButton
+              v-if="ability.can('update', subject) && item.status !== 'completed' && item.status !== 'cancelled'"
+              size="sm"
+              @click="openResult(item)"
             >
               Complete
             </HButton>
@@ -330,15 +399,30 @@ const headers = [
         <template #cell-patient.first_name="{ item }">
           {{ item.patient?.first_name }} {{ item.patient?.last_name }}
         </template>
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
+            {{ labelize(item.status) }}
+          </HBadge>
+        </template>
         <template #cell-actions="{ item }">
-          <HButton
-            v-if="ability.can('update', 'Bed')"
-            variant="ghost"
-            size="sm"
-            @click="discharge(item)"
-          >
-            Discharge
-          </HButton>
+          <div class="h-actions">
+            <HButton
+              v-if="item.encounter_id || item.encounter"
+              size="sm"
+              variant="ghost"
+              @click="openChart(item)"
+            >
+              Chart
+            </HButton>
+            <HButton
+              v-if="ability.can('update', 'Bed')"
+              variant="ghost"
+              size="sm"
+              @click="discharge(item)"
+            >
+              Discharge
+            </HButton>
+          </div>
         </template>
       </HTable>
     </HCard>
@@ -395,6 +479,12 @@ const headers = [
           item-title="full_name"
           item-value="id"
           label="Patient"
+        />
+        <HSelect
+          v-if="encounterOptions.length"
+          v-model="orderForm.encounter_id"
+          :items="encounterOptions"
+          label="Encounter"
         />
         <HInput
           v-model="orderForm.item_name"
@@ -460,5 +550,38 @@ const headers = [
         </HButton>
       </template>
     </HModal>
+
+    <HModal
+      v-model="resultOpen"
+      title="Record result"
+      :error="formError"
+      :persistent="saving"
+    >
+      <HTextarea
+        v-model="resultForm.result"
+        label="Result"
+      />
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="resultOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving || !resultForm.result"
+          @click="saveResult"
+        >
+          Complete order
+        </HButton>
+      </template>
+    </HModal>
+
+    <EncounterChart
+      v-model="chartOpen"
+      :encounter-id="encounterId"
+      @saved="load"
+    />
   </div>
 </template>

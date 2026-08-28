@@ -13,7 +13,7 @@ class AssistanceRequestController extends Controller
     public function index(Request $request)
     {
         $query = AssistanceRequest::query()
-            ->with(['fromHospital', 'toHospital', 'creator', 'responder'])
+            ->with(['fromHospital', 'toHospital', 'creator', 'responder', 'patient', 'facility', 'facilityType'])
             ->latest();
 
         if ($status = $request->string('status')->toString()) {
@@ -44,6 +44,11 @@ class AssistanceRequestController extends Controller
             'type' => ['required', Rule::in(AssistanceRequest::TYPES)],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
+            'patient_id' => ['nullable', 'exists:patients,id'],
+            'encounter_id' => ['nullable', 'exists:encounters,id'],
+            'facility_type_id' => ['nullable', 'exists:facility_types,id'],
+            'facility_id' => ['nullable', 'exists:facilities,id'],
+            'quantity' => ['nullable', 'integer', 'min:1'],
         ]);
 
         abort_if((int) $data['to_hospital_id'] === (int) $user->hospital_id, 422, 'Select a different hospital.');
@@ -54,7 +59,12 @@ class AssistanceRequestController extends Controller
         $requestModel = AssistanceRequest::query()->create([
             'from_hospital_id' => $user->hospital_id,
             'to_hospital_id' => $destination->id,
+            'patient_id' => $data['patient_id'] ?? null,
+            'encounter_id' => $data['encounter_id'] ?? null,
+            'facility_type_id' => $data['facility_type_id'] ?? null,
+            'facility_id' => $data['facility_id'] ?? null,
             'type' => $data['type'],
+            'quantity' => $data['quantity'] ?? 1,
             'title' => $data['title'],
             'description' => $data['description'] ?? null,
             'status' => 'pending',

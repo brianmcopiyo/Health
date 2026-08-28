@@ -5,17 +5,11 @@ namespace Database\Seeders;
 use App\Models\Ambulance;
 use App\Models\AssistanceRequest;
 use App\Models\Department;
-use App\Models\Encounter;
 use App\Models\Facility;
 use App\Models\FacilityType;
 use App\Models\Hospital;
 use App\Models\HospitalMembership;
-use App\Models\Invoice;
-use App\Models\InvoiceItem;
-use App\Models\Patient;
-use App\Models\Referral;
 use App\Models\Role;
-use App\Models\ServiceOrder;
 use App\Models\User;
 use App\Support\HospitalProvisioner;
 use App\Support\RoleProvisioner;
@@ -151,78 +145,7 @@ class DatabaseSeeder extends Seeder
             'capacity' => 2,
         ]);
 
-        $patient = Patient::query()->create([
-            'hospital_id' => $riverside->id,
-            'mrn' => 'RGH-0001',
-            'first_name' => 'Kojo',
-            'last_name' => 'Appiah',
-            'sex' => 'male',
-            'phone' => '555-1001',
-            'status' => 'active',
-        ]);
-
-        Patient::query()->create([
-            'hospital_id' => $riverside->id,
-            'mrn' => 'RGH-0002',
-            'first_name' => 'Ama',
-            'last_name' => 'Serwaa',
-            'sex' => 'female',
-            'phone' => '555-1002',
-            'status' => 'active',
-        ]);
-
-        Encounter::query()->create([
-            'hospital_id' => $riverside->id,
-            'patient_id' => $patient->id,
-            'type' => 'opd',
-            'status' => 'waiting',
-            'chief_complaint' => 'Chest pain',
-            'clinician_id' => $userModels['doctor@riverside.test']->id,
-        ]);
-
-        ServiceOrder::query()->create([
-            'hospital_id' => $riverside->id,
-            'patient_id' => $patient->id,
-            'module_key' => 'laboratory',
-            'item_name' => 'Full blood count',
-            'status' => 'pending',
-            'ordered_by' => $userModels['doctor@riverside.test']->id,
-        ]);
-
-        $invoice = Invoice::query()->create([
-            'hospital_id' => $riverside->id,
-            'patient_id' => $patient->id,
-            'number' => 'RGH-INV-0001',
-            'status' => 'issued',
-            'total' => 150,
-            'issued_at' => now(),
-        ]);
-        InvoiceItem::query()->create([
-            'invoice_id' => $invoice->id,
-            'description' => 'Consultation',
-            'quantity' => 1,
-            'unit_amount' => 150,
-            'amount' => 150,
-        ]);
-
-        $icu = Facility::withoutGlobalScope('hospital')
-            ->where('hospital_id', $lakeside->id)
-            ->where('code', 'ICU-1')
-            ->first();
-
-        Referral::query()->create([
-            'from_hospital_id' => $riverside->id,
-            'to_hospital_id' => $lakeside->id,
-            'patient_id' => $patient->id,
-            'patient_name' => $patient->fullName(),
-            'patient_reference' => $patient->mrn,
-            'reason' => 'Requires intensive monitoring after trauma',
-            'required_facility_type_id' => $typeModels['ward']->id,
-            'required_capacity' => 1,
-            'destination_facility_id' => $icu?->id,
-            'status' => 'pending',
-            'created_by' => $userModels['doctor@riverside.test']->id,
-        ]);
+        $this->call(ClinicalJourneySeeder::class);
 
         AssistanceRequest::query()->create([
             'from_hospital_id' => $riverside->id,

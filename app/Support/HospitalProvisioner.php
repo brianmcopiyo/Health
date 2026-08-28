@@ -39,9 +39,12 @@ class HospitalProvisioner
                 [
                     'name' => $name,
                     'module_key' => $moduleKey,
+                    'kind' => in_array($slug, ['billing', 'ambulance', 'reception'], true) ? 'operational' : 'clinical',
                     'is_active' => true,
                 ]
             );
         }
+
+        CatalogProvisioner::seedFor($hospital);
     }
 }

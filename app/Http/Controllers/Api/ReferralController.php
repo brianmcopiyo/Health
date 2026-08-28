@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Facility;
 use App\Models\Hospital;
+use App\Models\Encounter;
 use App\Models\Referral;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -59,7 +60,7 @@ class ReferralController extends Controller
     public function index(Request $request)
     {
         $query = Referral::query()
-            ->with(['fromHospital', 'toHospital', 'requiredFacilityType', 'destinationFacility', 'creator', 'reviewer'])
+            ->with(['fromHospital', 'toHospital', 'requiredFacilityType', 'destinationFacility', 'creator', 'reviewer', 'patient', 'encounter', 'referringClinician'])
             ->latest();
 
         if ($status = $request->string('status')->toString()) {
@@ -88,13 +89,30 @@ class ReferralController extends Controller
         $data = $request->validate([
             'to_hospital_id' => ['required', 'exists:hospitals,id'],
             'patient_id' => ['nullable', 'exists:patients,id'],
-            'patient_name' => ['required', 'string', 'max:255'],
+            'encounter_id' => ['nullable', 'exists:encounters,id'],
+            'referring_clinician_id' => ['nullable', 'exists:users,id'],
+            'patient_name' => ['nullable', 'string', 'max:255'],
             'patient_reference' => ['nullable', 'string', 'max:120'],
             'reason' => ['required', 'string'],
             'required_facility_type_id' => ['required', 'exists:facility_types,id'],
+            'required_service_id' => ['nullable', 'exists:clinical_services,id'],
             'required_capacity' => ['nullable', 'integer', 'min:1'],
             'destination_facility_id' => ['nullable', 'exists:facilities,id'],
         ]);
+
+        $encounter = ! empty($data['encounter_id']) ? Encounter::query()->with('patient')->find($data['encounter_id']) : null;
+        if ($encounter) {
+            $data['patient_id'] = $data['patient_id'] ?? $encounter->patient_id;
+            $data['referring_clinician_id'] = $data['referring_clinician_id'] ?? $encounter->clinician_id ?? $user->id;
+            $data['patient_name'] = $data['patient_name'] ?? $encounter->patient?->fullName();
+            $data['patient_reference'] = $data['patient_reference'] ?? $encounter->patient?->mrn;
+        } elseif (! empty($data['patient_id']) && empty($data['patient_name'])) {
+            $patient = \App\Models\Patient::query()->find($data['patient_id']);
+            $data['patient_name'] = $patient?->fullName();
+            $data['patient_reference'] = $data['patient_reference'] ?? $patient?->mrn;
+        }
+
+        abort_unless(($data['patient_name'] ?? null) || ($data['patient_id'] ?? null), 422, 'Patient is required.');
 
         abort_if((int) $data['to_hospital_id'] === (int) $user->hospital_id, 422, 'Select a different hospital.');
 
@@ -121,15 +139,22 @@ class ReferralController extends Controller
             'from_hospital_id' => $user->hospital_id,
             'to_hospital_id' => $destination->id,
             'patient_id' => $data['patient_id'] ?? null,
-            'patient_name' => $data['patient_name'],
-            'patient_reference' => $data['patient_reference'] ?? null,
+            'encounter_id' => $data['encounter_id'] ?? null,
+            'referring_clinician_id' => $data['referring_clinician_id'] ?? $user->id,
+            'patient_name' => $data['patient_name'] ?? optional($encounter?->patient)->fullName(),
+            'patient_reference' => $data['patient_reference'] ?? optional($encounter?->patient)->mrn,
             'reason' => $data['reason'],
             'required_facility_type_id' => $data['required_facility_type_id'],
+            'required_service_id' => $data['required_service_id'] ?? null,
             'required_capacity' => $required,
             'destination_facility_id' => $destinationFacilityId,
             'status' => 'pending',
             'created_by' => $user->id,
         ]);
+
+        if ($encounter && $encounter->isOpen()) {
+            $encounter->update(['status' => 'transferred']);
+        }
 
         return response()->json($referral->load(['fromHospital', 'toHospital', 'requiredFacilityType', 'destinationFacility', 'creator']), 201);
     }
@@ -152,10 +177,10 @@ class ReferralController extends Controller
         $isDestination = $user->isPlatformAdmin() || $referral->to_hospital_id === $user->hospital_id;
         $isOrigin = $user->isPlatformAdmin() || $referral->from_hospital_id === $user->hospital_id;
 
-        if (in_array($status, ['accepted', 'declined'], true)) {
+        if (in_array($status, ['accepted', 'declined', 'more_info'], true)) {
             $this->authorizePermission($user, 'respond', 'Referral');
             abort_unless($isDestination, 403, 'Only the destination hospital can respond.');
-            abort_unless($referral->status === 'pending', 422, 'Referral is not pending.');
+            abort_unless($referral->status === 'pending' || $referral->status === 'more_info', 422, 'Referral is not pending.');
         } elseif ($status === 'cancelled') {
             $this->authorizePermission($user, 'update', 'Referral');
             abort_unless($isOrigin, 403, 'Only the originating hospital can cancel.');
@@ -171,8 +196,7 @@ class ReferralController extends Controller
             $facilityId = $data['destination_facility_id'] ?? $referral->destination_facility_id;
             $facility = $this->claimFacility($referral, $facilityId);
             $referral->destination_facility_id = $facility->id;
-            $referral->reviewed_by = $user->id;
-            $referral->reviewed_at = now();
+            \App\Support\ReferralHandover::accept($referral, $user, $facility);
         }
 
         if (in_array($status, ['declined', 'cancelled', 'completed'], true) && $referral->destination_facility_id && $referral->status === 'accepted') {

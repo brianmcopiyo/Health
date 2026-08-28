@@ -16,24 +16,53 @@ class AmbulanceTrip extends Model
     protected $fillable = [
         'hospital_id',
         'ambulance_id',
+        'patient_id',
+        'encounter_id',
+        'referral_id',
         'driver_user_id',
         'origin',
+        'pickup_location',
         'destination',
         'destination_hospital_id',
+        'destination_facility_id',
+        'receiving_encounter_id',
         'status',
         'dispatched_at',
         'arrived_at',
         'completed_at',
+        'handover_at',
+        'handover_notes',
         'notes',
     ];
 
     protected function casts(): array
     {
         return [
+            'handover_at' => 'datetime',
             'dispatched_at' => 'datetime',
             'arrived_at' => 'datetime',
             'completed_at' => 'datetime',
         ];
+    }
+
+    public function patient(): BelongsTo
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function encounter(): BelongsTo
+    {
+        return $this->belongsTo(Encounter::class);
+    }
+
+    public function linkedReferral(): BelongsTo
+    {
+        return $this->belongsTo(Referral::class, 'referral_id');
+    }
+
+    public function destinationFacility(): BelongsTo
+    {
+        return $this->belongsTo(Facility::class, 'destination_facility_id');
     }
 
     public function hospital(): BelongsTo

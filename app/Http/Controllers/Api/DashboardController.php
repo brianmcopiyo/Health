@@ -50,7 +50,8 @@ class DashboardController extends Controller
             'facilitiesByType' => $facilitiesByType,
             'patients' => [
                 'total' => Patient::query()->count(),
-                'active' => Patient::query()->where('status', 'active')->count(),
+                'active' => Patient::query()->whereNotIn('status', ['discharged', 'deceased'])->count(),
+                'admitted' => Patient::query()->where('status', 'admitted')->count(),
             ],
             'encounters' => [
                 'waiting' => Encounter::query()->where('status', 'waiting')->count(),

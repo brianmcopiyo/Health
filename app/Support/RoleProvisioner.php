@@ -95,6 +95,7 @@ class RoleProvisioner
                 'read.Ambulance',
             ]],
             'ambulance-team' => ['Ambulance Team', 'Fleet, dispatch, and trip history', 'ambulances', [
+                'read.Patient',
                 'read.Ambulance', 'create.Ambulance', 'update.Ambulance', 'manage.Ambulance', 'dispatch.Ambulance',
                 'read.Referral', 'update.Referral',
                 'read.Emergency',

@@ -22,6 +22,11 @@ const form = ref({
   phone: '',
   address: '',
   mrn: '',
+  blood_group: '',
+  national_id: '',
+  next_of_kin_name: '',
+  next_of_kin_phone: '',
+  next_of_kin_relation: '',
 })
 
 const load = async () => {
@@ -39,6 +44,11 @@ const openCreate = () => {
     phone: '',
     address: '',
     mrn: '',
+    blood_group: '',
+    national_id: '',
+    next_of_kin_name: '',
+    next_of_kin_phone: '',
+    next_of_kin_relation: '',
   }
   formOpen.value = true
 }
@@ -54,6 +64,11 @@ const openEdit = item => {
     phone: item.phone,
     address: item.address,
     mrn: item.mrn,
+    blood_group: item.blood_group,
+    national_id: item.national_id,
+    next_of_kin_name: item.next_of_kin_name,
+    next_of_kin_phone: item.next_of_kin_phone,
+    next_of_kin_relation: item.next_of_kin_relation,
   }
   formOpen.value = true
 }
@@ -107,14 +122,23 @@ await withPageLoad(load)
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <HButton
-            v-if="ability.can('update', 'Patient')"
-            variant="ghost"
-            size="icon"
-            @click="openEdit(item)"
-          >
-            <HIcon name="edit" />
-          </HButton>
+          <div class="h-actions">
+            <HButton
+              variant="ghost"
+              size="icon"
+              :to="{ name: 'patients-id', params: { id: item.id } }"
+            >
+              <HIcon name="eye" />
+            </HButton>
+            <HButton
+              v-if="ability.can('update', 'Patient')"
+              variant="ghost"
+              size="icon"
+              @click="openEdit(item)"
+            >
+              <HIcon name="edit" />
+            </HButton>
+          </div>
         </template>
       </HTable>
     </HCard>
@@ -153,12 +177,37 @@ await withPageLoad(load)
           v-model="form.mrn"
           label="MRN (optional)"
         />
+        <HInput
+          v-model="form.national_id"
+          label="National ID"
+        />
+        <HInput
+          v-model="form.blood_group"
+          label="Blood group"
+        />
       </div>
       <HInput
         v-model="form.address"
         label="Address"
         style="margin-top:12px"
       />
+      <div
+        class="h-grid cols-3"
+        style="margin-top:12px"
+      >
+        <HInput
+          v-model="form.next_of_kin_name"
+          label="Next of kin"
+        />
+        <HInput
+          v-model="form.next_of_kin_phone"
+          label="Next of kin phone"
+        />
+        <HInput
+          v-model="form.next_of_kin_relation"
+          label="Relation"
+        />
+      </div>
       <template #actions>
         <HButton
           variant="ghost"

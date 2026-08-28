@@ -17,7 +17,12 @@ class AssistanceRequest extends Model
     protected $fillable = [
         'from_hospital_id',
         'to_hospital_id',
+        'patient_id',
+        'encounter_id',
+        'facility_type_id',
+        'facility_id',
         'type',
+        'quantity',
         'title',
         'description',
         'status',
@@ -32,6 +37,26 @@ class AssistanceRequest extends Model
         return [
             'responded_at' => 'datetime',
         ];
+    }
+
+    public function patient(): BelongsTo
+    {
+        return $this->belongsTo(Patient::class);
+    }
+
+    public function encounter(): BelongsTo
+    {
+        return $this->belongsTo(Encounter::class);
+    }
+
+    public function facilityType(): BelongsTo
+    {
+        return $this->belongsTo(FacilityType::class, 'facility_type_id');
+    }
+
+    public function facility(): BelongsTo
+    {
+        return $this->belongsTo(Facility::class);
     }
 
     public function fromHospital(): BelongsTo

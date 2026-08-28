@@ -1,4 +1,5 @@
 <script setup>
+import EncounterChart from '@/components/hms/EncounterChart.vue'
 import { labelize, statusColor } from '@/utils/status'
 
 definePage({
@@ -14,6 +15,8 @@ const encounters = ref([])
 const staff = ref([])
 const patientOpen = ref(false)
 const visitOpen = ref(false)
+const chartOpen = ref(false)
+const encounterId = ref(null)
 const saving = ref(false)
 const formError = ref('')
 const patientForm = ref({
@@ -21,6 +24,9 @@ const patientForm = ref({
   last_name: '',
   sex: null,
   phone: '',
+  next_of_kin_name: '',
+  next_of_kin_phone: '',
+  blood_group: '',
 })
 const visitForm = ref({
   patient_id: null,
@@ -45,7 +51,7 @@ const load = async () => {
 
 const openPatient = () => {
   formError.value = ''
-  patientForm.value = { first_name: '', last_name: '', sex: null, phone: '' }
+  patientForm.value = { first_name: '', last_name: '', sex: null, phone: '', next_of_kin_name: '', next_of_kin_phone: '', blood_group: '' }
   patientOpen.value = true
 }
 
@@ -67,10 +73,17 @@ const registerPatient = async () => {
 
 const createVisit = async () => {
   await wrapSave(saving, formError, async () => {
-    await $api('/encounters', { method: 'POST', body: visitForm.value })
+    const visit = await $api('/encounters', { method: 'POST', body: visitForm.value })
     visitOpen.value = false
     await load()
+    encounterId.value = visit.id
+    chartOpen.value = true
   })
+}
+
+const openChart = id => {
+  encounterId.value = id
+  chartOpen.value = true
 }
 
 await withPageLoad(load)
@@ -105,6 +118,7 @@ await withPageLoad(load)
           { title: 'Type', key: 'type' },
           { title: 'Complaint', key: 'chief_complaint' },
           { title: 'Status', key: 'status' },
+          { title: 'Actions', key: 'actions' },
         ]"
         :items="encounters"
         empty="No visits opened yet"
@@ -116,6 +130,15 @@ await withPageLoad(load)
           <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
           </HBadge>
+        </template>
+        <template #cell-actions="{ item }">
+          <HButton
+            size="sm"
+            variant="ghost"
+            @click="openChart(item.id)"
+          >
+            Open chart
+          </HButton>
         </template>
       </HTable>
     </HCard>
@@ -143,6 +166,18 @@ await withPageLoad(load)
         <HInput
           v-model="patientForm.phone"
           label="Phone"
+        />
+        <HInput
+          v-model="patientForm.blood_group"
+          label="Blood group"
+        />
+        <HInput
+          v-model="patientForm.next_of_kin_name"
+          label="Next of kin"
+        />
+        <HInput
+          v-model="patientForm.next_of_kin_phone"
+          label="Next of kin phone"
         />
       </div>
       <template #actions>
@@ -214,5 +249,11 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HModal>
+
+    <EncounterChart
+      v-model="chartOpen"
+      :encounter-id="encounterId"
+      @saved="load"
+    />
   </div>
 </template>

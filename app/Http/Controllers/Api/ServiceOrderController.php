@@ -3,7 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\ClinicalService;
+use App\Models\Encounter;
 use App\Models\ServiceOrder;
+use App\Support\ChargeLedger;
 use App\Support\ModuleCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -13,17 +16,25 @@ class ServiceOrderController extends Controller
     public function index(Request $request)
     {
         $module = $request->string('module')->toString();
-        $catalog = ModuleCatalog::find($module);
-        abort_unless($catalog, 422, 'Module is required.');
-        $this->authorizePermission($request->user(), 'read', $catalog['subject']);
-
         $query = ServiceOrder::query()
-            ->with(['patient', 'facility', 'orderedBy', 'completedBy'])
-            ->where('module_key', $module)
+            ->with(['patient', 'facility', 'orderedBy', 'completedBy', 'encounter', 'service'])
             ->latest();
+
+        if ($module) {
+            $catalog = ModuleCatalog::find($module);
+            abort_unless($catalog, 422, 'Unknown module.');
+            $this->authorizePermission($request->user(), 'read', $catalog['subject']);
+            $query->where('module_key', $module);
+        } else {
+            abort_unless($request->user()->hasPermission('read', 'Patient'), 403, 'This action is unauthorized.');
+        }
 
         if ($status = $request->string('status')->toString()) {
             $query->where('status', $status);
+        }
+
+        if ($encounterId = $request->integer('encounter_id')) {
+            $query->where('encounter_id', $encounterId);
         }
 
         return $query->get();
@@ -33,25 +44,46 @@ class ServiceOrderController extends Controller
     {
         $data = $request->validate([
             'module_key' => ['required', 'string'],
-            'patient_id' => ['required', 'exists:patients,id'],
+            'patient_id' => ['nullable', 'exists:patients,id'],
             'encounter_id' => ['nullable', 'exists:encounters,id'],
             'facility_id' => ['nullable', 'exists:facilities,id'],
-            'item_name' => ['required', 'string', 'max:255'],
+            'service_id' => ['nullable', 'exists:clinical_services,id'],
+            'item_name' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);
 
         $catalog = ModuleCatalog::find($data['module_key']);
         abort_unless($catalog, 422, 'Unknown module.');
-        $this->authorizePermission($request->user(), 'create', $catalog['subject']);
+        abort_unless(
+            $request->user()->hasPermission('create', $catalog['subject'])
+            || $request->user()->hasPermission('update', 'Opd')
+            || $request->user()->hasPermission('update', 'Emergency')
+            || $request->user()->hasPermission('update', 'Ward'),
+            403,
+            'This action is unauthorized.'
+        );
+
+        $encounter = ! empty($data['encounter_id']) ? Encounter::query()->findOrFail($data['encounter_id']) : null;
+        $service = ! empty($data['service_id']) ? ClinicalService::query()->find($data['service_id']) : null;
 
         $order = ServiceOrder::query()->create([
-            ...$data,
             'hospital_id' => $request->user()->hospital_id,
+            'patient_id' => $data['patient_id'] ?? $encounter?->patient_id,
+            'encounter_id' => $encounter?->id,
+            'facility_id' => $data['facility_id'] ?? null,
+            'service_id' => $service?->id,
             'ordered_by' => $request->user()->id,
-            'status' => 'pending',
+            'module_key' => $data['module_key'],
+            'order_type' => $data['module_key'],
+            'item_name' => $data['item_name'] ?? $service?->name,
+            'notes' => $data['notes'] ?? null,
+            'status' => 'requested',
+            'requested_at' => now(),
         ]);
 
-        return response()->json($order->load(['patient', 'facility', 'orderedBy']), 201);
+        abort_unless($order->patient_id && $order->item_name, 422, 'Patient and test or item are required.');
+
+        return response()->json($order->load(['patient', 'facility', 'orderedBy', 'service']), 201);
     }
 
     public function update(Request $request, ServiceOrder $serviceOrder)
@@ -67,12 +99,32 @@ class ServiceOrderController extends Controller
             'item_name' => ['sometimes', 'string', 'max:255'],
         ]);
 
-        if (in_array($data['status'] ?? null, ['completed', 'cancelled'], true)) {
+        $status = $data['status'] ?? null;
+        if ($status === 'collected') {
+            $data['collected_at'] = now();
+        }
+        if ($status === 'scheduled') {
+            $data['scheduled_at'] = now();
+        }
+        if ($status === 'processing' && ! $serviceOrder->collected_at && $serviceOrder->module_key === 'laboratory') {
+            $data['collected_at'] = $serviceOrder->collected_at ?: now();
+        }
+        if (in_array($status, ['completed', 'cancelled'], true)) {
             $data['completed_by'] = $request->user()->id;
+            $data['completed_at'] = now();
         }
 
         $serviceOrder->update($data);
 
-        return $serviceOrder->refresh()->load(['patient', 'facility', 'orderedBy', 'completedBy']);
+        if ($status === 'completed' && $serviceOrder->encounter_id) {
+            $code = $serviceOrder->service?->code;
+            if ($code) {
+                ChargeLedger::forService($serviceOrder->encounter, $code, 'order', $serviceOrder->id, $serviceOrder->item_name, $serviceOrder->service?->unit_price ?? 0);
+            } else {
+                ChargeLedger::post($serviceOrder->encounter, 'order', $serviceOrder->id, $serviceOrder->item_name, $serviceOrder->service?->unit_price ?? 80);
+            }
+        }
+
+        return $serviceOrder->refresh()->load(['patient', 'facility', 'orderedBy', 'completedBy', 'service', 'encounter']);
     }
 }

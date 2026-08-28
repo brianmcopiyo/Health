@@ -16,6 +16,7 @@ class Department extends Model
         'name',
         'slug',
         'module_key',
+        'kind',
         'is_active',
     ];
 
@@ -29,6 +30,16 @@ class Department extends Model
     public function hospital(): BelongsTo
     {
         return $this->belongsTo(Hospital::class);
+    }
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(ClinicalService::class);
+    }
+
+    public function staffAssignments(): HasMany
+    {
+        return $this->hasMany(StaffAssignment::class);
     }
 
     public function facilities(): HasMany

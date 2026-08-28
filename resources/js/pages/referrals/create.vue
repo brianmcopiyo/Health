@@ -1,4 +1,6 @@
 <script setup>
+import { labelize } from '@/utils/status'
+
 definePage({
   meta: {
     action: 'create',
@@ -8,19 +10,32 @@ definePage({
 
 const router = useRouter()
 const types = ref([])
+const services = ref([])
+const patients = ref([])
+const encounters = ref([])
 const matches = ref([])
 const searching = ref(false)
 const saving = ref(false)
 const formError = ref('')
 const form = ref({
+  patient_id: null,
+  encounter_id: null,
   patient_name: '',
   patient_reference: '',
   reason: '',
   required_facility_type_id: null,
+  required_service_id: null,
   required_capacity: 1,
   to_hospital_id: null,
   destination_facility_id: null,
 })
+
+const encounterOptions = computed(() => encounters.value.map(item => ({
+  title: `${labelize(item.type)} · ${item.chief_complaint || labelize(item.status)}`,
+  value: item.id,
+})))
+
+const selectedPatient = computed(() => patients.value.find(item => item.id === form.value.patient_id))
 
 const searchHospitals = async () => {
   searching.value = true
@@ -41,6 +56,24 @@ const searchHospitals = async () => {
   }
 }
 
+const onPatient = async id => {
+  form.value.encounter_id = null
+  const patient = patients.value.find(item => item.id === id)
+  form.value.patient_name = patient?.full_name || ''
+  form.value.patient_reference = patient?.mrn || ''
+  if (!id) {
+    encounters.value = []
+    return
+  }
+  encounters.value = asList(await $api('/encounters', { query: { patient_id: id } }))
+}
+
+const onEncounter = id => {
+  const encounter = encounters.value.find(item => item.id === id)
+  if (encounter?.chief_complaint && !form.value.reason)
+    form.value.reason = encounter.chief_complaint
+}
+
 const selectHospital = hospital => {
   form.value.to_hospital_id = hospital.id
   form.value.destination_facility_id = hospital.available_facilities[0]?.id ?? null
@@ -58,6 +91,8 @@ const submit = async () => {
 
 await withPageLoad(async () => {
   types.value = asList(await $api('/facility-types'))
+  services.value = asList(await $api('/clinical-services'))
+  patients.value = asList(await $api('/patients'))
   form.value.required_facility_type_id = types.value.find(type => type.slug === 'ward')?.id ?? types.value[0]?.id ?? null
   await searchHospitals()
 })
@@ -67,7 +102,7 @@ await withPageLoad(async () => {
   <div>
     <HPage
       title="Create referral"
-      subtitle="Find a hospital with the required remaining capacity"
+      subtitle="Start from a patient encounter, then match a hospital with the required capacity"
     >
       <HButton
         variant="ghost"
@@ -87,15 +122,27 @@ await withPageLoad(async () => {
         {{ formError }}
       </div>
       <div class="h-grid cols-2">
-        <HInput
-          v-model="form.patient_name"
-          label="Patient name"
+        <HSelect
+          v-model="form.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+          @update:model-value="onPatient"
         />
-        <HInput
-          v-model="form.patient_reference"
-          label="Patient reference"
+        <HSelect
+          v-model="form.encounter_id"
+          :items="encounterOptions"
+          label="Source encounter"
+          @update:model-value="onEncounter"
         />
       </div>
+      <p
+        v-if="selectedPatient"
+        style="color:var(--muted);font-size:13px"
+      >
+        {{ selectedPatient.mrn }} · {{ selectedPatient.phone || 'No phone' }}
+      </p>
       <HTextarea
         v-model="form.reason"
         label="Clinical reason"
@@ -112,6 +159,13 @@ await withPageLoad(async () => {
           item-value="id"
           label="Required facility"
           @update:model-value="searchHospitals"
+        />
+        <HSelect
+          v-model="form.required_service_id"
+          :items="services"
+          item-title="name"
+          item-value="id"
+          label="Required service"
         />
         <HInput
           v-model="form.required_capacity"
@@ -169,7 +223,7 @@ await withPageLoad(async () => {
           Cancel
         </HButton>
         <HButton
-          :disabled="saving || !form.to_hospital_id || !form.patient_name || !form.reason"
+          :disabled="saving || !form.to_hospital_id || !form.patient_id || !form.reason"
           @click="submit"
         >
           Create referral

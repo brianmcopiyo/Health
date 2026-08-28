@@ -1,4 +1,5 @@
 <script setup>
+import EncounterChart from '@/components/hms/EncounterChart.vue'
 import FacilityBoard from '@/components/hms/FacilityBoard.vue'
 import { labelize, statusColor } from '@/utils/status'
 
@@ -11,19 +12,19 @@ definePage({
 
 const ability = useAbility()
 const encounters = ref([])
-const staff = ref([])
+const mine = ref([])
+const encounterId = ref(null)
+const chartOpen = ref(false)
 
 const load = async () => {
-  encounters.value = asList(await $api('/encounters', { query: { type: 'opd' } }))
-  staff.value = asList(await $api('/users/directory'))
+  encounters.value = asList(await $api('/encounters', { query: { type: 'opd', open: true } }))
+  const workspace = await $api('/workspace')
+  mine.value = asList(workspace?.my_encounters)
 }
 
-const updateVisit = async (encounter, status) => {
-  await $api(`/encounters/${encounter.id}`, {
-    method: 'PATCH',
-    body: { status },
-  })
-  await load()
+const openChart = id => {
+  encounterId.value = id
+  chartOpen.value = true
 }
 
 await withPageLoad(load)
@@ -45,6 +46,40 @@ onBeforeUnmount(() => {
       title="OPD / Consultation"
       subject="Opd"
     />
+
+    <HCard
+      title="My open encounters"
+      style="margin-top:18px"
+    >
+      <HTable
+        :headers="[
+          { title: 'Patient', key: 'patient.first_name' },
+          { title: 'Type', key: 'type' },
+          { title: 'Complaint', key: 'chief_complaint' },
+          { title: 'Status', key: 'status' },
+          { title: 'Actions', key: 'actions' },
+        ]"
+        :items="mine"
+        empty="No patients currently assigned to you"
+      >
+        <template #cell-patient.first_name="{ item }">
+          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+        </template>
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
+            {{ labelize(item.status) }}
+          </HBadge>
+        </template>
+        <template #cell-actions="{ item }">
+          <HButton
+            size="sm"
+            @click="openChart(item.id)"
+          >
+            Open chart
+          </HButton>
+        </template>
+      </HTable>
+    </HCard>
 
     <HCard
       title="Consultation queue"
@@ -70,25 +105,21 @@ onBeforeUnmount(() => {
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              v-if="ability.can('update', 'Opd') && item.status === 'waiting'"
-              size="sm"
-              @click="updateVisit(item, 'in_progress')"
-            >
-              Start consult
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Opd') && item.status !== 'completed'"
-              variant="ghost"
-              size="sm"
-              @click="updateVisit(item, 'completed')"
-            >
-              Complete
-            </HButton>
-          </div>
+          <HButton
+            v-if="ability.can('update', 'Opd')"
+            size="sm"
+            @click="openChart(item.id)"
+          >
+            Open chart
+          </HButton>
         </template>
       </HTable>
     </HCard>
+
+    <EncounterChart
+      v-model="chartOpen"
+      :encounter-id="encounterId"
+      @saved="load"
+    />
   </div>
 </template>
