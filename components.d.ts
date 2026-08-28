@@ -27,6 +27,7 @@ declare module 'vue' {
     HNumber: typeof import('./resources/js/components/ui/HNumber.vue')['default']
     HOffcanvas: typeof import('./resources/js/components/ui/HOffcanvas.vue')['default']
     HPage: typeof import('./resources/js/components/ui/HPage.vue')['default']
+    HPager: typeof import('./resources/js/components/ui/HPager.vue')['default']
     HRadioGroup: typeof import('./resources/js/components/ui/HRadioGroup.vue')['default']
     HSegmented: typeof import('./resources/js/components/ui/HSegmented.vue')['default']
     HSelect: typeof import('./resources/js/components/ui/HSelect.vue')['default']

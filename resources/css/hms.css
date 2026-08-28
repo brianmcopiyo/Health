@@ -847,6 +847,16 @@ fieldset.h-grid {
 
 .h-stack { display: grid; gap: 12px; }
 .h-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.h-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 4px 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
 .h-metric {
   display: flex;
   justify-content: space-between;

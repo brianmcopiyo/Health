@@ -11,6 +11,9 @@ definePage({
 
 const ability = useAbility()
 const patients = ref([])
+const meta = ref(asPageMeta())
+const page = ref(1)
+const search = ref('')
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
@@ -31,7 +34,9 @@ const form = ref({
 })
 
 const load = async () => {
-  patients.value = asList(await $api('/patients'))
+  const payload = await $api('/patients', { query: { page: page.value, q: search.value || undefined } })
+  patients.value = asList(payload)
+  meta.value = asPageMeta(payload)
 }
 
 const openCreate = () => {
@@ -97,6 +102,13 @@ const today = new Date().toISOString().slice(0, 10)
       title="Patients"
       subtitle="Hospital patient register"
     >
+      <HInput
+        v-model="search"
+        placeholder="Search MRN, name or phone"
+        icon="search"
+        style="min-width:240px"
+        @keyup.enter="page = 1; load()"
+      />
       <HButton
         v-if="ability.can('create', 'Patient')"
         @click="openCreate"
@@ -144,6 +156,10 @@ const today = new Date().toISOString().slice(0, 10)
           </div>
         </template>
       </HTable>
+      <HPager
+        :meta="meta"
+        @update:page="value => { page = value; load() }"
+      />
     </HCard>
 
     <HModal

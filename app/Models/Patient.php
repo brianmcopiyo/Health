@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Concerns\BelongsToHospital;
 use App\Support\PatientTimeline;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -76,6 +77,29 @@ class Patient extends Model
     public function allergies(): HasMany
     {
         return $this->hasMany(PatientAllergy::class);
+    }
+
+    public function currentAllergies(): HasMany
+    {
+        return $this->hasMany(PatientAllergy::class)->where('is_current', true);
+    }
+
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        $term = trim((string) $term);
+        if ($term === '') {
+            return $query;
+        }
+
+        $prefix = addcslashes($term, '%_').'%';
+
+        return $query->where(function (Builder $builder) use ($term, $prefix) {
+            $builder->where('mrn', 'like', $prefix)
+                ->orWhere('phone', 'like', $prefix)
+                ->orWhere('national_id', $term)
+                ->orWhere('first_name', 'like', $prefix)
+                ->orWhere('last_name', 'like', $prefix);
+        });
     }
 
     public function conditions(): HasMany

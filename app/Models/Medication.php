@@ -36,7 +36,9 @@ class Medication extends Model
 
     public function adjustStock(int $delta): void
     {
-        $this->stock_qty = max(0, $this->stock_qty + $delta);
-        $this->save();
+        $row = static::withoutGlobalScope('hospital')->whereKey($this->id)->lockForUpdate()->firstOrFail();
+        $row->stock_qty = max(0, $row->stock_qty + $delta);
+        $row->save();
+        $this->stock_qty = $row->stock_qty;
     }
 }

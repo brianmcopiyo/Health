@@ -12,6 +12,7 @@ use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\Referral;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
@@ -19,72 +20,100 @@ class DashboardController extends Controller
     {
         $user = $request->user();
 
-        $facilityQuery = Facility::query();
-        $referralQuery = Referral::query();
-        $assistanceQuery = AssistanceRequest::query();
-        $ambulanceQuery = Ambulance::query();
+        $facilityRow = Facility::query()
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available,
+                SUM(CASE WHEN status = 'occupied' THEN 1 ELSE 0 END) as occupied,
+                SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance,
+                SUM(CASE WHEN status = 'reserved' THEN 1 ELSE 0 END) as reserved,
+                SUM(CASE WHEN status = 'unavailable' THEN 1 ELSE 0 END) as unavailable,
+                SUM(capacity) as capacity,
+                SUM(current_utilization) as utilization
+            ")
+            ->first();
 
-        $facilityStats = [
-            'total' => (clone $facilityQuery)->count(),
-            'available' => (clone $facilityQuery)->where('status', 'available')->count(),
-            'occupied' => (clone $facilityQuery)->where('status', 'occupied')->count(),
-            'maintenance' => (clone $facilityQuery)->where('status', 'maintenance')->count(),
-            'reserved' => (clone $facilityQuery)->where('status', 'reserved')->count(),
-            'unavailable' => (clone $facilityQuery)->where('status', 'unavailable')->count(),
-            'capacity' => (clone $facilityQuery)->sum('capacity'),
-            'utilization' => (clone $facilityQuery)->sum('current_utilization'),
-        ];
+        $patientCounts = $this->countsBy(Patient::query(), 'status');
+        $encounterStatus = $this->countsBy(Encounter::query(), 'status');
+        $openByType = Encounter::query()
+            ->select('type', DB::raw('COUNT(*) as aggregate'))
+            ->whereIn('status', ['waiting', 'in_progress'])
+            ->groupBy('type')
+            ->pluck('aggregate', 'type');
+        $invoiceCounts = $this->countsBy(Invoice::query(), 'status');
+        $referralCounts = $this->countsBy(Referral::query(), 'status');
+        $assistanceCounts = $this->countsBy(AssistanceRequest::query(), 'status');
+        $ambulanceCounts = $this->countsBy(Ambulance::query(), 'status');
 
-        $facilitiesByType = Facility::query()
-            ->selectRaw('facility_type_id, count(*) as total, sum(capacity) as capacity, sum(current_utilization) as utilization')
-            ->with('type:id,name,slug,icon')
-            ->groupBy('facility_type_id')
-            ->get();
+        $incomingPending = $user->hospital_id
+            ? Referral::query()->where('to_hospital_id', $user->hospital_id)->where('status', 'pending')->count()
+            : (int) ($referralCounts['pending'] ?? 0);
 
         return response()->json([
             'hospital' => $user->isPlatformAdmin()
                 ? ['id' => null, 'name' => 'Network', 'code' => 'NET']
                 : $user->hospital,
             'networkHospitals' => $user->isPlatformAdmin() ? Hospital::query()->where('is_active', true)->count() : null,
-            'facilities' => $facilityStats,
-            'facilitiesByType' => $facilitiesByType,
+            'facilities' => [
+                'total' => (int) ($facilityRow->total ?? 0),
+                'available' => (int) ($facilityRow->available ?? 0),
+                'occupied' => (int) ($facilityRow->occupied ?? 0),
+                'maintenance' => (int) ($facilityRow->maintenance ?? 0),
+                'reserved' => (int) ($facilityRow->reserved ?? 0),
+                'unavailable' => (int) ($facilityRow->unavailable ?? 0),
+                'capacity' => (int) ($facilityRow->capacity ?? 0),
+                'utilization' => (int) ($facilityRow->utilization ?? 0),
+            ],
+            'facilitiesByType' => Facility::query()
+                ->selectRaw('facility_type_id, count(*) as total, sum(capacity) as capacity, sum(current_utilization) as utilization')
+                ->with('type:id,name,slug,icon')
+                ->groupBy('facility_type_id')
+                ->get(),
             'patients' => [
-                'total' => Patient::query()->count(),
-                'active' => Patient::query()->whereNotIn('status', ['discharged', 'deceased'])->count(),
-                'admitted' => Patient::query()->where('status', 'admitted')->count(),
+                'total' => array_sum($patientCounts),
+                'active' => array_sum(array_filter($patientCounts, fn ($count, $status) => ! in_array($status, ['discharged', 'deceased'], true), ARRAY_FILTER_USE_BOTH)),
+                'admitted' => (int) ($patientCounts['admitted'] ?? 0),
             ],
             'encounters' => [
-                'waiting' => Encounter::query()->where('status', 'waiting')->count(),
-                'in_progress' => Encounter::query()->where('status', 'in_progress')->count(),
-                'opd' => Encounter::query()->where('type', 'opd')->whereIn('status', ['waiting', 'in_progress'])->count(),
-                'emergency' => Encounter::query()->where('type', 'emergency')->whereIn('status', ['waiting', 'in_progress'])->count(),
+                'waiting' => (int) ($encounterStatus['waiting'] ?? 0),
+                'in_progress' => (int) ($encounterStatus['in_progress'] ?? 0),
+                'opd' => (int) ($openByType['opd'] ?? 0),
+                'emergency' => (int) ($openByType['emergency'] ?? 0),
             ],
             'billing' => [
-                'draft' => Invoice::query()->where('status', 'draft')->count(),
-                'issued' => Invoice::query()->where('status', 'issued')->count(),
-                'paid' => Invoice::query()->where('status', 'paid')->count(),
-                'total' => Invoice::query()->sum('total'),
+                'draft' => (int) ($invoiceCounts['draft'] ?? 0),
+                'issued' => (int) ($invoiceCounts['issued'] ?? 0),
+                'paid' => (int) ($invoiceCounts['paid'] ?? 0),
+                'total' => (int) Invoice::query()->sum('total'),
             ],
             'referrals' => [
-                'total' => (clone $referralQuery)->count(),
-                'pending' => (clone $referralQuery)->where('status', 'pending')->count(),
-                'accepted' => (clone $referralQuery)->where('status', 'accepted')->count(),
-                'in_transit' => (clone $referralQuery)->where('status', 'in_transit')->count(),
-                'incoming' => $user->hospital_id
-                    ? (clone $referralQuery)->where('to_hospital_id', $user->hospital_id)->where('status', 'pending')->count()
-                    : (clone $referralQuery)->where('status', 'pending')->count(),
+                'total' => array_sum($referralCounts),
+                'pending' => (int) ($referralCounts['pending'] ?? 0),
+                'accepted' => (int) ($referralCounts['accepted'] ?? 0),
+                'in_transit' => (int) ($referralCounts['in_transit'] ?? 0),
+                'incoming' => $incomingPending,
             ],
             'assistance' => [
-                'total' => (clone $assistanceQuery)->count(),
-                'pending' => (clone $assistanceQuery)->where('status', 'pending')->count(),
-                'accepted' => (clone $assistanceQuery)->where('status', 'accepted')->count(),
+                'total' => array_sum($assistanceCounts),
+                'pending' => (int) ($assistanceCounts['pending'] ?? 0),
+                'accepted' => (int) ($assistanceCounts['accepted'] ?? 0),
             ],
             'ambulances' => [
-                'total' => (clone $ambulanceQuery)->count(),
-                'available' => (clone $ambulanceQuery)->where('status', 'available')->count(),
-                'on_trip' => (clone $ambulanceQuery)->where('status', 'on_trip')->count(),
-                'maintenance' => (clone $ambulanceQuery)->where('status', 'maintenance')->count(),
+                'total' => array_sum($ambulanceCounts),
+                'available' => (int) ($ambulanceCounts['available'] ?? 0),
+                'on_trip' => (int) ($ambulanceCounts['on_trip'] ?? 0),
+                'maintenance' => (int) ($ambulanceCounts['maintenance'] ?? 0),
             ],
         ]);
+    }
+
+    private function countsBy($query, string $column): array
+    {
+        return (clone $query)
+            ->select($column, DB::raw('COUNT(*) as aggregate'))
+            ->groupBy($column)
+            ->pluck('aggregate', $column)
+            ->map(fn ($value) => (int) $value)
+            ->all();
     }
 }

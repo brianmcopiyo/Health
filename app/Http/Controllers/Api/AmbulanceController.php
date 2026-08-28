@@ -9,7 +9,12 @@ use App\Models\AmbulanceTrip;
 use App\Models\Hospital;
 use App\Models\Referral;
 use App\Models\User;
+use App\Support\Audit;
+use App\Support\ChargeLedger;
+use App\Support\QueryList;
+use App\Support\TenantRules;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class AmbulanceController extends Controller
@@ -24,7 +29,10 @@ class AmbulanceController extends Controller
             $query->where('status', $status);
         }
 
-        return $query->get()->map(fn (Ambulance $ambulance) => $this->serialize($ambulance));
+        $paginator = QueryList::paginate($query, $request);
+        $paginator->getCollection()->transform(fn (Ambulance $ambulance) => $this->serialize($ambulance));
+
+        return $paginator;
     }
 
     public function store(Request $request)
@@ -64,6 +72,7 @@ class AmbulanceController extends Controller
     public function destroy(Ambulance $ambulance)
     {
         abort_if($ambulance->status === 'on_trip', 422, 'Complete the active trip before removing this ambulance.');
+        abort_if($ambulance->trips()->exists(), 422, 'This ambulance has trip history and cannot be deleted.');
 
         $ambulance->delete();
 
@@ -83,8 +92,8 @@ class AmbulanceController extends Controller
             'destination_facility_id' => ['nullable', 'exists:facilities,id'],
             'driver_user_id' => ['nullable', 'exists:users,id'],
             'referral_id' => ['nullable', 'exists:referrals,id'],
-            'patient_id' => ['nullable', 'exists:patients,id'],
-            'encounter_id' => ['nullable', 'exists:encounters,id'],
+            'patient_id' => ['nullable', TenantRules::inHospital('patients')],
+            'encounter_id' => ['nullable', TenantRules::inHospital('encounters')],
             'notes' => ['nullable', 'string'],
         ]);
 
@@ -94,36 +103,45 @@ class AmbulanceController extends Controller
 
         $referral = ! empty($data['referral_id']) ? Referral::query()->find($data['referral_id']) : null;
 
-        $trip = AmbulanceTrip::query()->create([
-            'hospital_id' => $ambulance->hospital_id,
-            'ambulance_id' => $ambulance->id,
-            'patient_id' => $data['patient_id'] ?? $referral?->patient_id,
-            'encounter_id' => $data['encounter_id'] ?? $referral?->encounter_id,
-            'referral_id' => $referral?->id,
-            'driver_user_id' => $data['driver_user_id'] ?? null,
-            'origin' => $data['origin'],
-            'pickup_location' => $data['pickup_location'] ?? $data['origin'],
-            'destination' => $data['destination'],
-            'destination_hospital_id' => $data['destination_hospital_id'] ?? $referral?->to_hospital_id,
-            'destination_facility_id' => $data['destination_facility_id'] ?? $referral?->destination_facility_id,
-            'status' => 'dispatched',
-            'dispatched_at' => now(),
-            'notes' => $data['notes'] ?? null,
-        ]);
+        $trip = DB::transaction(function () use ($ambulance, $data, $referral, $user) {
+            $ambulance = Ambulance::query()->lockForUpdate()->findOrFail($ambulance->id);
+            abort_unless($ambulance->status === 'available', 422, 'Ambulance is not available for dispatch.');
 
-        $ambulance->update(['status' => 'on_trip']);
-
-        if ($referral) {
-            abort_unless(
-                $referral->from_hospital_id === $user->hospital_id || $user->isPlatformAdmin(),
-                403,
-                'This action is unauthorized.'
-            );
-            $referral->update([
-                'ambulance_trip_id' => $trip->id,
-                'status' => $referral->status === 'accepted' ? 'in_transit' : $referral->status,
+            $trip = AmbulanceTrip::query()->create([
+                'hospital_id' => $ambulance->hospital_id,
+                'ambulance_id' => $ambulance->id,
+                'patient_id' => $data['patient_id'] ?? $referral?->patient_id,
+                'encounter_id' => $data['encounter_id'] ?? $referral?->encounter_id,
+                'referral_id' => $referral?->id,
+                'driver_user_id' => $data['driver_user_id'] ?? null,
+                'origin' => $data['origin'],
+                'pickup_location' => $data['pickup_location'] ?? $data['origin'],
+                'destination' => $data['destination'],
+                'destination_hospital_id' => $data['destination_hospital_id'] ?? $referral?->to_hospital_id,
+                'destination_facility_id' => $data['destination_facility_id'] ?? $referral?->destination_facility_id,
+                'status' => 'dispatched',
+                'dispatched_at' => now(),
+                'notes' => $data['notes'] ?? null,
             ]);
-        }
+
+            $ambulance->update(['status' => 'on_trip']);
+
+            if ($referral) {
+                abort_unless(
+                    $referral->from_hospital_id === $user->hospital_id || $user->isPlatformAdmin(),
+                    403,
+                    'This action is unauthorized.'
+                );
+                $referral->update([
+                    'ambulance_trip_id' => $trip->id,
+                    'status' => $referral->status === 'accepted' ? 'in_transit' : $referral->status,
+                ]);
+            }
+
+            Audit::record('dispatched', $trip, ['ambulance_id' => $ambulance->id]);
+
+            return $trip;
+        });
 
         return response()->json($trip->load(['ambulance', 'driver', 'destinationHospital', 'patient', 'encounter']), 201);
     }
@@ -142,7 +160,7 @@ class AmbulanceController extends Controller
             $query->whereIn('status', ['dispatched', 'en_route', 'arrived']);
         }
 
-        return $query->get();
+        return QueryList::paginate($query, $request);
     }
 
     public function updateTripStatus(Request $request, AmbulanceTrip $trip)
@@ -155,35 +173,41 @@ class AmbulanceController extends Controller
 
         abort_unless($trip->isActive() || $data['status'] === 'cancelled', 422, 'Trip is already closed.');
 
-        $trip->status = $data['status'];
-        $trip->notes = $data['notes'] ?? $trip->notes;
+        DB::transaction(function () use ($trip, $data) {
+            $trip = AmbulanceTrip::query()->lockForUpdate()->findOrFail($trip->id);
+            abort_unless($trip->isActive() || $data['status'] === 'cancelled', 422, 'Trip is already closed.');
 
-        if ($data['status'] === 'arrived') {
-            $trip->arrived_at = now();
-        }
+            $trip->status = $data['status'];
+            $trip->notes = $data['notes'] ?? $trip->notes;
 
-        if (in_array($data['status'], ['completed', 'cancelled'], true)) {
-            $trip->completed_at = now();
-            $trip->ambulance->update(['status' => 'available']);
-        }
-
-        if ($data['status'] === 'completed') {
-            $trip->handover_at = now();
-            $trip->handover_notes = $data['handover_notes'] ?? $trip->handover_notes;
-            if ($trip->encounter_id) {
-                \App\Support\ChargeLedger::forService($trip->encounter, 'AMB-TRP', 'ambulance', $trip->id);
+            if ($data['status'] === 'arrived') {
+                $trip->arrived_at = now();
             }
-            if ($trip->referral_id) {
-                $referral = Referral::query()->find($trip->referral_id);
-                if ($referral && $referral->status === 'in_transit') {
-                    $referral->update(['status' => 'completed']);
+
+            if (in_array($data['status'], ['completed', 'cancelled'], true)) {
+                $trip->completed_at = now();
+                $trip->ambulance->update(['status' => 'available']);
+            }
+
+            if ($data['status'] === 'completed') {
+                $trip->handover_at = now();
+                $trip->handover_notes = $data['handover_notes'] ?? $trip->handover_notes;
+                if ($trip->encounter_id) {
+                    ChargeLedger::forService($trip->encounter, 'AMB-TRP', 'ambulance', $trip->id);
+                }
+                if ($trip->referral_id) {
+                    $referral = Referral::query()->find($trip->referral_id);
+                    if ($referral && $referral->status === 'in_transit') {
+                        $referral->update(['status' => 'completed']);
+                    }
                 }
             }
-        }
 
-        $trip->save();
+            $trip->save();
+            Audit::record('status_changed', $trip, ['to' => $data['status']]);
+        });
 
-        return $trip->load(['ambulance', 'driver', 'destinationHospital']);
+        return $trip->refresh()->load(['ambulance', 'driver', 'destinationHospital']);
     }
 
     private function validatedVehicle(Request $request, ?Ambulance $ambulance = null): array

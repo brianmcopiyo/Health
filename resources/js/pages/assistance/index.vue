@@ -55,7 +55,7 @@ const load = async () => {
 const openCreate = async () => {
   formError.value = ''
   hospitals.value = asList(await $api('/network/hospitals'))
-  patients.value = asList(await $api('/patients').catch(() => []))
+  patients.value = asList(await $api('/patients', { query: compactListQuery() }).catch(() => []))
   types.value = asList(await $api('/facility-types').catch(() => []))
   encounters.value = []
   form.value = {

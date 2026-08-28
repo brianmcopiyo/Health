@@ -16,7 +16,7 @@ const saving = ref(false)
 const formError = ref('')
 
 const load = async () => {
-  prescriptions.value = asList(await $api('/prescriptions', { query: { queue: true } }))
+  prescriptions.value = asList(await $api('/prescriptions', { query: { queue: true, per_page: 50 } }))
   medications.value = asList(await $api('/medications'))
 }
 

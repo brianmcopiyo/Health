@@ -7,7 +7,12 @@ use App\Models\Facility;
 use App\Models\Hospital;
 use App\Models\Encounter;
 use App\Models\Referral;
+use App\Support\Audit;
+use App\Support\QueryList;
+use App\Support\ReferralHandover;
+use App\Support\TenantRules;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ReferralController extends Controller
@@ -23,14 +28,12 @@ class ReferralController extends Controller
         $originId = $request->user()->hospital_id;
 
         $facilities = Facility::withoutGlobalScope('hospital')
-            ->with('hospital')
+            ->with('hospital:id,name,code,city,region,is_active')
             ->where('facility_type_id', $data['facility_type_id'])
-            ->where('status', 'available')
+            ->hasRemainingCapacity($required)
+            ->whereHas('hospital', fn ($hospital) => $hospital->where('is_active', true))
             ->when($originId, fn ($query) => $query->where('hospital_id', '!=', $originId))
-            ->get()
-            ->filter(function (Facility $facility) use ($required) {
-                return $facility->hospital?->is_active && $facility->remainingCapacity() >= $required;
-            });
+            ->get(['id', 'hospital_id', 'name', 'code', 'status', 'capacity', 'current_utilization', 'facility_type_id']);
 
         return $facilities
             ->groupBy('hospital_id')
@@ -60,7 +63,17 @@ class ReferralController extends Controller
     public function index(Request $request)
     {
         $query = Referral::query()
-            ->with(['fromHospital', 'toHospital', 'requiredFacilityType', 'destinationFacility', 'creator', 'reviewer', 'patient', 'encounter', 'referringClinician'])
+            ->with([
+                'fromHospital:id,name,code,city,region',
+                'toHospital:id,name,code,city,region',
+                'requiredFacilityType:id,name,slug',
+                'destinationFacility:id,name,code,status',
+                'creator:id,name',
+                'reviewer:id,name',
+                'patient:id,mrn,first_name,last_name,status',
+                'encounter:id,type,status,chief_complaint',
+                'referringClinician:id,name',
+            ])
             ->latest();
 
         if ($status = $request->string('status')->toString()) {
@@ -77,7 +90,7 @@ class ReferralController extends Controller
             }
         }
 
-        return $query->get();
+        return QueryList::paginate($query, $request);
     }
 
     public function store(Request $request)
@@ -88,26 +101,26 @@ class ReferralController extends Controller
 
         $data = $request->validate([
             'to_hospital_id' => ['required', 'exists:hospitals,id'],
-            'patient_id' => ['nullable', 'exists:patients,id'],
-            'encounter_id' => ['nullable', 'exists:encounters,id'],
+            'patient_id' => ['nullable', TenantRules::inHospital('patients')],
+            'encounter_id' => ['nullable', TenantRules::inHospital('encounters')],
             'referring_clinician_id' => ['nullable', 'exists:users,id'],
             'patient_name' => ['nullable', 'string', 'max:255'],
             'patient_reference' => ['nullable', 'string', 'max:120'],
             'reason' => ['required', 'string'],
             'required_facility_type_id' => ['required', 'exists:facility_types,id'],
-            'required_service_id' => ['nullable', 'exists:clinical_services,id'],
+            'required_service_id' => ['nullable', TenantRules::inHospital('clinical_services')],
             'required_capacity' => ['nullable', 'integer', 'min:1'],
             'destination_facility_id' => ['nullable', 'exists:facilities,id'],
         ]);
 
-        $encounter = ! empty($data['encounter_id']) ? Encounter::query()->with('patient')->find($data['encounter_id']) : null;
+        $encounter = ! empty($data['encounter_id']) ? Encounter::query()->with('patient:id,first_name,last_name,mrn')->find($data['encounter_id']) : null;
         if ($encounter) {
             $data['patient_id'] = $data['patient_id'] ?? $encounter->patient_id;
             $data['referring_clinician_id'] = $data['referring_clinician_id'] ?? $encounter->clinician_id ?? $user->id;
             $data['patient_name'] = $data['patient_name'] ?? $encounter->patient?->fullName();
             $data['patient_reference'] = $data['patient_reference'] ?? $encounter->patient?->mrn;
         } elseif (! empty($data['patient_id']) && empty($data['patient_name'])) {
-            $patient = \App\Models\Patient::query()->find($data['patient_id']);
+            $patient = \App\Models\Patient::query()->find($data['patient_id'], ['id', 'first_name', 'last_name', 'mrn']);
             $data['patient_name'] = $patient?->fullName();
             $data['patient_reference'] = $data['patient_reference'] ?? $patient?->mrn;
         }
@@ -123,10 +136,8 @@ class ReferralController extends Controller
         $eligible = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $destination->id)
             ->where('facility_type_id', $data['required_facility_type_id'])
-            ->where('status', 'available')
-            ->get()
-            ->filter(fn (Facility $facility) => $facility->remainingCapacity() >= $required)
-            ->values();
+            ->hasRemainingCapacity($required)
+            ->get(['id', 'hospital_id', 'capacity', 'current_utilization', 'status']);
 
         abort_if($eligible->isEmpty(), 422, 'Destination hospital does not have the required capacity.');
 
@@ -135,26 +146,32 @@ class ReferralController extends Controller
             abort_unless($eligible->contains('id', $destinationFacilityId), 422, 'Selected facility is not available.');
         }
 
-        $referral = Referral::query()->create([
-            'from_hospital_id' => $user->hospital_id,
-            'to_hospital_id' => $destination->id,
-            'patient_id' => $data['patient_id'] ?? null,
-            'encounter_id' => $data['encounter_id'] ?? null,
-            'referring_clinician_id' => $data['referring_clinician_id'] ?? $user->id,
-            'patient_name' => $data['patient_name'] ?? optional($encounter?->patient)->fullName(),
-            'patient_reference' => $data['patient_reference'] ?? optional($encounter?->patient)->mrn,
-            'reason' => $data['reason'],
-            'required_facility_type_id' => $data['required_facility_type_id'],
-            'required_service_id' => $data['required_service_id'] ?? null,
-            'required_capacity' => $required,
-            'destination_facility_id' => $destinationFacilityId,
-            'status' => 'pending',
-            'created_by' => $user->id,
-        ]);
+        $referral = DB::transaction(function () use ($user, $destination, $data, $required, $destinationFacilityId, $encounter) {
+            $referral = Referral::query()->create([
+                'from_hospital_id' => $user->hospital_id,
+                'to_hospital_id' => $destination->id,
+                'patient_id' => $data['patient_id'] ?? null,
+                'encounter_id' => $data['encounter_id'] ?? null,
+                'referring_clinician_id' => $data['referring_clinician_id'] ?? $user->id,
+                'patient_name' => $data['patient_name'] ?? optional($encounter?->patient)->fullName(),
+                'patient_reference' => $data['patient_reference'] ?? optional($encounter?->patient)->mrn,
+                'reason' => $data['reason'],
+                'required_facility_type_id' => $data['required_facility_type_id'],
+                'required_service_id' => $data['required_service_id'] ?? null,
+                'required_capacity' => $required,
+                'destination_facility_id' => $destinationFacilityId,
+                'status' => 'pending',
+                'created_by' => $user->id,
+            ]);
 
-        if ($encounter && $encounter->isOpen()) {
-            $encounter->update(['status' => 'transferred']);
-        }
+            if ($encounter && $encounter->isOpen()) {
+                $encounter->update(['status' => 'transferred']);
+            }
+
+            Audit::record('created', $referral, ['to_hospital_id' => $destination->id]);
+
+            return $referral;
+        });
 
         return response()->json($referral->load(['fromHospital', 'toHospital', 'requiredFacilityType', 'destinationFacility', 'creator']), 201);
     }
@@ -192,41 +209,45 @@ class ReferralController extends Controller
             abort(422, 'Unsupported status transition.');
         }
 
-        if ($status === 'accepted') {
-            $facilityId = $data['destination_facility_id'] ?? $referral->destination_facility_id;
-            $facility = $this->claimFacility($referral, $facilityId);
-            $referral->destination_facility_id = $facility->id;
-            \App\Support\ReferralHandover::accept($referral, $user, $facility);
-        }
+        DB::transaction(function () use ($referral, $data, $status, $user) {
+            $previous = $referral->status;
 
-        if (in_array($status, ['declined', 'cancelled', 'completed'], true) && $referral->destination_facility_id && $referral->status === 'accepted') {
-            $this->releaseFacility($referral);
-        }
+            if ($status === 'accepted') {
+                $facilityId = $data['destination_facility_id'] ?? $referral->destination_facility_id;
+                $facility = $this->claimFacility($referral, $facilityId);
+                $referral->destination_facility_id = $facility->id;
+                ReferralHandover::accept($referral, $user, $facility);
+            }
 
-        if ($status === 'declined') {
-            $referral->reviewed_by = $user->id;
-            $referral->reviewed_at = now();
-        }
+            if (in_array($status, ['declined', 'cancelled', 'completed'], true) && $referral->destination_facility_id && $referral->status === 'accepted') {
+                $this->releaseFacility($referral);
+            }
 
-        $referral->status = $status;
-        $referral->response_notes = $data['response_notes'] ?? $referral->response_notes;
-        $referral->save();
+            if ($status === 'declined') {
+                $referral->reviewed_by = $user->id;
+                $referral->reviewed_at = now();
+            }
+
+            $referral->status = $status;
+            $referral->response_notes = $data['response_notes'] ?? $referral->response_notes;
+            $referral->save();
+            Audit::record('status_changed', $referral, ['from' => $previous, 'to' => $status]);
+        });
 
         return $referral->load(['fromHospital', 'toHospital', 'requiredFacilityType', 'destinationFacility', 'creator', 'reviewer']);
     }
 
     private function claimFacility(Referral $referral, ?int $facilityId): Facility
     {
-        $candidates = Facility::withoutGlobalScope('hospital')
+        $query = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $referral->to_hospital_id)
             ->where('facility_type_id', $referral->required_facility_type_id)
-            ->where('status', 'available')
-            ->get()
-            ->filter(fn (Facility $item) => $item->remainingCapacity() >= $referral->required_capacity);
+            ->hasRemainingCapacity($referral->required_capacity)
+            ->lockForUpdate();
 
         $facility = $facilityId
-            ? $candidates->firstWhere('id', $facilityId)
-            : $candidates->sortByDesc('capacity')->first();
+            ? (clone $query)->where('id', $facilityId)->first()
+            : $query->orderByDesc('capacity')->first();
 
         abort_unless($facility, 422, 'Required facility is no longer available.');
 
@@ -237,7 +258,7 @@ class ReferralController extends Controller
 
     private function releaseFacility(Referral $referral): void
     {
-        $facility = Facility::withoutGlobalScope('hospital')->find($referral->destination_facility_id);
+        $facility = Facility::withoutGlobalScope('hospital')->lockForUpdate()->find($referral->destination_facility_id);
 
         if ($facility) {
             $facility->adjustUtilization(-1 * $referral->required_capacity);

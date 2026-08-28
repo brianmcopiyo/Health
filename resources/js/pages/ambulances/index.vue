@@ -100,8 +100,8 @@ const saveVehicle = async () => {
 const openDispatch = async item => {
   formError.value = ''
   hospitals.value = asList(await $api('/network/hospitals'))
-  patients.value = asList(await $api('/patients').catch(() => []))
-  referrals.value = asList(await $api('/referrals', { query: { direction: 'outgoing' } }).catch(() => []))
+  patients.value = asList(await $api('/patients', { query: compactListQuery() }).catch(() => []))
+  referrals.value = asList(await $api('/referrals', { query: { direction: 'outgoing', per_page: 50 } }).catch(() => []))
     .filter(row => ['accepted', 'in_transit', 'pending'].includes(row.status))
   encounters.value = []
   dispatching.value = item

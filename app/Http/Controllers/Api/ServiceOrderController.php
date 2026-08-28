@@ -8,6 +8,8 @@ use App\Models\Encounter;
 use App\Models\ServiceOrder;
 use App\Support\ChargeLedger;
 use App\Support\ModuleCatalog;
+use App\Support\QueryList;
+use App\Support\TenantRules;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -17,7 +19,7 @@ class ServiceOrderController extends Controller
     {
         $module = $request->string('module')->toString();
         $query = ServiceOrder::query()
-            ->with(['patient', 'facility', 'orderedBy', 'completedBy', 'encounter', 'service'])
+            ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code', 'orderedBy:id,name', 'completedBy:id,name', 'encounter:id,type,status', 'service:id,name,code,unit_price'])
             ->latest();
 
         if ($module) {
@@ -37,17 +39,17 @@ class ServiceOrderController extends Controller
             $query->where('encounter_id', $encounterId);
         }
 
-        return $query->get();
+        return QueryList::paginate($query, $request);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
             'module_key' => ['required', 'string'],
-            'patient_id' => ['nullable', 'exists:patients,id'],
-            'encounter_id' => ['nullable', 'exists:encounters,id'],
-            'facility_id' => ['nullable', 'exists:facilities,id'],
-            'service_id' => ['nullable', 'exists:clinical_services,id'],
+            'patient_id' => ['nullable', TenantRules::inHospital('patients')],
+            'encounter_id' => ['nullable', TenantRules::inHospital('encounters')],
+            'facility_id' => ['nullable', TenantRules::inHospital('facilities')],
+            'service_id' => ['nullable', TenantRules::inHospital('clinical_services')],
             'item_name' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);

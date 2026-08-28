@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hospital;
+use App\Models\Patient;
 use App\Support\HospitalProvisioner;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -89,6 +90,7 @@ class HospitalController extends Controller
     public function destroy(Request $request, Hospital $hospital)
     {
         abort_unless($request->user()->isPlatformAdmin(), 403, 'This action is unauthorized.');
+        abort_if(Patient::withoutGlobalScope('hospital')->where('hospital_id', $hospital->id)->exists(), 422, 'This hospital has clinical records and cannot be deleted.');
 
         $hospital->delete();
 

@@ -3,28 +3,34 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\BedAssignment;
+use App\Models\Encounter;
 use App\Models\Facility;
 use App\Models\FacilityType;
+use App\Support\QueryList;
+use App\Support\TenantRules;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 class FacilityController extends Controller
 {
     public function types()
     {
-        return FacilityType::query()->orderBy('name')->get();
+        return Cache::remember('hms.facility_types', 86400, fn () => FacilityType::query()->orderBy('name')->get());
     }
 
     public function index(Request $request)
     {
-        $query = Facility::query()->with(['type', 'parent', 'hospital', 'department'])->orderBy('name');
+        $query = Facility::query()->with(['type:id,name,slug,icon', 'parent:id,name,code', 'hospital:id,name,code', 'department:id,name'])->orderBy('name');
 
         if ($typeId = $request->integer('facility_type_id')) {
             $query->where('facility_type_id', $typeId);
         }
 
         if ($type = $request->string('type')->toString()) {
-            $query->whereHas('type', fn ($builder) => $builder->where('slug', $type));
+            $typeId = Cache::remember('facility_type:'.$type, 86400, fn () => FacilityType::query()->where('slug', $type)->value('id'));
+            $query->where('facility_type_id', $typeId ?: 0);
         }
 
         if ($departmentId = $request->integer('department_id')) {
@@ -35,14 +41,12 @@ class FacilityController extends Controller
             $query->where('status', $status);
         }
 
-        if ($search = $request->string('q')->toString()) {
-            $query->where(function ($builder) use ($search) {
-                $builder->where('name', 'like', "%{$search}%")
-                    ->orWhere('code', 'like', "%{$search}%");
-            });
-        }
+        $query->search($request->string('q')->toString());
 
-        return $query->get()->map(fn (Facility $facility) => $this->serialize($facility));
+        $paginator = QueryList::paginate($query, $request, $request->boolean('compact') ? 50 : 25);
+        $paginator->getCollection()->transform(fn (Facility $facility) => $this->serialize($facility));
+
+        return $paginator;
     }
 
     public function store(Request $request)
@@ -88,6 +92,8 @@ class FacilityController extends Controller
     public function destroy(Facility $facility)
     {
         abort_if($facility->children()->exists(), 422, 'Remove child facilities first.');
+        abort_if(BedAssignment::query()->where('facility_id', $facility->id)->exists(), 422, 'This facility has assignment history and cannot be deleted.');
+        abort_if(Encounter::query()->where('facility_id', $facility->id)->exists(), 422, 'This facility is linked to clinical encounters and cannot be deleted.');
 
         $facility->delete();
 
@@ -103,8 +109,8 @@ class FacilityController extends Controller
         $data = $request->validate([
             'hospital_id' => [$request->user()->isPlatformAdmin() ? 'nullable' : 'prohibited', 'exists:hospitals,id'],
             'facility_type_id' => [$facility ? 'sometimes' : 'required', 'exists:facility_types,id'],
-            'parent_id' => ['nullable', 'exists:facilities,id'],
-            'department_id' => ['nullable', 'exists:departments,id'],
+            'parent_id' => ['nullable', TenantRules::inHospital('facilities')],
+            'department_id' => ['nullable', TenantRules::inHospital('departments')],
             'name' => [$facility ? 'sometimes' : 'required', 'string', 'max:255'],
             'code' => [
                 $facility ? 'sometimes' : 'required',

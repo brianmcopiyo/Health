@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\HospitalMembership;
 use App\Models\Role;
 use App\Models\User;
+use App\Support\QueryList;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -25,13 +26,17 @@ class UserController extends Controller
         }
 
         if ($search = $request->string('q')->toString()) {
-            $query->where(function ($builder) use ($search) {
-                $builder->where('name', 'like', "%{$search}%")
-                    ->orWhere('email', 'like', "%{$search}%");
+            $prefix = addcslashes($search, '%_').'%';
+            $query->where(function ($builder) use ($prefix) {
+                $builder->where('name', 'like', $prefix)
+                    ->orWhere('email', 'like', $prefix);
             });
         }
 
-        return $query->get()->map(fn (User $user) => $this->serialize($user, $actor));
+        $paginator = QueryList::paginate($query, $request);
+        $paginator->getCollection()->transform(fn (User $user) => $this->serialize($user, $actor));
+
+        return $paginator;
     }
 
     public function directory(Request $request)

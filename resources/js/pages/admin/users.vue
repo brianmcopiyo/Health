@@ -8,6 +8,8 @@ definePage({
 
 const ability = useAbility()
 const users = ref([])
+const meta = ref(asPageMeta())
+const page = ref(1)
 const roles = ref([])
 const hospitals = ref([])
 const formOpen = ref(false)
@@ -33,7 +35,9 @@ const headers = [
 ]
 
 const load = async () => {
-  users.value = asList(await $api('/users'))
+  const payload = await $api('/users', { query: { page: page.value } })
+  users.value = asList(payload)
+  meta.value = asPageMeta(payload)
   if (ability.can('manage', 'User'))
     roles.value = asList(await $api('/roles'))
 }
@@ -121,6 +125,10 @@ await withPageLoad(load)
           </HButton>
         </template>
       </HTable>
+      <HPager
+        :meta="meta"
+        @update:page="value => { page = value; load() }"
+      />
     </HCard>
 
     <HModal

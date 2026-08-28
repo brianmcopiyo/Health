@@ -9,8 +9,12 @@ use App\Models\Encounter;
 use App\Models\Medication;
 use App\Models\Prescription;
 use App\Models\PrescriptionItem;
+use App\Support\Audit;
 use App\Support\ChargeLedger;
+use App\Support\QueryList;
+use App\Support\TenantRules;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class PrescriptionController extends Controller
@@ -27,7 +31,7 @@ class PrescriptionController extends Controller
         );
 
         $query = Prescription::query()
-            ->with(['patient', 'encounter', 'prescribedBy', 'items.medication'])
+            ->with(['patient:id,mrn,first_name,last_name,status', 'encounter:id,type,status', 'prescribedBy:id,name', 'items.medication'])
             ->latest();
 
         if ($status = $request->string('status')->toString()) {
@@ -38,16 +42,16 @@ class PrescriptionController extends Controller
             $query->whereIn('status', ['pending', 'verified']);
         }
 
-        return $query->get();
+        return QueryList::paginate($query, $request);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'encounter_id' => ['required', 'exists:encounters,id'],
+            'encounter_id' => ['required', TenantRules::inHospital('encounters')],
             'notes' => ['nullable', 'string'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.medication_id' => ['required', 'exists:medications,id'],
+            'items.*.medication_id' => ['required', TenantRules::inHospital('medications')],
             'items.*.dose' => ['required', 'string', 'max:80'],
             'items.*.frequency' => ['required', 'string', 'max:80'],
             'items.*.duration' => ['nullable', 'string', 'max:80'],
@@ -65,22 +69,28 @@ class PrescriptionController extends Controller
             'This action is unauthorized.'
         );
 
-        $rx = Prescription::query()->create([
-            'hospital_id' => $encounter->hospital_id,
-            'patient_id' => $encounter->patient_id,
-            'encounter_id' => $encounter->id,
-            'prescribed_by' => $request->user()->id,
-            'status' => 'pending',
-            'notes' => $data['notes'] ?? null,
-            'prescribed_at' => now(),
-        ]);
-
-        foreach ($data['items'] as $item) {
-            PrescriptionItem::query()->create([
-                'prescription_id' => $rx->id,
-                ...$item,
+        $rx = DB::transaction(function () use ($data, $encounter, $request) {
+            $rx = Prescription::query()->create([
+                'hospital_id' => $encounter->hospital_id,
+                'patient_id' => $encounter->patient_id,
+                'encounter_id' => $encounter->id,
+                'prescribed_by' => $request->user()->id,
+                'status' => 'pending',
+                'notes' => $data['notes'] ?? null,
+                'prescribed_at' => now(),
             ]);
-        }
+
+            foreach ($data['items'] as $item) {
+                PrescriptionItem::query()->create([
+                    'prescription_id' => $rx->id,
+                    ...$item,
+                ]);
+            }
+
+            Audit::record('created', $rx);
+
+            return $rx;
+        });
 
         return response()->json($rx->load(['patient', 'items.medication', 'prescribedBy']), 201);
     }
@@ -101,12 +111,14 @@ class PrescriptionController extends Controller
         if ($data['status'] === 'dispensed') {
             $this->authorizePermission($request->user(), 'update', 'Pharmacy');
             abort_unless(in_array($prescription->status, ['pending', 'verified'], true), 422, 'Prescription cannot be dispensed.');
-            $this->dispense($prescription, $request->user()->id);
-            $prescription->dispensed_at = now();
-            if (! $prescription->verified_at) {
-                $prescription->verified_by = $request->user()->id;
-                $prescription->verified_at = now();
-            }
+            DB::transaction(function () use ($prescription, $request) {
+                $this->dispense($prescription, $request->user()->id);
+                $prescription->dispensed_at = now();
+                if (! $prescription->verified_at) {
+                    $prescription->verified_by = $request->user()->id;
+                    $prescription->verified_at = now();
+                }
+            });
         }
 
         if ($data['status'] === 'cancelled') {
@@ -120,6 +132,7 @@ class PrescriptionController extends Controller
 
         $prescription->status = $data['status'];
         $prescription->save();
+        Audit::record('status_changed', $prescription, ['to' => $data['status']]);
 
         return $prescription->refresh()->load(['patient', 'items.medication', 'prescribedBy', 'dispensings']);
     }
@@ -135,12 +148,12 @@ class PrescriptionController extends Controller
             'This action is unauthorized.'
         );
 
-        return Medication::query()->orderBy('name')->get();
+        return Medication::query()->orderBy('name')->get(['id', 'hospital_id', 'name', 'form', 'strength', 'sku', 'unit_price', 'stock_qty', 'reorder_level']);
     }
 
     public function services()
     {
-        return ClinicalService::query()->where('is_active', true)->orderBy('name')->get();
+        return ClinicalService::query()->where('is_active', true)->orderBy('name')->get(['id', 'hospital_id', 'name', 'code', 'category', 'unit_price', 'is_active']);
     }
 
     private function dispense(Prescription $prescription, int $userId): void

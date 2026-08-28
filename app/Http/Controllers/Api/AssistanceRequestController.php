@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\AssistanceRequest;
 use App\Models\Hospital;
+use App\Support\QueryList;
+use App\Support\TenantRules;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -13,7 +15,7 @@ class AssistanceRequestController extends Controller
     public function index(Request $request)
     {
         $query = AssistanceRequest::query()
-            ->with(['fromHospital', 'toHospital', 'creator', 'responder', 'patient', 'facility', 'facilityType'])
+            ->with(['fromHospital:id,name,code', 'toHospital:id,name,code', 'creator:id,name', 'responder:id,name', 'patient:id,mrn,first_name,last_name,status', 'facility:id,name,code', 'facilityType:id,name,slug'])
             ->latest();
 
         if ($status = $request->string('status')->toString()) {
@@ -30,7 +32,7 @@ class AssistanceRequestController extends Controller
             }
         }
 
-        return $query->get();
+        return QueryList::paginate($query, $request);
     }
 
     public function store(Request $request)
@@ -44,10 +46,10 @@ class AssistanceRequestController extends Controller
             'type' => ['required', Rule::in(AssistanceRequest::TYPES)],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
-            'patient_id' => ['nullable', 'exists:patients,id'],
-            'encounter_id' => ['nullable', 'exists:encounters,id'],
+            'patient_id' => ['nullable', TenantRules::inHospital('patients')],
+            'encounter_id' => ['nullable', TenantRules::inHospital('encounters')],
             'facility_type_id' => ['nullable', 'exists:facility_types,id'],
-            'facility_id' => ['nullable', 'exists:facilities,id'],
+            'facility_id' => ['nullable', TenantRules::inHospital('facilities')],
             'quantity' => ['nullable', 'integer', 'min:1'],
         ]);
 

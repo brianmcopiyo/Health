@@ -30,7 +30,7 @@ const encounters = computed(() => asList(board.value?.encounters))
 const load = async () => {
   board.value = await $api('/modules/emergency')
   if (ability.can('read', 'Patient'))
-    patients.value = asList(await $api('/patients'))
+    patients.value = asList(await $api('/patients', { query: compactListQuery() }))
   staff.value = asList(await $api('/users/directory'))
 }
 

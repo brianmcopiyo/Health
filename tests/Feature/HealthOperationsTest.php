@@ -55,7 +55,7 @@ class HealthOperationsTest extends TestCase
     {
         Sanctum::actingAs($this->user('admin@riverside.test'));
 
-        $emails = collect($this->getJson('/api/users')->assertOk()->json())->pluck('email');
+        $emails = $this->jsonList($this->getJson('/api/users')->assertOk())->pluck('email');
 
         $this->assertTrue($emails->contains('doctor@riverside.test'));
         $this->assertFalse($emails->contains('admin@lakeside.test'));
@@ -65,7 +65,7 @@ class HealthOperationsTest extends TestCase
     public function test_facility_lists_are_tenant_scoped(): void
     {
         Sanctum::actingAs($this->user('admin@riverside.test'));
-        $ids = collect($this->getJson('/api/facilities')->assertOk()->json())->pluck('id');
+        $ids = $this->jsonList($this->getJson('/api/facilities')->assertOk())->pluck('id');
         $lakesideFacility = Facility::withoutGlobalScope('hospital')->where('hospital_id', $this->hospital('LMC')->id)->first();
 
         $this->assertTrue($ids->contains(Facility::query()->where('code', 'WARD-A')->first()->id));
@@ -226,7 +226,7 @@ class HealthOperationsTest extends TestCase
         $this->patchJson('/api/ambulance-trips/'.$tripId.'/status', ['status' => 'completed'])->assertOk();
         $this->assertSame('available', $ambulance->fresh()->status);
 
-        $trips = $this->getJson('/api/ambulance-trips')->assertOk()->json();
+        $trips = $this->jsonList($this->getJson('/api/ambulance-trips')->assertOk());
         $this->assertNotEmpty($trips);
     }
 
@@ -364,11 +364,11 @@ class HealthOperationsTest extends TestCase
         ])->assertCreated();
 
         $this->assertStringStartsWith('RGH-', $created->json('mrn'));
-        $ids = collect($this->getJson('/api/patients')->assertOk()->json())->pluck('id');
+        $ids = $this->jsonList($this->getJson('/api/patients')->assertOk())->pluck('id');
         $this->assertTrue($ids->contains($created->json('id')));
 
         Sanctum::actingAs($this->user('admin@lakeside.test'));
-        $lakesideIds = collect($this->getJson('/api/patients')->assertOk()->json())->pluck('id');
+        $lakesideIds = $this->jsonList($this->getJson('/api/patients')->assertOk())->pluck('id');
         $this->assertFalse($lakesideIds->contains($created->json('id')));
     }
 

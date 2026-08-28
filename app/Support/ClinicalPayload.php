@@ -9,8 +9,8 @@ class ClinicalPayload
     public static function encounter(Encounter $encounter): array
     {
         $encounter->loadMissing([
-            'patient.allergies',
-            'patient.conditions',
+            'patient.currentAllergies',
+            'patient.conditions' => fn ($conditions) => $conditions->where('status', 'active'),
             'department',
             'clinician',
             'facility',
@@ -28,6 +28,10 @@ class ClinicalPayload
             'referral.fromHospital',
             'referral.toHospital',
         ]);
+
+        if ($encounter->patient && $encounter->patient->relationLoaded('currentAllergies')) {
+            $encounter->patient->setRelation('allergies', $encounter->patient->currentAllergies);
+        }
 
         return [
             'id' => $encounter->id,

@@ -25,6 +25,7 @@ use App\Models\StaffAssignment;
 use App\Models\User;
 use App\Models\Vital;
 use App\Support\ChargeLedger;
+use App\Support\HospitalSequence;
 use Illuminate\Database\Seeder;
 
 class ClinicalJourneySeeder extends Seeder
@@ -126,6 +127,9 @@ class ClinicalJourneySeeder extends Seeder
         $this->seedOpdJourney($riverside, $kojo, $doctor, $lab, $imaging, $pharmacy, $billing, $opd, $consult);
         $this->seedInpatientJourney($riverside, $ama, $emergency, $nurse, $doctor, $erDept, $wards, $erBay, $ward, $bed1);
         $this->seedReferralJourney($riverside, $lakeside, $yaw, $emergency, $doctor, $erDept, $erBay);
+
+        HospitalSequence::sync($riverside);
+        HospitalSequence::sync($lakeside);
     }
 
     private function seedOpdJourney($hospital, Patient $patient, $doctor, $lab, $imaging, $pharmacy, $billing, $opd, $consult): void
@@ -270,6 +274,7 @@ class ClinicalJourneySeeder extends Seeder
         Payment::query()->create([
             'hospital_id' => $hospital->id,
             'invoice_id' => $invoice->id,
+            'patient_id' => $patient->id,
             'amount' => 80,
             'method' => 'mobile_money',
             'received_by' => $billing->id,

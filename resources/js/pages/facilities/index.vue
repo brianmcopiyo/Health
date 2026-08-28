@@ -11,6 +11,8 @@ definePage({
 const ability = useAbility()
 const facilities = ref([])
 const types = ref([])
+const meta = ref(asPageMeta())
+const page = ref(1)
 const search = ref('')
 const status = ref(null)
 const typeId = ref(null)
@@ -41,7 +43,7 @@ const headers = [
 ]
 
 const load = async () => {
-  const query = {}
+  const query = { page: page.value }
   if (search.value)
     query.q = search.value
   if (status.value)
@@ -55,6 +57,7 @@ const load = async () => {
   ])
 
   facilities.value = asList(items)
+  meta.value = asPageMeta(items)
   types.value = asList(facilityTypes)
 }
 
@@ -183,6 +186,10 @@ await withPageLoad(load)
           </div>
         </template>
       </HTable>
+      <HPager
+        :meta="meta"
+        @update:page="value => { page = value; load() }"
+      />
     </HCard>
 
     <HOffcanvas

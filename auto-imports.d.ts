@@ -10,11 +10,13 @@ declare global {
   const ambulanceStatuses: typeof import('./resources/js/utils/status.js')['ambulanceStatuses']
   const applySession: typeof import('./resources/js/utils/session.js')['applySession']
   const asList: typeof import('./resources/js/composables/usePageLoad.js')['asList']
+  const asPageMeta: typeof import('./resources/js/composables/usePageLoad.js')['asPageMeta']
   const assistanceStatuses: typeof import('./resources/js/utils/status.js')['assistanceStatuses']
   const assistanceTypes: typeof import('./resources/js/utils/status.js')['assistanceTypes']
   const bloodGroups: typeof import('./resources/js/utils/clinicalOptions.js')['bloodGroups']
   const canNavigate: typeof import('./resources/js/composables/useAbility.js')['canNavigate']
   const clearSession: typeof import('./resources/js/utils/session.js')['clearSession']
+  const compactListQuery: typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']
   const computed: typeof import('vue')['computed']
   const createApp: typeof import('vue')['createApp']
   const customRef: typeof import('vue')['customRef']
@@ -118,11 +120,13 @@ declare module 'vue' {
     readonly ambulanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['ambulanceStatuses']>
     readonly applySession: UnwrapRef<typeof import('./resources/js/utils/session.js')['applySession']>
     readonly asList: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['asList']>
+    readonly asPageMeta: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['asPageMeta']>
     readonly assistanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['assistanceStatuses']>
     readonly assistanceTypes: UnwrapRef<typeof import('./resources/js/utils/status.js')['assistanceTypes']>
     readonly bloodGroups: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['bloodGroups']>
     readonly canNavigate: UnwrapRef<typeof import('./resources/js/composables/useAbility.js')['canNavigate']>
     readonly clearSession: UnwrapRef<typeof import('./resources/js/utils/session.js')['clearSession']>
+    readonly compactListQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
@@ -219,11 +223,13 @@ declare module '@vue/runtime-core' {
     readonly ambulanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['ambulanceStatuses']>
     readonly applySession: UnwrapRef<typeof import('./resources/js/utils/session.js')['applySession']>
     readonly asList: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['asList']>
+    readonly asPageMeta: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['asPageMeta']>
     readonly assistanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['assistanceStatuses']>
     readonly assistanceTypes: UnwrapRef<typeof import('./resources/js/utils/status.js')['assistanceTypes']>
     readonly bloodGroups: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['bloodGroups']>
     readonly canNavigate: UnwrapRef<typeof import('./resources/js/composables/useAbility.js')['canNavigate']>
     readonly clearSession: UnwrapRef<typeof import('./resources/js/utils/session.js')['clearSession']>
+    readonly compactListQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>

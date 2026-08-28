@@ -31,7 +31,7 @@ class PatientTimeline
             null
         ));
 
-        Encounter::query()->with(['clinician', 'department'])->where('patient_id', $patient->id)->get()->each(function (Encounter $encounter) use ($events) {
+        Encounter::query()->with(['clinician:id,name', 'department:id,name'])->where('patient_id', $patient->id)->latest()->limit(80)->get()->each(function (Encounter $encounter) use ($events) {
             $events->push(self::event(
                 $encounter->created_at,
                 'encounter',
@@ -48,45 +48,45 @@ class PatientTimeline
             }
         });
 
-        Vital::query()->with('recordedBy')->where('patient_id', $patient->id)->get()->each(function (Vital $vital) use ($events) {
+        Vital::query()->with('recordedBy:id,name')->where('patient_id', $patient->id)->latest('recorded_at')->limit(80)->get()->each(function (Vital $vital) use ($events) {
             $events->push(self::event($vital->recorded_at ?: $vital->created_at, 'vitals', 'Vitals recorded', $vital->summary(), $vital->encounter_id, $vital->recordedBy?->name));
         });
 
-        ClinicalNote::query()->with('author')->where('patient_id', $patient->id)->get()->each(function (ClinicalNote $note) use ($events) {
+        ClinicalNote::query()->with('author:id,name')->where('patient_id', $patient->id)->latest('recorded_at')->limit(80)->get()->each(function (ClinicalNote $note) use ($events) {
             $events->push(self::event($note->recorded_at ?: $note->created_at, 'note', ucfirst($note->type).' note', mb_strimwidth($note->body, 0, 140, '…'), $note->encounter_id, $note->author?->name));
         });
 
-        Diagnosis::query()->with('recordedBy')->where('patient_id', $patient->id)->get()->each(function (Diagnosis $diagnosis) use ($events) {
+        Diagnosis::query()->with('recordedBy:id,name')->where('patient_id', $patient->id)->latest('recorded_at')->limit(80)->get()->each(function (Diagnosis $diagnosis) use ($events) {
             $events->push(self::event($diagnosis->recorded_at ?: $diagnosis->created_at, 'diagnosis', $diagnosis->kind === 'primary' ? 'Primary diagnosis' : 'Diagnosis', $diagnosis->name, $diagnosis->encounter_id, $diagnosis->recordedBy?->name));
         });
 
-        ServiceOrder::query()->with('orderedBy')->where('patient_id', $patient->id)->get()->each(function (ServiceOrder $order) use ($events) {
+        ServiceOrder::query()->with('orderedBy:id,name')->where('patient_id', $patient->id)->latest()->limit(80)->get()->each(function (ServiceOrder $order) use ($events) {
             $events->push(self::event($order->requested_at ?: $order->created_at, 'order', ucfirst($order->order_type ?: $order->module_key).' ordered', $order->item_name, $order->encounter_id, $order->orderedBy?->name));
             if ($order->status === 'completed') {
                 $events->push(self::event($order->completed_at ?: $order->updated_at, 'result', $order->item_name.' result', $order->result, $order->encounter_id, null));
             }
         });
 
-        Prescription::query()->with('prescribedBy')->where('patient_id', $patient->id)->get()->each(function (Prescription $rx) use ($events) {
+        Prescription::query()->with('prescribedBy:id,name')->where('patient_id', $patient->id)->latest()->limit(80)->get()->each(function (Prescription $rx) use ($events) {
             $events->push(self::event($rx->prescribed_at ?: $rx->created_at, 'prescription', 'Prescription written', $rx->notes, $rx->encounter_id, $rx->prescribedBy?->name));
         });
 
-        Dispensing::query()->with(['medication', 'dispensedBy'])->where('patient_id', $patient->id)->get()->each(function (Dispensing $row) use ($events) {
+        Dispensing::query()->with(['medication:id,name,strength,form', 'dispensedBy:id,name'])->where('patient_id', $patient->id)->latest('dispensed_at')->limit(80)->get()->each(function (Dispensing $row) use ($events) {
             $events->push(self::event($row->dispensed_at ?: $row->created_at, 'dispense', 'Medication dispensed', $row->medication?->label().' × '.$row->quantity, $row->encounter_id, $row->dispensedBy?->name));
         });
 
-        BedAssignment::query()->with('facility')->where('patient_id', $patient->id)->get()->each(function (BedAssignment $assignment) use ($events) {
+        BedAssignment::query()->with('facility:id,name,code')->where('patient_id', $patient->id)->latest()->limit(40)->get()->each(function (BedAssignment $assignment) use ($events) {
             $events->push(self::event($assignment->assigned_at ?: $assignment->created_at, 'bed', 'Assigned to '.$assignment->facility?->name, $assignment->facility?->code, $assignment->encounter_id, null));
             if ($assignment->discharged_at) {
                 $events->push(self::event($assignment->discharged_at, 'bed', 'Left '.$assignment->facility?->name, null, $assignment->encounter_id, null));
             }
         });
 
-        Invoice::query()->where('patient_id', $patient->id)->get()->each(function (Invoice $invoice) use ($events) {
+        Invoice::query()->where('patient_id', $patient->id)->latest()->limit(40)->get()->each(function (Invoice $invoice) use ($events) {
             $events->push(self::event($invoice->created_at, 'billing', 'Invoice '.$invoice->number, 'Total '.$invoice->total, $invoice->encounter_id, null));
         });
 
-        Payment::query()->with(['invoice', 'receivedBy'])->whereHas('invoice', fn ($query) => $query->where('patient_id', $patient->id))->get()->each(function (Payment $payment) use ($events) {
+        Payment::query()->with(['invoice:id,encounter_id,patient_id', 'receivedBy:id,name'])->where('patient_id', $patient->id)->latest('received_at')->limit(40)->get()->each(function (Payment $payment) use ($events) {
             $events->push(self::event($payment->received_at ?: $payment->created_at, 'payment', 'Payment received', $payment->method.' · '.$payment->amount, $payment->invoice?->encounter_id, $payment->receivedBy?->name));
         });
 
@@ -96,6 +96,7 @@ class PatientTimeline
                 $query->where('patient_id', $patient->id)
                     ->orWhere('receiving_patient_id', $patient->id);
             })
+            ->limit(40)
             ->get()
             ->each(function (Referral $referral) use ($events, $patient) {
             $outgoing = $referral->patient_id === $patient->id;
@@ -109,13 +110,14 @@ class PatientTimeline
             ));
         });
 
-        AmbulanceTrip::query()->where('patient_id', $patient->id)->get()->each(function (AmbulanceTrip $trip) use ($events) {
+        AmbulanceTrip::query()->with('driver:id,name')->where('patient_id', $patient->id)->latest()->limit(20)->get()->each(function (AmbulanceTrip $trip) use ($events) {
             $events->push(self::event($trip->dispatched_at ?: $trip->created_at, 'ambulance', 'Ambulance '.$trip->status, trim($trip->origin.' → '.$trip->destination), $trip->encounter_id, $trip->driver?->name));
         });
 
         return $events
             ->filter(fn ($event) => $event['at'])
             ->sortByDesc('at')
+            ->take(250)
             ->values()
             ->all();
     }

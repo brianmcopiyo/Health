@@ -11,6 +11,8 @@ definePage({
 const ability = useAbility()
 const userData = useCookie('userData')
 const referrals = ref([])
+const meta = ref(asPageMeta())
+const page = ref(1)
 const status = ref(null)
 const direction = ref('all')
 const selected = ref(null)
@@ -30,13 +32,15 @@ const headers = [
 ]
 
 const load = async () => {
-  const query = {}
+  const query = { page: page.value }
   if (status.value)
     query.status = status.value
   if (direction.value !== 'all')
     query.direction = direction.value
 
-  referrals.value = asList(await $api('/referrals', { query }))
+  const payload = await $api('/referrals', { query })
+  referrals.value = asList(payload)
+  meta.value = asPageMeta(payload)
 }
 
 const isDestination = item => userData.value?.hospitalId === item.to_hospital_id
@@ -128,6 +132,10 @@ await withPageLoad(load)
           </HButton>
         </template>
       </HTable>
+      <HPager
+        :meta="meta"
+        @update:page="value => { page = value; load() }"
+      />
     </HCard>
 
     <HModal

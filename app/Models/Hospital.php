@@ -19,12 +19,16 @@ class Hospital extends Model
         'email',
         'address',
         'is_active',
+        'patient_seq',
+        'invoice_seq',
     ];
 
     protected function casts(): array
     {
         return [
             'is_active' => 'boolean',
+            'patient_seq' => 'integer',
+            'invoice_seq' => 'integer',
         ];
     }
 

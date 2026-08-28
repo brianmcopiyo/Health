@@ -11,6 +11,8 @@ definePage({
 
 const ability = useAbility()
 const invoices = ref([])
+const meta = ref(asPageMeta())
+const page = ref(1)
 const patients = ref([])
 const encounters = ref([])
 const formOpen = ref(false)
@@ -34,9 +36,11 @@ const encounterOptions = computed(() => encounters.value.map(item => ({
 })))
 
 const load = async () => {
-  invoices.value = asList(await $api('/invoices'))
+  const payload = await $api('/invoices', { query: { page: page.value } })
+  invoices.value = asList(payload)
+  meta.value = asPageMeta(payload)
   if (ability.can('create', 'Invoice') || ability.can('update', 'Invoice'))
-    patients.value = asList(await $api('/patients'))
+    patients.value = asList(await $api('/patients', { query: compactListQuery() }))
 }
 
 const loadEncounters = async patientId => {
@@ -166,6 +170,10 @@ await withPageLoad(load)
           </div>
         </template>
       </HTable>
+      <HPager
+        :meta="meta"
+        @update:page="value => { page = value; load() }"
+      />
     </HCard>
 
     <HOffcanvas

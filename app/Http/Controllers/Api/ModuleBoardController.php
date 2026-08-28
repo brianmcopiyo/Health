@@ -7,9 +7,12 @@ use App\Models\BedAssignment;
 use App\Models\Department;
 use App\Models\Encounter;
 use App\Models\Facility;
+use App\Models\FacilityType;
+use App\Models\Prescription;
 use App\Models\ServiceOrder;
 use App\Support\ModuleCatalog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\Rule;
 
 class ModuleBoardController extends Controller
@@ -30,26 +33,42 @@ class ModuleBoardController extends Controller
         abort_unless($catalog, 404);
         $this->authorizePermission($request->user(), 'read', $catalog['subject']);
 
-        $facilityQuery = Facility::query()->with(['type', 'parent', 'department', 'hospital']);
+        $typeId = $this->facilityTypeId($catalog['facility_type'] ?? null);
+        $facilityQuery = Facility::query()->with(['type:id,name,slug,icon', 'parent:id,name,code', 'department:id,name', 'hospital:id,name,code']);
 
-        if (! empty($catalog['facility_type'])) {
-            $facilityQuery->whereHas('type', fn ($query) => $query->where('slug', $catalog['facility_type']));
+        if ($typeId) {
+            $facilityQuery->where('facility_type_id', $typeId);
         }
 
-        $facilities = $facilityQuery->orderBy('name')->get();
+        $statsRow = Facility::query()
+            ->when($typeId, fn ($query) => $query->where('facility_type_id', $typeId))
+            ->selectRaw("
+                COUNT(*) as total,
+                SUM(CASE WHEN status = 'available' THEN 1 ELSE 0 END) as available,
+                SUM(CASE WHEN status = 'occupied' THEN 1 ELSE 0 END) as occupied,
+                SUM(CASE WHEN status = 'maintenance' THEN 1 ELSE 0 END) as maintenance,
+                SUM(CASE WHEN status = 'unavailable' THEN 1 ELSE 0 END) as unavailable,
+                SUM(CASE WHEN status = 'reserved' THEN 1 ELSE 0 END) as reserved,
+                SUM(capacity) as capacity,
+                SUM(current_utilization) as utilization,
+                SUM(CASE WHEN capacity > current_utilization THEN capacity - current_utilization ELSE 0 END) as remaining
+            ")
+            ->first();
+
+        $facilities = $facilityQuery->orderBy('name')->limit(200)->get();
 
         $payload = [
             'module' => $catalog,
             'stats' => [
-                'total' => $facilities->count(),
-                'available' => $facilities->where('status', 'available')->count(),
-                'occupied' => $facilities->where('status', 'occupied')->count(),
-                'maintenance' => $facilities->where('status', 'maintenance')->count(),
-                'unavailable' => $facilities->where('status', 'unavailable')->count(),
-                'reserved' => $facilities->where('status', 'reserved')->count(),
-                'capacity' => $facilities->sum('capacity'),
-                'utilization' => $facilities->sum('current_utilization'),
-                'remaining' => $facilities->sum(fn (Facility $facility) => $facility->remainingCapacity()),
+                'total' => (int) ($statsRow->total ?? 0),
+                'available' => (int) ($statsRow->available ?? 0),
+                'occupied' => (int) ($statsRow->occupied ?? 0),
+                'maintenance' => (int) ($statsRow->maintenance ?? 0),
+                'unavailable' => (int) ($statsRow->unavailable ?? 0),
+                'reserved' => (int) ($statsRow->reserved ?? 0),
+                'capacity' => (int) ($statsRow->capacity ?? 0),
+                'utilization' => (int) ($statsRow->utilization ?? 0),
+                'remaining' => (int) ($statsRow->remaining ?? 0),
             ],
             'facilities' => $facilities->map(fn (Facility $facility) => [
                 'id' => $facility->id,
@@ -69,12 +88,12 @@ class ModuleBoardController extends Controller
                 ->where('module_key', $catalog['key'])
                 ->where('is_active', true)
                 ->orderBy('name')
-                ->get(),
+                ->get(['id', 'hospital_id', 'name', 'slug', 'module_key', 'is_active']),
         ];
 
         if (! empty($catalog['orders'])) {
             $payload['orders'] = ServiceOrder::query()
-                ->with(['patient', 'facility', 'orderedBy', 'encounter'])
+                ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code', 'orderedBy:id,name', 'encounter:id,type,status'])
                 ->where('module_key', $catalog['key'])
                 ->latest()
                 ->limit(50)
@@ -82,8 +101,8 @@ class ModuleBoardController extends Controller
         }
 
         if ($catalog['key'] === 'pharmacy') {
-            $payload['prescriptions'] = \App\Models\Prescription::query()
-                ->with(['patient', 'encounter', 'items.medication', 'prescribedBy'])
+            $payload['prescriptions'] = Prescription::query()
+                ->with(['patient:id,mrn,first_name,last_name,status', 'encounter:id,type,status', 'items.medication', 'prescribedBy:id,name'])
                 ->whereIn('status', ['pending', 'verified'])
                 ->latest()
                 ->limit(50)
@@ -92,18 +111,20 @@ class ModuleBoardController extends Controller
 
         if (! empty($catalog['assignments'])) {
             $payload['assignments'] = BedAssignment::query()
-                ->with(['patient', 'facility', 'assignedBy', 'encounter', 'nurse'])
+                ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code,status', 'assignedBy:id,name', 'encounter:id,type,status', 'nurse:id,name'])
                 ->where('status', 'active')
                 ->latest()
+                ->limit(100)
                 ->get();
         }
 
         if (! empty($catalog['encounter_type'])) {
             $payload['encounters'] = Encounter::query()
-                ->with(['patient', 'clinician', 'facility', 'department', 'diagnoses', 'orders'])
+                ->with(['patient:id,mrn,first_name,last_name,sex,status', 'clinician:id,name', 'facility:id,name,code', 'department:id,name'])
                 ->where('type', $catalog['encounter_type'])
                 ->whereIn('status', ['waiting', 'in_progress'])
                 ->latest()
+                ->limit(100)
                 ->get();
         }
 
@@ -141,5 +162,14 @@ class ModuleBoardController extends Controller
             'remaining_capacity' => $facility->remainingCapacity(),
             'resource_notes' => $facility->resource_notes,
         ];
+    }
+
+    private function facilityTypeId(?string $slug): ?int
+    {
+        if (! $slug) {
+            return null;
+        }
+
+        return Cache::remember('facility_type:'.$slug, 86400, fn () => FacilityType::query()->where('slug', $slug)->value('id'));
     }
 }

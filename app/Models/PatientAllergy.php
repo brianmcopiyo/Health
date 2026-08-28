@@ -11,12 +11,15 @@ class PatientAllergy extends Model
     use BelongsToHospital;
 
     protected $fillable = [
-        'hospital_id', 'patient_id', 'allergen', 'reaction', 'severity', 'noted_by', 'noted_at',
+        'hospital_id', 'patient_id', 'allergen', 'reaction', 'severity', 'is_current', 'noted_by', 'noted_at',
     ];
 
     protected function casts(): array
     {
-        return ['noted_at' => 'datetime'];
+        return [
+            'noted_at' => 'datetime',
+            'is_current' => 'boolean',
+        ];
     }
 
     public function patient(): BelongsTo

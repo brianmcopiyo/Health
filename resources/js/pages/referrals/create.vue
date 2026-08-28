@@ -92,7 +92,7 @@ const submit = async () => {
 await withPageLoad(async () => {
   types.value = asList(await $api('/facility-types'))
   services.value = asList(await $api('/clinical-services'))
-  patients.value = asList(await $api('/patients'))
+  patients.value = asList(await $api('/patients', { query: compactListQuery() }))
   form.value.required_facility_type_id = types.value.find(type => type.slug === 'ward')?.id ?? types.value[0]?.id ?? null
   await searchHospitals()
 })

@@ -3,7 +3,34 @@ import { ref } from 'vue'
 export const pageLoadError = ref(null)
 export const pageLoading = ref(false)
 
-export const asList = value => (Array.isArray(value) ? value : [])
+export const asList = value => {
+  if (Array.isArray(value))
+    return value
+  if (Array.isArray(value?.data))
+    return value.data
+
+  return []
+}
+
+export const asPageMeta = value => {
+  if (!value || Array.isArray(value)) {
+    return {
+      current_page: 1,
+      last_page: 1,
+      per_page: Array.isArray(value) ? value.length : 25,
+      total: Array.isArray(value) ? value.length : 0,
+    }
+  }
+
+  return {
+    current_page: value.current_page ?? 1,
+    last_page: value.last_page ?? 1,
+    per_page: value.per_page ?? 25,
+    total: value.total ?? 0,
+  }
+}
+
+export const compactListQuery = (extra = {}) => ({ compact: 1, per_page: 50, ...extra })
 
 export const saveError = error => {
   const data = error?.data

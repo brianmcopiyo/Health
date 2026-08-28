@@ -37,7 +37,7 @@ const visitForm = ref({
 })
 
 const load = async () => {
-  patients.value = asList(await $api('/patients'))
+  patients.value = asList(await $api('/patients', { query: compactListQuery() }))
   staff.value = asList(await $api('/users/directory'))
   const [opd, emergency] = await Promise.all([
     ability.can('create', 'Opd') || ability.can('read', 'Opd')

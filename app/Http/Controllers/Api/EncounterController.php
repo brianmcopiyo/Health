@@ -3,17 +3,21 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\BedAssignment;
 use App\Models\CarePlan;
 use App\Models\ClinicalNote;
 use App\Models\Department;
 use App\Models\Diagnosis;
 use App\Models\Encounter;
+use App\Models\EncounterClinician;
 use App\Models\Facility;
 use App\Models\Vital;
+use App\Support\Audit;
 use App\Support\ChargeLedger;
 use App\Support\ClinicalPayload;
+use App\Support\QueryList;
+use App\Support\TenantRules;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class EncounterController extends Controller
@@ -24,7 +28,12 @@ class EncounterController extends Controller
         $mine = $request->boolean('mine');
 
         $query = Encounter::query()
-            ->with(['patient', 'clinician', 'facility', 'department', 'bedAssignments.facility'])
+            ->with([
+                'patient:id,hospital_id,mrn,first_name,last_name,sex,status',
+                'clinician:id,name',
+                'facility:id,name,code,status',
+                'department:id,name',
+            ])
             ->latest();
 
         if ($type) {
@@ -41,6 +50,10 @@ class EncounterController extends Controller
             abort_unless($this->canListEncounters($request->user()), 403, 'This action is unauthorized.');
         }
 
+        if ($type === 'admission') {
+            $query->with(['bedAssignments' => fn ($assignments) => $assignments->where('status', 'active')->with('facility:id,name,code,status')]);
+        }
+
         if ($status = $request->string('status')->toString()) {
             $query->where('status', $status);
         } elseif ($request->boolean('open')) {
@@ -48,9 +61,10 @@ class EncounterController extends Controller
         }
 
         if ($mine) {
-            $query->where(function ($builder) use ($request) {
-                $builder->where('clinician_id', $request->user()->id)
-                    ->orWhereHas('careTeam', fn ($team) => $team->where('user_id', $request->user()->id));
+            $userId = $request->user()->id;
+            $query->where(function ($builder) use ($userId) {
+                $builder->where('clinician_id', $userId)
+                    ->orWhereIn('id', EncounterClinician::query()->select('encounter_id')->where('user_id', $userId));
             });
         }
 
@@ -58,20 +72,20 @@ class EncounterController extends Controller
             $query->where('patient_id', $patientId);
         }
 
-        return $query->get();
+        return QueryList::paginate($query, $request, $patientId ? 50 : 25);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'patient_id' => ['required', 'exists:patients,id'],
+            'patient_id' => ['required', TenantRules::inHospital('patients')],
             'type' => ['required', Rule::in(Encounter::TYPES)],
-            'department_id' => ['nullable', 'exists:departments,id'],
+            'department_id' => ['nullable', TenantRules::inHospital('departments')],
             'clinician_id' => ['nullable', 'exists:users,id'],
-            'facility_id' => ['nullable', 'exists:facilities,id'],
+            'facility_id' => ['nullable', TenantRules::inHospital('facilities')],
             'chief_complaint' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
-            'parent_encounter_id' => ['nullable', 'exists:encounters,id'],
+            'parent_encounter_id' => ['nullable', TenantRules::inHospital('encounters')],
         ]);
 
         $subject = $this->subjectForType($data['type']);
@@ -88,23 +102,29 @@ class EncounterController extends Controller
                 ->value('id');
         }
 
-        $encounter = Encounter::query()->create([
-            ...$data,
-            'hospital_id' => $request->user()->hospital_id,
-            'status' => 'waiting',
-        ]);
+        $encounter = DB::transaction(function () use ($data, $request) {
+            $encounter = Encounter::query()->create([
+                ...$data,
+                'hospital_id' => $request->user()->hospital_id,
+                'status' => 'waiting',
+            ]);
 
-        $encounter->addClinician($data['clinician_id'] ?? $request->user()->id);
+            $encounter->addClinician($data['clinician_id'] ?? $request->user()->id);
 
-        $code = match ($encounter->type) {
-            'opd' => 'OPD-CON',
-            'emergency' => 'ER-CON',
-            'admission' => 'ADM-DAY',
-            default => null,
-        };
-        if ($code) {
-            ChargeLedger::forService($encounter, $code, 'encounter', $encounter->id);
-        }
+            $code = match ($encounter->type) {
+                'opd' => 'OPD-CON',
+                'emergency' => 'ER-CON',
+                'admission' => 'ADM-DAY',
+                default => null,
+            };
+            if ($code) {
+                ChargeLedger::forService($encounter, $code, 'encounter', $encounter->id);
+            }
+
+            Audit::record('created', $encounter, ['type' => $encounter->type]);
+
+            return $encounter;
+        });
 
         return response()->json($encounter->load(['patient', 'clinician', 'facility', 'department']), 201);
     }
@@ -123,7 +143,7 @@ class EncounterController extends Controller
         $data = $request->validate([
             'status' => ['sometimes', Rule::in(Encounter::STATUSES)],
             'clinician_id' => ['nullable', 'exists:users,id'],
-            'facility_id' => ['nullable', 'exists:facilities,id'],
+            'facility_id' => ['nullable', TenantRules::inHospital('facilities')],
             'chief_complaint' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
         ]);
@@ -136,8 +156,14 @@ class EncounterController extends Controller
             $data['completed_at'] = now();
         }
 
-        $encounter->update($data);
-        $encounter->addClinician($data['clinician_id'] ?? null);
+        DB::transaction(function () use ($encounter, $data) {
+            $previous = $encounter->status;
+            $encounter->update($data);
+            $encounter->addClinician($data['clinician_id'] ?? null);
+            if (isset($data['status']) && $data['status'] !== $previous) {
+                Audit::record('status_changed', $encounter, ['from' => $previous, 'to' => $data['status']]);
+            }
+        });
 
         return ClinicalPayload::encounter($encounter->refresh());
     }
@@ -166,7 +192,7 @@ class EncounterController extends Controller
             'recorded_at' => now(),
         ]);
 
-        return response()->json($vital->load('recordedBy'), 201);
+        return response()->json($vital->load('recordedBy:id,name'), 201);
     }
 
     public function storeNote(Request $request, Encounter $encounter)
@@ -188,7 +214,7 @@ class EncounterController extends Controller
             'recorded_at' => now(),
         ]);
 
-        return response()->json($note->load('author'), 201);
+        return response()->json($note->load('author:id,name'), 201);
     }
 
     public function storeDiagnosis(Request $request, Encounter $encounter)
@@ -211,7 +237,7 @@ class EncounterController extends Controller
             'recorded_at' => now(),
         ]);
 
-        return response()->json($diagnosis->load('recordedBy'), 201);
+        return response()->json($diagnosis->load('recordedBy:id,name'), 201);
     }
 
     public function storeCarePlan(Request $request, Encounter $encounter)
@@ -232,7 +258,7 @@ class EncounterController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        return response()->json($plan->load('createdBy'), 201);
+        return response()->json($plan->load('createdBy:id,name'), 201);
     }
 
     public function admit(Request $request, Encounter $encounter)
@@ -240,29 +266,34 @@ class EncounterController extends Controller
         $this->authorizeEncounter($encounter, $request->user(), 'update');
 
         $data = $request->validate([
-            'facility_id' => ['nullable', 'exists:facilities,id'],
+            'facility_id' => ['nullable', TenantRules::inHospital('facilities')],
             'clinician_id' => ['nullable', 'exists:users,id'],
             'notes' => ['nullable', 'string'],
         ]);
 
-        $admission = Encounter::query()->create([
-            'hospital_id' => $encounter->hospital_id,
-            'patient_id' => $encounter->patient_id,
-            'department_id' => Department::query()->where('slug', 'wards')->value('id'),
-            'clinician_id' => $data['clinician_id'] ?? $encounter->clinician_id,
-            'facility_id' => $data['facility_id'] ?? null,
-            'parent_encounter_id' => $encounter->id,
-            'type' => 'admission',
-            'status' => 'in_progress',
-            'chief_complaint' => $encounter->chief_complaint,
-            'notes' => $data['notes'] ?? $encounter->notes,
-            'started_at' => now(),
-            'admitted_at' => now(),
-        ]);
+        $admission = DB::transaction(function () use ($encounter, $data) {
+            $admission = Encounter::query()->create([
+                'hospital_id' => $encounter->hospital_id,
+                'patient_id' => $encounter->patient_id,
+                'department_id' => Department::query()->where('slug', 'wards')->value('id'),
+                'clinician_id' => $data['clinician_id'] ?? $encounter->clinician_id,
+                'facility_id' => $data['facility_id'] ?? null,
+                'parent_encounter_id' => $encounter->id,
+                'type' => 'admission',
+                'status' => 'in_progress',
+                'chief_complaint' => $encounter->chief_complaint,
+                'notes' => $data['notes'] ?? $encounter->notes,
+                'started_at' => now(),
+                'admitted_at' => now(),
+            ]);
 
-        $admission->addClinician($admission->clinician_id);
-        $encounter->patient->update(['status' => 'admitted']);
-        ChargeLedger::forService($admission, 'ADM-DAY', 'encounter', $admission->id);
+            $admission->addClinician($admission->clinician_id);
+            $encounter->patient->update(['status' => 'admitted']);
+            ChargeLedger::forService($admission, 'ADM-DAY', 'encounter', $admission->id);
+            Audit::record('admitted', $admission, ['from_encounter_id' => $encounter->id]);
+
+            return $admission;
+        });
 
         return response()->json(ClinicalPayload::encounter($admission), 201);
     }
@@ -275,29 +306,33 @@ class EncounterController extends Controller
             'notes' => ['nullable', 'string'],
         ]);
 
-        $encounter->update([
-            'status' => 'completed',
-            'completed_at' => now(),
-            'discharged_at' => now(),
-            'notes' => $data['notes'] ?? $encounter->notes,
-        ]);
-
-        $active = $encounter->bedAssignments()->where('status', 'active')->get();
-        foreach ($active as $assignment) {
-            $assignment->update([
-                'status' => 'discharged',
+        DB::transaction(function () use ($encounter, $data) {
+            $encounter->update([
+                'status' => 'completed',
+                'completed_at' => now(),
                 'discharged_at' => now(),
+                'notes' => $data['notes'] ?? $encounter->notes,
             ]);
-            $facility = Facility::query()->with('type')->find($assignment->facility_id);
-            $facility?->adjustUtilization(-1);
-            if ($facility?->type?->slug === 'bed') {
-                $facility->update(['status' => 'cleaning']);
-            }
-        }
 
-        if (! $encounter->patient->bedAssignments()->where('status', 'active')->exists()) {
-            $encounter->patient->update(['status' => 'active']);
-        }
+            $active = $encounter->bedAssignments()->where('status', 'active')->lockForUpdate()->get();
+            foreach ($active as $assignment) {
+                $assignment->update([
+                    'status' => 'discharged',
+                    'discharged_at' => now(),
+                ]);
+                $facility = Facility::query()->with('type')->find($assignment->facility_id);
+                $facility?->adjustUtilization(-1);
+                if ($facility?->type?->slug === 'bed') {
+                    $facility->update(['status' => 'cleaning']);
+                }
+            }
+
+            if (! $encounter->patient->bedAssignments()->where('status', 'active')->exists()) {
+                $encounter->patient->update(['status' => 'active']);
+            }
+
+            Audit::record('discharged', $encounter);
+        });
 
         return ClinicalPayload::encounter($encounter->refresh());
     }

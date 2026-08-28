@@ -109,7 +109,7 @@ const load = async () => {
   }
 
   if (ability.can('read', 'Patient') && (board.value.orders || board.value.assignments))
-    patients.value = asList(await $api('/patients'))
+    patients.value = asList(await $api('/patients', { query: compactListQuery() }))
 }
 
 const openStatus = item => {

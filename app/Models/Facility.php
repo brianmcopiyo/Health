@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToHospital;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Facility extends Model
 {
@@ -70,22 +72,48 @@ class Facility extends Model
         return $this->status === 'available' && $this->remainingCapacity() >= $requiredCapacity;
     }
 
+    public function scopeSearch(Builder $query, ?string $term): Builder
+    {
+        $term = trim((string) $term);
+        if ($term === '') {
+            return $query;
+        }
+
+        $prefix = addcslashes($term, '%_').'%';
+
+        return $query->where(function (Builder $builder) use ($prefix) {
+            $builder->where('name', 'like', $prefix)
+                ->orWhere('code', 'like', $prefix);
+        });
+    }
+
+    public function scopeHasRemainingCapacity(Builder $query, int $required = 1): Builder
+    {
+        return $query->where('status', 'available')
+            ->whereRaw('(capacity - current_utilization) >= ?', [$required]);
+    }
+
     public function adjustUtilization(int $delta): void
     {
-        $this->current_utilization = max(0, $this->current_utilization + $delta);
+        DB::transaction(function () use ($delta) {
+            $row = static::withoutGlobalScope('hospital')->whereKey($this->id)->lockForUpdate()->firstOrFail();
+            $row->current_utilization = max(0, $row->current_utilization + $delta);
 
-        if ($this->current_utilization > $this->capacity) {
-            $this->current_utilization = $this->capacity;
-        }
+            if ($row->current_utilization > $row->capacity) {
+                $row->current_utilization = $row->capacity;
+            }
 
-        if ($this->current_utilization >= $this->capacity && $this->status === 'available') {
-            $this->status = 'occupied';
-        }
+            if ($row->current_utilization >= $row->capacity && $row->status === 'available') {
+                $row->status = 'occupied';
+            }
 
-        if ($this->current_utilization < $this->capacity && $this->status === 'occupied') {
-            $this->status = 'available';
-        }
+            if ($row->current_utilization < $row->capacity && $row->status === 'occupied') {
+                $row->status = 'available';
+            }
 
-        $this->save();
+            $row->save();
+            $this->setRawAttributes($row->getAttributes());
+            $this->syncOriginal();
+        });
     }
 }
