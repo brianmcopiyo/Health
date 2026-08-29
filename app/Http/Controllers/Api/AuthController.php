@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\Access\AccountStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -25,6 +26,12 @@ class AuthController extends Controller
             ]);
         }
 
+        if (! $user->canAuthenticate()) {
+            throw ValidationException::withMessages([
+                'email' => [AccountStatus::denialMessage($user->status)],
+            ]);
+        }
+
         if ($user->hospital && ! $user->hospital->is_active && ! $user->isPlatformAdmin()) {
             throw ValidationException::withMessages([
                 'email' => ['This hospital account is inactive'],
@@ -40,6 +47,8 @@ class AuthController extends Controller
             'ip_address' => $request->ip(),
             'user_agent' => mb_substr((string) $request->userAgent(), 0, 255),
         ])->save();
+
+        $user->recordLogin();
 
         return response()->json(array_merge($user->toSessionPayload(), [
             'accessToken' => $created->plainTextToken,

@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Hospital;
 use App\Models\Permission;
 use App\Models\Role;
+use App\Support\Access\PermissionActions;
 
 class RoleProvisioner
 {
@@ -42,7 +43,7 @@ class RoleProvisioner
         ];
 
         foreach ($modules as $subject => $group) {
-            foreach (['read' => 'View', 'create' => 'Create', 'update' => 'Update', 'manage' => 'Manage'] as $action => $label) {
+            foreach (PermissionActions::moduleActions() as $action => $label) {
                 $items[] = [
                     'name' => $label.' '.$group,
                     'action' => $action,
@@ -136,7 +137,7 @@ class RoleProvisioner
     public static function seedPermissions(): void
     {
         foreach (self::permissionDefinitions() as $permission) {
-            Permission::query()->firstOrCreate(
+            Permission::query()->updateOrCreate(
                 ['action' => $permission['action'], 'subject' => $permission['subject']],
                 $permission
             );

@@ -1,5 +1,5 @@
 <script setup>
-import { labelize } from '@/utils/status'
+import { labelize, statusColor } from '@/utils/status'
 
 definePage({
   meta: {
@@ -85,6 +85,7 @@ watch(() => route.params.id, () => run())
         :headers="[
           { title: 'Name', key: 'name' },
           { title: 'Email', key: 'email' },
+          { title: 'Status', key: 'status' },
           { title: 'Department', key: 'department.name' },
         ]"
         :items="record.users || []"
@@ -97,6 +98,11 @@ watch(() => route.params.id, () => run())
           >
             {{ item.name }}
           </RouterLink>
+        </template>
+        <template #cell-status="{ item }">
+          <HBadge :tone="statusColor(item.status)">
+            {{ labelize(item.status) }}
+          </HBadge>
         </template>
         <template #cell-department.name="{ item }">
           <RouterLink

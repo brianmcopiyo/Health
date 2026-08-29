@@ -8,6 +8,8 @@ declare global {
   const $api: typeof import('./resources/js/utils/api.js')['$api']
   const EffectScope: typeof import('vue')['EffectScope']
   const LOAD_HINT_DELAY: typeof import('./resources/js/composables/usePageLoad.js')['LOAD_HINT_DELAY']
+  const accountStatusItems: typeof import('./resources/js/utils/access.js')['accountStatusItems']
+  const accountStatuses: typeof import('./resources/js/utils/access.js')['accountStatuses']
   const addPageWait: typeof import('./resources/js/composables/useRouteLoad.js')['addPageWait']
   const ambulanceStatuses: typeof import('./resources/js/utils/status.js')['ambulanceStatuses']
   const applySession: typeof import('./resources/js/utils/session.js')['applySession']
@@ -16,7 +18,10 @@ declare global {
   const assistanceStatuses: typeof import('./resources/js/utils/status.js')['assistanceStatuses']
   const assistanceTypes: typeof import('./resources/js/utils/status.js')['assistanceTypes']
   const bloodGroups: typeof import('./resources/js/utils/clinicalOptions.js')['bloodGroups']
+  const bulkStatusItems: typeof import('./resources/js/utils/access.js')['bulkStatusItems']
   const canNavigate: typeof import('./resources/js/composables/useAbility.js')['canNavigate']
+  const canWriteRole: typeof import('./resources/js/utils/access.js')['canWriteRole']
+  const canWriteUser: typeof import('./resources/js/utils/access.js')['canWriteUser']
   const clearSession: typeof import('./resources/js/utils/session.js')['clearSession']
   const compactListQuery: typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']
   const computed: typeof import('vue')['computed']
@@ -33,6 +38,7 @@ declare global {
   const downloadAuthorized: typeof import('./resources/js/utils/api.js')['downloadAuthorized']
   const downloadReport: typeof import('./resources/js/composables/useReports.js')['downloadReport']
   const effectScope: typeof import('vue')['effectScope']
+  const emptyUserForm: typeof import('./resources/js/utils/access.js')['emptyUserForm']
   const errorCatalog: typeof import('./resources/js/utils/errors.js')['errorCatalog']
   const errorText: typeof import('./resources/js/utils/formOptions.js')['errorText']
   const facilityRecordTo: typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']
@@ -44,6 +50,7 @@ declare global {
   const getByPath: typeof import('./resources/js/utils/helpers.js')['getByPath']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
+  const groupPermissions: typeof import('./resources/js/utils/access.js')['groupPermissions']
   const h: typeof import('vue')['h']
   const httpStatus: typeof import('./resources/js/utils/errors.js')['httpStatus']
   const inject: typeof import('vue')['inject']
@@ -97,6 +104,7 @@ declare global {
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
   const shallowRef: typeof import('vue')['shallowRef']
+  const sortDirItems: typeof import('./resources/js/utils/access.js')['sortDirItems']
   const startPageNav: typeof import('./resources/js/composables/useRouteLoad.js')['startPageNav']
   const statusColor: typeof import('./resources/js/utils/status.js')['statusColor']
   const toRaw: typeof import('vue')['toRaw']
@@ -122,6 +130,10 @@ declare global {
   const useRouter: typeof import('vue-router/auto')['useRouter']
   const useSlots: typeof import('vue')['useSlots']
   const useToast: typeof import('./resources/js/composables/useToast.js')['useToast']
+  const userFormFrom: typeof import('./resources/js/utils/access.js')['userFormFrom']
+  const userListQuery: typeof import('./resources/js/utils/access.js')['userListQuery']
+  const userPayload: typeof import('./resources/js/utils/access.js')['userPayload']
+  const userSortItems: typeof import('./resources/js/utils/access.js')['userSortItems']
   const vehicleTypes: typeof import('./resources/js/utils/clinicalOptions.js')['vehicleTypes']
   const visitTypeOptions: typeof import('./resources/js/utils/clinicalOptions.js')['visitTypeOptions']
   const watch: typeof import('vue')['watch']
@@ -147,6 +159,8 @@ declare module 'vue' {
     readonly $api: UnwrapRef<typeof import('./resources/js/utils/api.js')['$api']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly LOAD_HINT_DELAY: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['LOAD_HINT_DELAY']>
+    readonly accountStatusItems: UnwrapRef<typeof import('./resources/js/utils/access.js')['accountStatusItems']>
+    readonly accountStatuses: UnwrapRef<typeof import('./resources/js/utils/access.js')['accountStatuses']>
     readonly ambulanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['ambulanceStatuses']>
     readonly applySession: UnwrapRef<typeof import('./resources/js/utils/session.js')['applySession']>
     readonly asList: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['asList']>
@@ -154,7 +168,10 @@ declare module 'vue' {
     readonly assistanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['assistanceStatuses']>
     readonly assistanceTypes: UnwrapRef<typeof import('./resources/js/utils/status.js')['assistanceTypes']>
     readonly bloodGroups: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['bloodGroups']>
+    readonly bulkStatusItems: UnwrapRef<typeof import('./resources/js/utils/access.js')['bulkStatusItems']>
     readonly canNavigate: UnwrapRef<typeof import('./resources/js/composables/useAbility.js')['canNavigate']>
+    readonly canWriteRole: UnwrapRef<typeof import('./resources/js/utils/access.js')['canWriteRole']>
+    readonly canWriteUser: UnwrapRef<typeof import('./resources/js/utils/access.js')['canWriteUser']>
     readonly clearSession: UnwrapRef<typeof import('./resources/js/utils/session.js')['clearSession']>
     readonly compactListQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
@@ -171,6 +188,7 @@ declare module 'vue' {
     readonly downloadAuthorized: UnwrapRef<typeof import('./resources/js/utils/api.js')['downloadAuthorized']>
     readonly downloadReport: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['downloadReport']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly emptyUserForm: UnwrapRef<typeof import('./resources/js/utils/access.js')['emptyUserForm']>
     readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
     readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
@@ -182,6 +200,7 @@ declare module 'vue' {
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly groupPermissions: UnwrapRef<typeof import('./resources/js/utils/access.js')['groupPermissions']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly httpStatus: UnwrapRef<typeof import('./resources/js/utils/errors.js')['httpStatus']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
@@ -234,6 +253,7 @@ declare module 'vue' {
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
+    readonly sortDirItems: UnwrapRef<typeof import('./resources/js/utils/access.js')['sortDirItems']>
     readonly startPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['startPageNav']>
     readonly statusColor: UnwrapRef<typeof import('./resources/js/utils/status.js')['statusColor']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
@@ -259,6 +279,10 @@ declare module 'vue' {
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useToast: UnwrapRef<typeof import('./resources/js/composables/useToast.js')['useToast']>
+    readonly userFormFrom: UnwrapRef<typeof import('./resources/js/utils/access.js')['userFormFrom']>
+    readonly userListQuery: UnwrapRef<typeof import('./resources/js/utils/access.js')['userListQuery']>
+    readonly userPayload: UnwrapRef<typeof import('./resources/js/utils/access.js')['userPayload']>
+    readonly userSortItems: UnwrapRef<typeof import('./resources/js/utils/access.js')['userSortItems']>
     readonly vehicleTypes: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['vehicleTypes']>
     readonly visitTypeOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['visitTypeOptions']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
@@ -276,6 +300,8 @@ declare module '@vue/runtime-core' {
     readonly $api: UnwrapRef<typeof import('./resources/js/utils/api.js')['$api']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
     readonly LOAD_HINT_DELAY: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['LOAD_HINT_DELAY']>
+    readonly accountStatusItems: UnwrapRef<typeof import('./resources/js/utils/access.js')['accountStatusItems']>
+    readonly accountStatuses: UnwrapRef<typeof import('./resources/js/utils/access.js')['accountStatuses']>
     readonly ambulanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['ambulanceStatuses']>
     readonly applySession: UnwrapRef<typeof import('./resources/js/utils/session.js')['applySession']>
     readonly asList: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['asList']>
@@ -283,7 +309,10 @@ declare module '@vue/runtime-core' {
     readonly assistanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['assistanceStatuses']>
     readonly assistanceTypes: UnwrapRef<typeof import('./resources/js/utils/status.js')['assistanceTypes']>
     readonly bloodGroups: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['bloodGroups']>
+    readonly bulkStatusItems: UnwrapRef<typeof import('./resources/js/utils/access.js')['bulkStatusItems']>
     readonly canNavigate: UnwrapRef<typeof import('./resources/js/composables/useAbility.js')['canNavigate']>
+    readonly canWriteRole: UnwrapRef<typeof import('./resources/js/utils/access.js')['canWriteRole']>
+    readonly canWriteUser: UnwrapRef<typeof import('./resources/js/utils/access.js')['canWriteUser']>
     readonly clearSession: UnwrapRef<typeof import('./resources/js/utils/session.js')['clearSession']>
     readonly compactListQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
@@ -300,6 +329,7 @@ declare module '@vue/runtime-core' {
     readonly downloadAuthorized: UnwrapRef<typeof import('./resources/js/utils/api.js')['downloadAuthorized']>
     readonly downloadReport: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['downloadReport']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly emptyUserForm: UnwrapRef<typeof import('./resources/js/utils/access.js')['emptyUserForm']>
     readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
     readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
@@ -311,6 +341,7 @@ declare module '@vue/runtime-core' {
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
+    readonly groupPermissions: UnwrapRef<typeof import('./resources/js/utils/access.js')['groupPermissions']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly httpStatus: UnwrapRef<typeof import('./resources/js/utils/errors.js')['httpStatus']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
@@ -363,6 +394,7 @@ declare module '@vue/runtime-core' {
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
+    readonly sortDirItems: UnwrapRef<typeof import('./resources/js/utils/access.js')['sortDirItems']>
     readonly startPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['startPageNav']>
     readonly statusColor: UnwrapRef<typeof import('./resources/js/utils/status.js')['statusColor']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
@@ -388,6 +420,10 @@ declare module '@vue/runtime-core' {
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
     readonly useToast: UnwrapRef<typeof import('./resources/js/composables/useToast.js')['useToast']>
+    readonly userFormFrom: UnwrapRef<typeof import('./resources/js/utils/access.js')['userFormFrom']>
+    readonly userListQuery: UnwrapRef<typeof import('./resources/js/utils/access.js')['userListQuery']>
+    readonly userPayload: UnwrapRef<typeof import('./resources/js/utils/access.js')['userPayload']>
+    readonly userSortItems: UnwrapRef<typeof import('./resources/js/utils/access.js')['userSortItems']>
     readonly vehicleTypes: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['vehicleTypes']>
     readonly visitTypeOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['visitTypeOptions']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>

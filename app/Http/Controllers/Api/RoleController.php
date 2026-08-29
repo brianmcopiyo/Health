@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Support\ModuleCatalog;
+use App\Support\Access\AccountGuard;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -30,7 +31,7 @@ class RoleController extends Controller
 
         return $role->load([
             'permissions',
-            'users:id,name,email,job_title,role_id,department_id',
+            'users:id,name,email,job_title,role_id,department_id,status,last_login_at',
             'users.department:id,name',
             'hospital:id,name,code',
         ]);
@@ -56,7 +57,7 @@ class RoleController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'workspace' => ['nullable', 'string', 'max:80'],
             'permission_ids' => ['array'],
-            'permission_ids.*' => ['integer', 'exists:permissions,id'],
+            'permission_ids.*' => ['uuid', 'exists:permissions,id'],
         ]);
 
         $role = Role::query()->create([
@@ -85,7 +86,7 @@ class RoleController extends Controller
             'description' => ['nullable', 'string', 'max:255'],
             'workspace' => ['nullable', 'string', 'max:80'],
             'permission_ids' => ['array'],
-            'permission_ids.*' => ['integer', 'exists:permissions,id'],
+            'permission_ids.*' => ['uuid', 'exists:permissions,id'],
         ]);
 
         $role->fill(collect($data)->only(['name', 'description', 'workspace'])->all());
@@ -98,6 +99,7 @@ class RoleController extends Controller
 
         if (array_key_exists('permission_ids', $data)) {
             abort_if($role->is_system && $role->slug === 'platform-admin', 422, 'Platform admin permissions cannot be changed.');
+            AccountGuard::assertCanSyncPermissions($role, $data['permission_ids']);
             $role->permissions()->sync($this->filterPermissionIds($user, $data['permission_ids']));
         }
 

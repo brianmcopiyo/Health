@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Support\ModuleCatalog;
+use App\Support\Access\HasAccountAccess;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -11,7 +12,7 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, HasUuids, Notifiable;
+    use HasAccountAccess, HasApiTokens, HasFactory, HasUuids, Notifiable;
 
     protected $fillable = [
         'name',
@@ -27,6 +28,8 @@ class User extends Authenticatable
         'avatar_path',
         'availability',
         'preferences',
+        'status',
+        'last_login_at',
     ];
 
     protected $hidden = [
@@ -41,6 +44,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'preferences' => 'array',
+            'last_login_at' => 'datetime',
         ];
     }
 
@@ -77,32 +81,6 @@ class User extends Authenticatable
     public function isPlatformAdmin(): bool
     {
         return $this->role?->slug === 'platform-admin';
-    }
-
-    public function hasPermission(string $action, string $subject): bool
-    {
-        $this->loadMissing('role.permissions');
-
-        $permissions = $this->role?->permissions ?? collect();
-
-        if ($permissions->contains(fn (Permission $permission) => $permission->action === 'manage' && $permission->subject === 'all')) {
-            return true;
-        }
-
-        return $permissions->contains(function (Permission $permission) use ($action, $subject) {
-            return $permission->subject === $subject
-                && in_array($permission->action, [$action, 'manage'], true);
-        });
-    }
-
-    public function abilityRules(): array
-    {
-        $this->loadMissing('role.permissions');
-
-        return $this->role?->permissions
-            ->map(fn (Permission $permission) => $permission->toAbilityRule())
-            ->values()
-            ->all() ?? [];
     }
 
     public function belongsToHospital(string $hospitalId): bool
@@ -144,6 +122,7 @@ class User extends Authenticatable
             'departmentId' => $this->department_id,
             'departmentName' => $this->department?->name,
             'availability' => $this->availability ?: 'available',
+            'status' => $this->accountStatus(),
             'hasAvatar' => (bool) $this->avatar_path,
             'preferences' => $this->preferenceMap(),
             'avatar' => null,

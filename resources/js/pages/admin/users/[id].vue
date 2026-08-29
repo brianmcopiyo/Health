@@ -1,4 +1,5 @@
 <script setup>
+import AccessUserProfile from '@/components/access/AccessUserProfile.vue'
 import { facilityRecordTo, formatWhen } from '@/utils/helpers'
 import { labelize, statusColor } from '@/utils/status'
 
@@ -9,6 +10,8 @@ definePage({
   },
 })
 
+const ability = useAbility()
+const hospitals = ref([])
 const route = useRoute()
 const record = ref(null)
 const tab = ref('overview')
@@ -22,6 +25,8 @@ const tabs = [
 
 const load = async () => {
   record.value = await $api(`/users/${route.params.id}`)
+  if (ability.can('manage', 'Hospital'))
+    hospitals.value = asList(await $api('/hospitals'))
 }
 
 const { pending, run } = usePageQuery(load)
@@ -32,7 +37,7 @@ watch(() => route.params.id, () => run())
   <HRecord
     :title="record?.name || 'User'"
     :subtitle="record?.email || ''"
-    :status="record?.availability"
+    :status="record?.status"
     :back="{ name: 'admin-users' }"
     back-label="Users"
     :tabs="tabs"
@@ -41,24 +46,12 @@ watch(() => route.params.id, () => run())
     :missing="!pending && !record"
     @update:tab="tab = $event"
   >
-    <div
+    <AccessUserProfile
       v-if="record && tab === 'overview'"
-      class="h-detail"
+      :record="record"
+      @saved="run"
     >
-      <HCard title="Account">
-        <div class="h-metric">
-          <span>Role</span>
-          <strong>
-            <RouterLink
-              v-if="record.role?.id"
-              class="h-inline-link"
-              :to="{ name: 'admin-roles-id', params: { id: record.role.id } }"
-            >
-              {{ record.role.name }}
-            </RouterLink>
-            <span v-else>—</span>
-          </strong>
-        </div>
+      <template #account-extra>
         <div class="h-metric">
           <span>Department</span>
           <strong>
@@ -76,28 +69,27 @@ watch(() => route.params.id, () => run())
           <span>Hospital</span>
           <strong>{{ record.hospital?.name || '—' }}</strong>
         </div>
-        <div class="h-metric">
-          <span>Title</span>
-          <strong>{{ record.job_title || '—' }}</strong>
-        </div>
-      </HCard>
-      <HCard title="Permissions">
-        <div class="h-actions">
-          <HBadge
-            v-for="permission in (record.permissions || []).slice(0, 12)"
-            :key="permission.id"
-          >
-            {{ permission.name }}
-          </HBadge>
-        </div>
-        <p
-          v-if="!(record.permissions || []).length"
-          class="h-muted"
+      </template>
+      <template #access-extra>
+        <div
+          v-if="(record.memberships || []).length"
+          class="h-metric"
         >
-          No permissions on this role
-        </p>
-      </HCard>
-    </div>
+          <span>Memberships</span>
+          <strong>{{ record.memberships.length }}</strong>
+        </div>
+      </template>
+      <template #form-extra="{ form, ability: can }">
+        <HSelect
+          v-if="can.can('manage', 'Hospital')"
+          v-model="form.hospital_id"
+          :items="hospitals"
+          item-title="name"
+          item-value="id"
+          label="Hospital"
+        />
+      </template>
+    </AccessUserProfile>
 
     <HCard
       v-if="record && tab === 'assignments'"

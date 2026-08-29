@@ -67,16 +67,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/roles', [RoleController::class, 'index'])->middleware('permission:read,Role');
     Route::get('/roles/{role}', [RoleController::class, 'show'])->middleware('permission:read,Role');
     Route::get('/permissions', [RoleController::class, 'permissions'])->middleware('permission:read,Role');
-    Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:manage,Role');
-    Route::put('/roles/{role}', [RoleController::class, 'update'])->middleware('permission:manage,Role');
-    Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->middleware('permission:manage,Role');
+    Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:create,Role');
+    Route::put('/roles/{role}', [RoleController::class, 'update'])->middleware('permission:update,Role');
+    Route::delete('/roles/{role}', [RoleController::class, 'destroy'])->middleware('permission:delete,Role');
 
     Route::get('/users/directory', [UserController::class, 'directory']);
     Route::get('/users', [UserController::class, 'index'])->middleware('permission:read,User');
-    Route::post('/users', [UserController::class, 'store'])->middleware('permission:manage,User');
+    Route::post('/users', [UserController::class, 'store'])->middleware('permission:create,User');
+    Route::post('/users/bulk-status', [UserController::class, 'bulkStatus'])->middleware('permission:update,User');
     Route::get('/users/{user}', [UserController::class, 'show'])->middleware('permission:read,User');
-    Route::put('/users/{user}', [UserController::class, 'update'])->middleware('permission:manage,User');
-    Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware('permission:manage,User');
+    Route::put('/users/{user}', [UserController::class, 'update'])->middleware('permission:update,User');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware('permission:delete,User');
 
     Route::get('/departments', [DepartmentController::class, 'index'])->middleware('permission:read,Department');
     Route::post('/departments', [DepartmentController::class, 'store'])->middleware('permission:manage,Department');

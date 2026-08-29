@@ -28,7 +28,7 @@ const tabs = [
 
 const load = async () => {
   record.value = await $api(`/departments/${route.params.id}`)
-  if (ability.can('manage', 'User'))
+  if (ability.can('update', 'User') || ability.can('manage', 'User'))
     directory.value = asList(await $api('/users/directory').catch(() => []))
 }
 
@@ -115,7 +115,7 @@ watch(() => route.params.id, () => run())
         </template>
       </HTable>
       <fieldset
-        v-if="ability.can('manage', 'User')"
+        v-if="ability.can('update', 'User') || ability.can('manage', 'User')"
         class="h-form"
         style="padding: 1rem"
       >

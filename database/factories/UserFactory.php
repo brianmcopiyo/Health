@@ -23,6 +23,7 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
             'hospital_id' => null,
             'role_id' => null,
+            'status' => 'active',
         ];
     }
 

@@ -7,6 +7,12 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    AccessConfirmModal: typeof import('./resources/js/components/access/AccessConfirmModal.vue')['default']
+    AccessRoleBoard: typeof import('./resources/js/components/access/AccessRoleBoard.vue')['default']
+    AccessRoleFormOverlay: typeof import('./resources/js/components/access/AccessRoleFormOverlay.vue')['default']
+    AccessUserFormModal: typeof import('./resources/js/components/access/AccessUserFormModal.vue')['default']
+    AccessUserList: typeof import('./resources/js/components/access/AccessUserList.vue')['default']
+    AccessUserProfile: typeof import('./resources/js/components/access/AccessUserProfile.vue')['default']
     AccountNav: typeof import('./resources/js/components/hms/AccountNav.vue')['default']
     EncounterChart: typeof import('./resources/js/components/hms/EncounterChart.vue')['default']
     FacilityBoard: typeof import('./resources/js/components/hms/FacilityBoard.vue')['default']

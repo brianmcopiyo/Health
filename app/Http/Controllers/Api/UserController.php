@@ -7,7 +7,12 @@ use App\Models\HospitalMembership;
 use App\Models\Role;
 use App\Models\User;
 use App\Support\QueryList;
+use App\Support\Access\AccountGuard;
+use App\Support\Access\AccountPresenter;
+use App\Support\Access\AccountStatus;
+use App\Support\Access\UserQuery;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -15,7 +20,7 @@ class UserController extends Controller
     {
         $actor = $request->user();
 
-        $query = User::query()->with(['role', 'hospital', 'memberships.role', 'memberships.hospital'])->orderBy('name');
+        $query = User::query()->with(['role', 'hospital', 'memberships.role', 'memberships.hospital']);
 
         if (! $actor->isPlatformAdmin()) {
             $query->where(function ($builder) use ($actor) {
@@ -24,14 +29,7 @@ class UserController extends Controller
             })->whereDoesntHave('role', fn ($role) => $role->where('slug', 'platform-admin'));
         }
 
-        if ($search = $request->string('q')->toString()) {
-            $prefix = addcslashes($search, '%_').'%';
-            $query->where(function ($builder) use ($prefix) {
-                $builder->where('name', 'like', $prefix)
-                    ->orWhere('email', 'like', $prefix);
-            });
-        }
-
+        UserQuery::apply($query, $request);
         $paginator = QueryList::paginate($query, $request);
         $paginator->getCollection()->transform(fn (User $user) => $this->serialize($user, $actor));
 
@@ -74,7 +72,7 @@ class UserController extends Controller
     {
         $actor = $request->user();
 
-        $query = User::query()->with('role')->orderBy('name');
+        $query = User::query()->with('role')->where('status', AccountStatus::ACTIVE)->orderBy('name');
 
         if (! $actor->isPlatformAdmin()) {
             abort_unless($actor->hospital_id, 403, 'This action is unauthorized.');
@@ -99,6 +97,7 @@ class UserController extends Controller
             'hospital_id' => [$actor->isPlatformAdmin() ? 'nullable' : 'prohibited', 'exists:hospitals,id'],
             'phone' => ['nullable', 'string', 'max:50'],
             'job_title' => ['nullable', 'string', 'max:120'],
+            'status' => ['nullable', Rule::in(AccountStatus::all())],
         ]);
 
         $role = Role::query()->findOrFail($data['role_id']);
@@ -122,6 +121,7 @@ class UserController extends Controller
             'hospital_id' => $role->slug === 'platform-admin' ? null : $hospitalId,
             'phone' => $data['phone'] ?? null,
             'job_title' => $data['job_title'] ?? null,
+            'status' => $data['status'] ?? AccountStatus::ACTIVE,
         ]);
 
         if ($role->slug !== 'platform-admin') {
@@ -145,12 +145,22 @@ class UserController extends Controller
             'hospital_id' => [$actor->isPlatformAdmin() ? 'nullable' : 'prohibited', 'exists:hospitals,id'],
             'phone' => ['nullable', 'string', 'max:50'],
             'job_title' => ['nullable', 'string', 'max:120'],
+            'status' => ['sometimes', Rule::in(AccountStatus::all())],
         ]);
+
+        if (isset($data['status'])) {
+            AccountGuard::assertCanChangeStatus($actor, $user, $data['status']);
+            $user->status = $data['status'];
+            if (! AccountStatus::allowsAuthentication($data['status'])) {
+                $user->revokeAccessTokens();
+            }
+        }
 
         if (isset($data['role_id'])) {
             $role = Role::query()->findOrFail($data['role_id']);
             abort_unless($role->isVisibleTo($actor), 422, 'Invalid role.');
             abort_if($role->slug === 'platform-admin' && ! $actor->isPlatformAdmin(), 403, 'This action is unauthorized.');
+            AccountGuard::assertCanChangeRole($actor, $user, $role);
 
             $hospitalId = $actor->isPlatformAdmin()
                 ? ($data['hospital_id'] ?? $user->hospital_id ?? $role->hospital_id)
@@ -189,7 +199,7 @@ class UserController extends Controller
         $actor = $request->user();
 
         abort_unless($actor->isPlatformAdmin() || $user->belongsToHospital($actor->hospital_id), 403, 'This action is unauthorized.');
-        abort_if($user->id === $actor->id, 422, 'You cannot delete your own account.');
+        AccountGuard::assertCanRevokeAccess($actor, $user);
 
         if (! $actor->isPlatformAdmin() && $user->memberships()->where('hospital_id', '!=', $actor->hospital_id)->exists()) {
             $user->memberships()->where('hospital_id', $actor->hospital_id)->delete();
@@ -207,6 +217,37 @@ class UserController extends Controller
         $user->delete();
 
         return response()->json(['message' => 'User removed']);
+    }
+
+    public function bulkStatus(Request $request)
+    {
+        $actor = $request->user();
+
+        $data = $request->validate([
+            'user_ids' => ['required', 'array', 'min:1'],
+            'user_ids.*' => ['uuid', 'exists:users,id'],
+            'status' => ['required', Rule::in(AccountStatus::all())],
+        ]);
+
+        $updated = 0;
+        $skipped = 0;
+
+        foreach (User::query()->whereIn('id', $data['user_ids'])->get() as $user) {
+            if (! $actor->isPlatformAdmin() && ! $user->belongsToHospital($actor->hospital_id)) {
+                $skipped++;
+                continue;
+            }
+
+            try {
+                AccountGuard::assertCanChangeStatus($actor, $user, $data['status']);
+                $user->applyAccountStatus($data['status']);
+                $updated++;
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+                $skipped++;
+            }
+        }
+
+        return ['updated' => $updated, 'skipped' => $skipped];
     }
 
     private function syncMembership(User $user, string $hospitalId, string $roleId): void
@@ -238,6 +279,7 @@ class UserController extends Controller
             'role' => $role,
             'hospital' => $hospital,
             'memberships' => $user->memberships,
+            ...AccountPresenter::fields($user),
         ];
     }
 }

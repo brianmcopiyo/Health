@@ -44,6 +44,7 @@ export const statusColor = status => {
     away: 'secondary',
     archived: 'secondary',
     inactive: 'secondary',
+    suspended: 'error',
     system: 'info',
   }
 
