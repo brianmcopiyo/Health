@@ -8,14 +8,18 @@ class ModuleCatalog
 {
     public static function all(): array
     {
+        $sections = config('hms.navigation.sections', []);
+
         return [
             [
-                'key' => 'reception',
-                'title' => 'Reception',
-                'icon' => 'tabler-desk',
-                'to' => 'reception',
-                'subject' => 'Reception',
-                'heading' => 'Front desk',
+                'key' => 'admin',
+                'title' => 'Dashboard',
+                'icon' => 'tabler-layout-dashboard',
+                'to' => 'admin',
+                'subject' => null,
+                'section' => 'home',
+                'rank' => 1,
+                'heading' => $sections['home']['title'] ?? 'Workspace',
             ],
             [
                 'key' => 'patients',
@@ -23,7 +27,19 @@ class ModuleCatalog
                 'icon' => 'tabler-users',
                 'to' => 'patients',
                 'subject' => 'Patient',
-                'heading' => 'Front desk',
+                'section' => 'care',
+                'rank' => 1,
+                'heading' => $sections['care']['title'] ?? 'Care',
+            ],
+            [
+                'key' => 'reception',
+                'title' => 'Reception',
+                'icon' => 'tabler-desk',
+                'to' => 'reception',
+                'subject' => 'Reception',
+                'section' => 'care',
+                'rank' => 2,
+                'heading' => $sections['care']['title'] ?? 'Care',
             ],
             [
                 'key' => 'opd',
@@ -31,7 +47,9 @@ class ModuleCatalog
                 'icon' => 'tabler-stethoscope',
                 'to' => 'opd',
                 'subject' => 'Opd',
-                'heading' => 'Clinical',
+                'section' => 'clinical',
+                'rank' => 1,
+                'heading' => $sections['clinical']['title'] ?? 'Clinical',
                 'facility_type' => 'consultation-room',
                 'encounter_type' => 'opd',
             ],
@@ -41,7 +59,9 @@ class ModuleCatalog
                 'icon' => 'tabler-emergency-bed',
                 'to' => 'emergency',
                 'subject' => 'Emergency',
-                'heading' => 'Clinical',
+                'section' => 'clinical',
+                'rank' => 2,
+                'heading' => $sections['clinical']['title'] ?? 'Clinical',
                 'facility_type' => 'emergency-unit',
                 'encounter_type' => 'emergency',
                 'orders' => true,
@@ -52,7 +72,9 @@ class ModuleCatalog
                 'icon' => 'tabler-building-hospital',
                 'to' => 'wards',
                 'subject' => 'Ward',
-                'heading' => 'Inpatient',
+                'section' => 'inpatient',
+                'rank' => 1,
+                'heading' => $sections['inpatient']['title'] ?? 'Inpatient',
                 'facility_type' => 'ward',
             ],
             [
@@ -61,19 +83,11 @@ class ModuleCatalog
                 'icon' => 'tabler-bed',
                 'to' => 'beds',
                 'subject' => 'Bed',
-                'heading' => 'Inpatient',
+                'section' => 'inpatient',
+                'rank' => 2,
+                'heading' => $sections['inpatient']['title'] ?? 'Inpatient',
                 'facility_type' => 'bed',
                 'assignments' => true,
-            ],
-            [
-                'key' => 'theatre',
-                'title' => 'Theatre',
-                'icon' => 'tabler-cut',
-                'to' => 'theatre',
-                'subject' => 'Theatre',
-                'heading' => 'Inpatient',
-                'facility_type' => 'theatre',
-                'orders' => true,
             ],
             [
                 'key' => 'laboratory',
@@ -81,7 +95,9 @@ class ModuleCatalog
                 'icon' => 'tabler-test-pipe',
                 'to' => 'laboratory',
                 'subject' => 'Laboratory',
-                'heading' => 'Diagnostics',
+                'section' => 'diagnostics',
+                'rank' => 1,
+                'heading' => $sections['diagnostics']['title'] ?? 'Diagnostics',
                 'facility_type' => 'lab',
                 'orders' => true,
             ],
@@ -91,7 +107,9 @@ class ModuleCatalog
                 'icon' => 'tabler-scan',
                 'to' => 'imaging',
                 'subject' => 'Imaging',
-                'heading' => 'Diagnostics',
+                'section' => 'diagnostics',
+                'rank' => 2,
+                'heading' => $sections['diagnostics']['title'] ?? 'Diagnostics',
                 'facility_type' => 'imaging',
                 'orders' => true,
             ],
@@ -101,8 +119,22 @@ class ModuleCatalog
                 'icon' => 'tabler-pill',
                 'to' => 'pharmacy',
                 'subject' => 'Pharmacy',
-                'heading' => 'Pharmacy',
+                'section' => 'pharmacy',
+                'rank' => 1,
+                'heading' => $sections['pharmacy']['title'] ?? 'Pharmacy',
                 'facility_type' => 'pharmacy',
+                'orders' => true,
+            ],
+            [
+                'key' => 'theatre',
+                'title' => 'Theatre',
+                'icon' => 'tabler-cut',
+                'to' => 'theatre',
+                'subject' => 'Theatre',
+                'section' => 'theatre',
+                'rank' => 1,
+                'heading' => $sections['theatre']['title'] ?? 'Theatre',
+                'facility_type' => 'theatre',
                 'orders' => true,
             ],
             [
@@ -111,7 +143,9 @@ class ModuleCatalog
                 'icon' => 'tabler-transfer',
                 'to' => 'referrals',
                 'subject' => 'Referral',
-                'heading' => 'Network',
+                'section' => 'network',
+                'rank' => 1,
+                'heading' => $sections['network']['title'] ?? 'Network',
             ],
             [
                 'key' => 'assistance',
@@ -119,7 +153,9 @@ class ModuleCatalog
                 'icon' => 'tabler-heartbeat',
                 'to' => 'assistance',
                 'subject' => 'AssistanceRequest',
-                'heading' => 'Network',
+                'section' => 'network',
+                'rank' => 2,
+                'heading' => $sections['network']['title'] ?? 'Network',
             ],
             [
                 'key' => 'ambulances',
@@ -127,7 +163,9 @@ class ModuleCatalog
                 'icon' => 'tabler-ambulance',
                 'to' => 'ambulances',
                 'subject' => 'Ambulance',
-                'heading' => 'Network',
+                'section' => 'network',
+                'rank' => 3,
+                'heading' => $sections['network']['title'] ?? 'Network',
             ],
             [
                 'key' => 'billing',
@@ -135,7 +173,9 @@ class ModuleCatalog
                 'icon' => 'tabler-receipt',
                 'to' => 'billing',
                 'subject' => 'Invoice',
-                'heading' => 'Finance',
+                'section' => 'finance',
+                'rank' => 1,
+                'heading' => $sections['finance']['title'] ?? 'Finance',
             ],
             [
                 'key' => 'reports',
@@ -143,15 +183,9 @@ class ModuleCatalog
                 'icon' => 'tabler-chart-bar',
                 'to' => 'reports',
                 'subject' => 'Report',
-                'heading' => 'Finance',
-            ],
-            [
-                'key' => 'admin',
-                'title' => 'Overview',
-                'icon' => 'tabler-layout-dashboard',
-                'to' => 'admin',
-                'subject' => 'User',
-                'heading' => 'Administration',
+                'section' => 'finance',
+                'rank' => 2,
+                'heading' => $sections['finance']['title'] ?? 'Finance',
             ],
             [
                 'key' => 'departments',
@@ -159,7 +193,9 @@ class ModuleCatalog
                 'icon' => 'tabler-building',
                 'to' => 'admin-departments',
                 'subject' => 'Department',
-                'heading' => 'Administration',
+                'section' => 'admin',
+                'rank' => 1,
+                'heading' => $sections['admin']['title'] ?? 'Administration',
             ],
             [
                 'key' => 'facilities',
@@ -167,7 +203,9 @@ class ModuleCatalog
                 'icon' => 'tabler-building-community',
                 'to' => 'facilities',
                 'subject' => 'Facility',
-                'heading' => 'Administration',
+                'section' => 'admin',
+                'rank' => 2,
+                'heading' => $sections['admin']['title'] ?? 'Administration',
             ],
             [
                 'key' => 'users',
@@ -175,7 +213,9 @@ class ModuleCatalog
                 'icon' => 'tabler-user-cog',
                 'to' => 'admin-users',
                 'subject' => 'User',
-                'heading' => 'Administration',
+                'section' => 'admin',
+                'rank' => 3,
+                'heading' => $sections['admin']['title'] ?? 'Administration',
             ],
             [
                 'key' => 'roles',
@@ -183,7 +223,9 @@ class ModuleCatalog
                 'icon' => 'tabler-shield',
                 'to' => 'admin-roles',
                 'subject' => 'Role',
-                'heading' => 'Administration',
+                'section' => 'admin',
+                'rank' => 4,
+                'heading' => $sections['admin']['title'] ?? 'Administration',
             ],
             [
                 'key' => 'hospitals',
@@ -191,7 +233,9 @@ class ModuleCatalog
                 'icon' => 'tabler-building-skyscraper',
                 'to' => 'admin-hospitals',
                 'subject' => 'Hospital',
-                'heading' => 'Administration',
+                'section' => 'admin',
+                'rank' => 5,
+                'heading' => $sections['admin']['title'] ?? 'Administration',
             ],
         ];
     }
@@ -216,8 +260,7 @@ class ModuleCatalog
 
     public static function keysFor(User $user): array
     {
-        return collect(self::all())
-            ->filter(fn (array $module) => $user->hasPermission('read', $module['subject']))
+        return collect(self::visibleFor($user))
             ->pluck('key')
             ->values()
             ->all();
@@ -229,44 +272,111 @@ class ModuleCatalog
 
         if ($workspace) {
             $module = collect(self::all())->firstWhere('to', $workspace);
-            if ($module && $user->hasPermission('read', $module['subject'])) {
+            if ($module && self::canAccess($user, $module)) {
                 return $workspace;
             }
         }
 
-        foreach (self::all() as $module) {
-            if ($user->hasPermission('read', $module['subject'])) {
+        foreach (self::visibleFor($user) as $module) {
+            if ($module['key'] !== 'admin') {
                 return $module['to'];
             }
         }
 
-        return 'not-authorized';
+        return collect(self::visibleFor($user))->first()['to'] ?? 'not-authorized';
     }
 
     public static function navigation(User $user): array
     {
-        $modules = $user->isPlatformAdmin()
-            ? collect(self::all())->whereIn('key', ['hospitals', 'users', 'roles', 'reports'])
-            : collect(self::all())->filter(fn (array $module) => $user->hasPermission('read', $module['subject']));
-
         $items = [];
-        $currentHeading = null;
 
-        foreach ($modules as $module) {
-            if ($currentHeading !== $module['heading']) {
-                $currentHeading = $module['heading'];
-                $items[] = ['heading' => $currentHeading];
+        foreach (self::groupsFor($user) as $group) {
+            if ($group['heading']) {
+                $items[] = ['heading' => $group['heading']];
             }
 
-            $items[] = [
-                'title' => $module['title'],
-                'icon' => ['icon' => $module['icon']],
-                'to' => $module['to'],
-                'action' => 'read',
-                'subject' => $module['subject'],
-            ];
+            foreach ($group['items'] as $module) {
+                $items[] = [
+                    'title' => $module['title'],
+                    'icon' => ['icon' => $module['icon']],
+                    'to' => $module['to'],
+                    'action' => 'read',
+                    'subject' => $module['subject'],
+                    'section' => $module['section'],
+                ];
+            }
         }
 
         return $items;
+    }
+
+    public static function groupsFor(User $user): array
+    {
+        $sections = config('hms.navigation.sections', []);
+        $workspaceRank = (int) config('hms.navigation.workspace_section_rank', 15);
+        $workspace = $user->role?->workspace;
+        $homeSection = collect(self::all())->firstWhere('to', $workspace)['section'] ?? null;
+
+        $grouped = [];
+
+        foreach (self::visibleFor($user) as $module) {
+            $section = $module['section'];
+            if (! isset($grouped[$section])) {
+                $meta = $sections[$section] ?? ['title' => $module['heading'] ?? null, 'rank' => 99];
+                $rank = (int) ($meta['rank'] ?? 99);
+                if ($homeSection === $section && ! in_array($section, ['home', 'admin'], true)) {
+                    $rank = $workspaceRank;
+                }
+                $grouped[$section] = [
+                    'heading' => $meta['title'] ?? null,
+                    'section' => $section,
+                    'rank' => $rank,
+                    'items' => [],
+                ];
+            }
+
+            $grouped[$section]['items'][] = $module;
+        }
+
+        return collect($grouped)
+            ->filter(fn (array $group) => count($group['items']) > 0)
+            ->sortBy(fn (array $group) => [$group['rank'], $group['section']])
+            ->map(function (array $group) {
+                $group['items'] = collect($group['items'])->sortBy('rank')->values()->all();
+
+                return $group;
+            })
+            ->values()
+            ->all();
+    }
+
+    public static function visibleFor(User $user): array
+    {
+        $always = config('hms.navigation.always_visible', ['admin']);
+        $platform = config('hms.navigation.platform_keys', ['admin', 'reports', 'users', 'roles', 'hospitals']);
+
+        return collect(self::all())
+            ->filter(function (array $module) use ($user, $always, $platform) {
+                if ($user->isPlatformAdmin()) {
+                    return in_array($module['key'], $platform, true);
+                }
+
+                if (in_array($module['key'], $always, true) || empty($module['subject'])) {
+                    return true;
+                }
+
+                return $user->hasPermission('read', $module['subject']);
+            })
+            ->values()
+            ->all();
+    }
+
+    private static function canAccess(User $user, array $module): bool
+    {
+        if (in_array($module['key'], config('hms.navigation.always_visible', ['admin']), true) || empty($module['subject'])) {
+            return true;
+        }
+
+        return $user->hasPermission('read', $module['subject']);
     }
 }

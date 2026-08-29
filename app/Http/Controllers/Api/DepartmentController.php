@@ -14,7 +14,20 @@ class DepartmentController extends Controller
 {
     public function index()
     {
-        return Department::query()->withCount('facilities')->orderBy('name')->get();
+        return Department::query()->withCount(['facilities', 'users', 'staffAssignments'])->orderBy('name')->get();
+    }
+
+    public function show(Department $department)
+    {
+        return $department->load([
+            'facilities.type:id,name,slug',
+            'users:id,name,email,job_title,department_id,role_id',
+            'users.role:id,name,slug',
+            'staffAssignments.user:id,name,job_title',
+            'staffAssignments.facility:id,name,code',
+            'services:id,name,code,category,is_active,department_id',
+            'encounters' => fn ($query) => $query->with(['patient:id,mrn,first_name,last_name,status', 'clinician:id,name'])->latest()->limit(20),
+        ])->loadCount(['facilities', 'users', 'encounters']);
     }
 
     public function store(Request $request)

@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\ServiceOrderController;
+use App\Http\Controllers\Api\StaffAssignmentController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
@@ -43,8 +44,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/workspace', [WorkspaceController::class, 'show']);
     Route::get('/clinical-services', [PrescriptionController::class, 'services']);
     Route::get('/medications', [PrescriptionController::class, 'medications']);
+    Route::patch('/medications/{medication}', [PrescriptionController::class, 'updateMedication']);
 
-    Route::get('/dashboard', [DashboardController::class, 'show'])->middleware('permission:read,Report');
+    Route::get('/dashboard', [DashboardController::class, 'command']);
     Route::get('/reports', [DashboardController::class, 'show'])->middleware('permission:read,Report');
 
     Route::get('/modules/catalog', [ModuleBoardController::class, 'catalog']);
@@ -60,6 +62,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/hospitals/{hospital}', [HospitalController::class, 'destroy'])->middleware('permission:manage,Hospital');
 
     Route::get('/roles', [RoleController::class, 'index'])->middleware('permission:read,Role');
+    Route::get('/roles/{role}', [RoleController::class, 'show'])->middleware('permission:read,Role');
     Route::get('/permissions', [RoleController::class, 'permissions'])->middleware('permission:read,Role');
     Route::post('/roles', [RoleController::class, 'store'])->middleware('permission:manage,Role');
     Route::put('/roles/{role}', [RoleController::class, 'update'])->middleware('permission:manage,Role');
@@ -68,19 +71,26 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/directory', [UserController::class, 'directory']);
     Route::get('/users', [UserController::class, 'index'])->middleware('permission:read,User');
     Route::post('/users', [UserController::class, 'store'])->middleware('permission:manage,User');
+    Route::get('/users/{user}', [UserController::class, 'show'])->middleware('permission:read,User');
     Route::put('/users/{user}', [UserController::class, 'update'])->middleware('permission:manage,User');
     Route::delete('/users/{user}', [UserController::class, 'destroy'])->middleware('permission:manage,User');
 
     Route::get('/departments', [DepartmentController::class, 'index'])->middleware('permission:read,Department');
     Route::post('/departments', [DepartmentController::class, 'store'])->middleware('permission:manage,Department');
     Route::post('/departments/restore-defaults', [DepartmentController::class, 'restoreDefaults'])->middleware('permission:manage,Department');
+    Route::get('/departments/{department}', [DepartmentController::class, 'show'])->middleware('permission:read,Department');
     Route::put('/departments/{department}', [DepartmentController::class, 'update'])->middleware('permission:manage,Department');
     Route::delete('/departments/{department}', [DepartmentController::class, 'destroy'])->middleware('permission:manage,Department');
 
+    Route::get('/staff-assignments', [StaffAssignmentController::class, 'index']);
+    Route::post('/staff-assignments', [StaffAssignmentController::class, 'store'])->middleware('permission:manage,User');
+    Route::put('/staff-assignments/{staffAssignment}', [StaffAssignmentController::class, 'update'])->middleware('permission:manage,User');
+    Route::delete('/staff-assignments/{staffAssignment}', [StaffAssignmentController::class, 'destroy'])->middleware('permission:manage,User');
+
     Route::get('/facility-types', [FacilityController::class, 'types']);
-    Route::get('/facilities', [FacilityController::class, 'index'])->middleware('permission:read,Facility');
-    Route::post('/facilities', [FacilityController::class, 'store'])->middleware('permission:create,Facility');
-    Route::get('/facilities/{facility}', [FacilityController::class, 'show'])->middleware('permission:read,Facility');
+    Route::get('/facilities', [FacilityController::class, 'index']);
+    Route::post('/facilities', [FacilityController::class, 'store']);
+    Route::get('/facilities/{facility}', [FacilityController::class, 'show']);
     Route::put('/facilities/{facility}', [FacilityController::class, 'update'])->middleware('permission:update,Facility');
     Route::patch('/facilities/{facility}/status', [FacilityController::class, 'updateStatus'])->middleware('permission:update,Facility');
     Route::delete('/facilities/{facility}', [FacilityController::class, 'destroy'])->middleware('permission:manage,Facility');
@@ -89,6 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/patients', [PatientController::class, 'store'])->middleware('permission:create,Patient');
     Route::get('/patients/{patient}', [PatientController::class, 'show'])->middleware('permission:read,Patient');
     Route::put('/patients/{patient}', [PatientController::class, 'update'])->middleware('permission:update,Patient');
+    Route::patch('/patients/{patient}/archive', [PatientController::class, 'archive'])->middleware('permission:update,Patient');
     Route::get('/patients/{patient}/export', [PatientController::class, 'export'])->middleware('permission:manage,Patient');
     Route::get('/patients/{patient}/documents', [DocumentController::class, 'index'])->middleware('permission:read,Patient');
     Route::post('/patients/{patient}/documents', [DocumentController::class, 'store'])->middleware('permission:update,Patient');
@@ -109,6 +120,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/bed-assignments', [BedAssignmentController::class, 'index'])->middleware('permission:read,Bed');
     Route::post('/bed-assignments', [BedAssignmentController::class, 'store'])->middleware('permission:create,Bed');
     Route::patch('/bed-assignments/{bedAssignment}/discharge', [BedAssignmentController::class, 'discharge'])->middleware('permission:update,Bed');
+    Route::patch('/bed-assignments/{bedAssignment}/transfer', [BedAssignmentController::class, 'transfer'])->middleware('permission:update,Bed');
 
     Route::get('/service-orders', [ServiceOrderController::class, 'index']);
     Route::post('/service-orders', [ServiceOrderController::class, 'store']);

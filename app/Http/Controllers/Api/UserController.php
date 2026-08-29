@@ -39,6 +39,38 @@ class UserController extends Controller
         return $paginator;
     }
 
+    public function show(Request $request, User $user)
+    {
+        $actor = $request->user();
+        abort_unless($actor->isPlatformAdmin() || $user->belongsToHospital($actor->hospital_id), 403, 'This action is unauthorized.');
+
+        $user->load([
+            'role.permissions',
+            'hospital',
+            'department:id,name,slug',
+            'memberships.role',
+            'memberships.hospital',
+            'staffAssignments.department:id,name',
+            'staffAssignments.facility:id,name,code',
+            'encounters' => fn ($query) => $query->with('patient:id,mrn,first_name,last_name,status')->latest()->limit(12),
+        ]);
+
+        $activity = \App\Models\AuditEvent::query()
+            ->where('actor_id', $user->id)
+            ->latest('created_at')
+            ->limit(20)
+            ->get(['id', 'action', 'auditable_type', 'auditable_id', 'created_at']);
+
+        return [
+            ...$this->serialize($user, $actor),
+            'department' => $user->department,
+            'staff_assignments' => $user->staffAssignments,
+            'encounters' => $user->encounters,
+            'permissions' => $user->role?->permissions,
+            'activity' => $activity,
+        ];
+    }
+
     public function directory(Request $request)
     {
         $actor = $request->user();

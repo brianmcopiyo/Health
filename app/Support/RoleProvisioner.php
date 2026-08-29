@@ -103,8 +103,8 @@ class RoleProvisioner
             'facility-manager' => ['Facility Manager', 'Departments, capacity, and facility configuration', 'facilities', [
                 'read.Facility', 'create.Facility', 'update.Facility', 'manage.Facility',
                 'read.Department', 'create.Department', 'update.Department', 'manage.Department',
-                'read.Ward', 'update.Ward',
-                'read.Bed', 'update.Bed',
+                'read.Ward', 'create.Ward', 'update.Ward', 'manage.Ward',
+                'read.Bed', 'create.Bed', 'update.Bed', 'manage.Bed',
                 'read.Theatre', 'update.Theatre',
                 'read.Emergency', 'update.Emergency',
                 'read.Referral', 'respond.Referral',

@@ -111,11 +111,61 @@ class ModuleBoardController extends Controller
 
         if (! empty($catalog['assignments'])) {
             $payload['assignments'] = BedAssignment::query()
-                ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code,status', 'assignedBy:id,name', 'encounter:id,type,status', 'nurse:id,name'])
+                ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code,status,parent_id', 'facility.parent:id,name,code', 'assignedBy:id,name', 'encounter:id,type,status', 'nurse:id,name', 'ward:id,name,code'])
                 ->where('status', 'active')
                 ->latest()
                 ->limit(100)
                 ->get();
+        }
+
+        if (in_array($catalog['key'], ['wards', 'beds'], true)) {
+            $beds = Facility::query()
+                ->with([
+                    'type:id,name,slug',
+                    'parent:id,name,code,status',
+                    'department:id,name',
+                    'activeAssignment.patient:id,mrn,first_name,last_name,status',
+                    'activeAssignment.encounter:id,type,status',
+                    'activeAssignment.nurse:id,name',
+                ])
+                ->whereHas('type', fn ($query) => $query->where('slug', 'bed'))
+                ->orderBy('name')
+                ->limit(200)
+                ->get()
+                ->map(fn (Facility $bed) => [
+                    'id' => $bed->id,
+                    'name' => $bed->name,
+                    'code' => $bed->code,
+                    'status' => $bed->status,
+                    'capacity' => $bed->capacity,
+                    'current_utilization' => $bed->current_utilization,
+                    'remaining_capacity' => $bed->remainingCapacity(),
+                    'parent_id' => $bed->parent_id,
+                    'parent' => $bed->parent,
+                    'ward' => $bed->parent,
+                    'department' => $bed->department,
+                    'assignment' => $bed->activeAssignment,
+                    'patient' => $bed->activeAssignment?->patient,
+                    'updated_at' => $bed->updated_at,
+                ]);
+
+            $payload['beds'] = $beds;
+
+            if ($catalog['key'] === 'wards') {
+                $payload['facilities'] = collect($payload['facilities'])->map(function (array $ward) use ($beds) {
+                    $wardBeds = $beds->where('parent_id', $ward['id'])->values();
+                    $ward['beds'] = $wardBeds;
+                    $ward['capacity'] = $wardBeds->isNotEmpty() ? (int) $wardBeds->sum('capacity') : $ward['capacity'];
+                    $ward['current_utilization'] = $wardBeds->isNotEmpty() ? (int) $wardBeds->sum('current_utilization') : $ward['current_utilization'];
+                    $ward['remaining_capacity'] = max(0, $ward['capacity'] - $ward['current_utilization']);
+
+                    return $ward;
+                })->all();
+
+                $payload['stats']['capacity'] = (int) collect($payload['facilities'])->sum('capacity');
+                $payload['stats']['utilization'] = (int) collect($payload['facilities'])->sum('current_utilization');
+                $payload['stats']['remaining'] = max(0, $payload['stats']['capacity'] - $payload['stats']['utilization']);
+            }
         }
 
         if (! empty($catalog['encounter_type'])) {

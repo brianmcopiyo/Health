@@ -23,6 +23,11 @@ class StaffAssignment extends BaseModel
         ];
     }
 
+    public function hospital(): BelongsTo
+    {
+        return $this->belongsTo(Hospital::class);
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

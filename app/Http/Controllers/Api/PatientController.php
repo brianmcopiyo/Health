@@ -94,15 +94,16 @@ class PatientController extends Controller
             'allergies.notedBy:id,name',
             'conditions.recordedBy:id,name',
             'encounters' => fn ($encounters) => $encounters->with(['clinician:id,name', 'department:id,name'])->latest()->limit(50),
-            'bedAssignments' => fn ($assignments) => $assignments->with('facility:id,name,code,status')->latest()->limit(20),
+            'bedAssignments' => fn ($assignments) => $assignments->with(['facility:id,name,code,status,parent_id', 'facility.parent:id,name,code', 'ward:id,name,code', 'nurse:id,name'])->latest()->limit(20),
             'invoices' => fn ($invoices) => $invoices->with('items')->latest()->limit(20),
             'prescriptions' => fn ($prescriptions) => $prescriptions->with('items.medication')->latest()->limit(20),
             'orders' => fn ($orders) => $orders->latest()->limit(30),
+            'referrals' => fn ($referrals) => $referrals->with(['fromHospital:id,name', 'toHospital:id,name'])->latest()->limit(20),
         ]);
 
         $payload = $this->serialize($patient);
         $payload['timeline'] = $patient->timeline();
-        $payload['active_bed'] = $patient->activeBed()?->load('facility:id,name,code,status');
+        $payload['active_bed'] = $patient->activeBed()?->load(['facility:id,name,code,status,parent_id', 'facility.parent:id,name,code', 'ward:id,name,code', 'nurse:id,name']);
         Audit::viewed($patient, ['mrn' => $patient->mrn]);
 
         return Redactor::patient($payload, $request->user());
@@ -129,6 +130,20 @@ class PatientController extends Controller
         });
 
         return Redactor::patient($this->serialize($patient->refresh()->load(['allergies', 'conditions'])), $request->user());
+    }
+
+    public function archive(Request $request, Patient $patient)
+    {
+        abort_unless(Access::canUpdatePatient($request->user(), $patient), 403, 'This action is unauthorized.');
+        abort_if($patient->bedAssignments()->where('status', 'active')->exists(), 422, 'Discharge the patient from their bed first.');
+
+        $patient->update([
+            'archived_at' => now(),
+            'status' => $patient->status === 'admitted' ? 'discharged' : $patient->status,
+        ]);
+        Audit::record('archived', $patient);
+
+        return Redactor::patient($this->serialize($patient->refresh()), $request->user());
     }
 
     public function export(Request $request, Patient $patient)
@@ -314,6 +329,7 @@ class PatientController extends Controller
             'next_of_kin_phone' => $patient->next_of_kin_phone,
             'next_of_kin_relation' => $patient->next_of_kin_relation,
             'notes' => $patient->notes,
+            'archived_at' => $patient->archived_at,
             'allergies' => collect($allergies)->where('is_current', true)->values(),
             'conditions' => collect($conditions)->where('status', 'active')->values(),
             'encounters' => $patient->relationLoaded('encounters') ? $patient->encounters : [],
@@ -321,6 +337,7 @@ class PatientController extends Controller
             'invoices' => $patient->relationLoaded('invoices') ? $patient->invoices : [],
             'prescriptions' => $patient->relationLoaded('prescriptions') ? $patient->prescriptions : [],
             'orders' => $patient->relationLoaded('orders') ? $patient->orders : [],
+            'referrals' => $patient->relationLoaded('referrals') ? $patient->referrals : [],
         ];
     }
 }

@@ -12,6 +12,7 @@ use App\Support\ModuleCatalog;
 use App\Support\QueryList;
 use App\Support\TenantRules;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class ServiceOrderController extends Controller
@@ -124,16 +125,18 @@ class ServiceOrderController extends Controller
             $data['completed_at'] = now();
         }
 
-        $serviceOrder->update($data);
+        DB::transaction(function () use ($serviceOrder, $data, $status) {
+            $serviceOrder->update($data);
 
-        if ($status === 'completed' && $serviceOrder->encounter_id) {
-            $code = $serviceOrder->service?->code;
-            if ($code) {
-                ChargeLedger::forService($serviceOrder->encounter, $code, 'order', $serviceOrder->id, $serviceOrder->item_name, $serviceOrder->service?->unit_price ?? 0);
-            } else {
-                ChargeLedger::post($serviceOrder->encounter, 'order', $serviceOrder->id, $serviceOrder->item_name, $serviceOrder->service?->unit_price ?? 80);
+            if ($status === 'completed' && $serviceOrder->encounter_id) {
+                $code = $serviceOrder->service?->code;
+                if ($code) {
+                    ChargeLedger::forService($serviceOrder->encounter, $code, 'order', $serviceOrder->id, $serviceOrder->item_name, $serviceOrder->service?->unit_price ?? 0);
+                } else {
+                    ChargeLedger::post($serviceOrder->encounter, 'order', $serviceOrder->id, $serviceOrder->item_name, $serviceOrder->service?->unit_price ?? 80);
+                }
             }
-        }
+        });
 
         return $serviceOrder->refresh()->load(['patient', 'facility', 'orderedBy', 'completedBy', 'service', 'encounter']);
     }

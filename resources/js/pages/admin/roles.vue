@@ -109,11 +109,16 @@ await withPageLoad(load)
         :key="role.id"
         :title="role.name"
       >
-        <template
-          v-if="ability.can('manage', 'Role')"
-          #actions
-        >
+        <template #actions>
           <HButton
+            variant="ghost"
+            size="sm"
+            :to="{ name: 'admin-roles-id', params: { id: role.id } }"
+          >
+            View
+          </HButton>
+          <HButton
+            v-if="ability.can('manage', 'Role')"
             variant="ghost"
             size="sm"
             @click="openEdit(role)"
@@ -121,7 +126,7 @@ await withPageLoad(load)
             Edit
           </HButton>
           <HButton
-            v-if="!role.is_system"
+            v-if="ability.can('manage', 'Role') && !role.is_system"
             variant="ghost"
             size="sm"
             @click="formError = ''; removing = role"

@@ -18,10 +18,12 @@ const encounterId = ref(null)
 const chartOpen = ref(false)
 const editOpen = ref(false)
 const uploadOpen = ref(false)
-const invoiceOpen = ref(false)
-const invoice = ref(null)
+const statusOpen = ref(false)
+const visitOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
+const statusForm = ref('active')
+const visitForm = ref({ type: 'opd', chief_complaint: '' })
 const uploadFile = ref(null)
 const form = ref({
   first_name: '',
@@ -127,39 +129,98 @@ const downloadDocument = async item => {
   })
 }
 
-const openInvoice = async id => {
-  if (!ability.can('read', 'Invoice'))
-    return
-  invoice.value = await $api(`/invoices/${id}`)
-  invoiceOpen.value = true
+const openStatus = () => {
+  formError.value = ''
+  statusForm.value = chart.value.status
+  statusOpen.value = true
 }
 
+const saveStatus = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/patients/${chart.value.id}`, { method: 'PUT', body: { status: statusForm.value } })
+    statusOpen.value = false
+    await load()
+  })
+}
+
+const archivePatient = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/patients/${chart.value.id}/archive`, { method: 'PATCH' })
+    await load()
+  })
+}
+
+const openVisit = () => {
+  formError.value = ''
+  visitForm.value = { type: 'opd', chief_complaint: '' }
+  visitOpen.value = true
+}
+
+const startVisit = async () => {
+  await wrapSave(saving, formError, async () => {
+    const encounter = await $api('/encounters', {
+      method: 'POST',
+      body: { patient_id: chart.value.id, ...visitForm.value },
+    })
+    visitOpen.value = false
+    await load()
+    openEncounter(encounter.id)
+  })
+}
+
+const tab = ref('overview')
+const tabs = [
+  { title: 'Overview', value: 'overview' },
+  { title: 'Encounters', value: 'encounters' },
+  { title: 'Orders', value: 'orders' },
+  { title: 'Pharmacy', value: 'pharmacy' },
+  { title: 'Billing', value: 'billing' },
+  { title: 'History', value: 'history' },
+]
+
+watch(() => route.params.id, () => withPageLoad(load))
 await withPageLoad(load)
 
 const today = new Date().toISOString().slice(0, 10)
 </script>
 
 <template>
-  <div>
-    <HPage
-      :title="chart ? `${chart.first_name} ${chart.last_name}` : 'Patient'"
-      :subtitle="chart ? `${chart.mrn} · ${labelize(chart.status)}` : ''"
+  <HRecord
+    :title="chart ? `${chart.first_name} ${chart.last_name}` : 'Patient'"
+    :subtitle="chart ? chart.mrn : ''"
+    :status="chart?.status"
+    :back="{ name: 'patients' }"
+    back-label="Patients"
+    :tabs="tabs"
+    :tab="tab"
+    :missing="!chart"
+    @update:tab="tab = $event"
+  >
+    <template
+      v-if="chart"
+      #actions
     >
       <HButton
-        variant="ghost"
-        :to="{ name: 'patients' }"
+        v-if="ability.can('create', 'Opd') || ability.can('create', 'Reception') || ability.can('create', 'Emergency')"
+        @click="openVisit"
       >
-        <HIcon name="back" />
-        Patients
+        Open visit
       </HButton>
       <HButton
-        v-if="chart && ability.can('update', 'Patient')"
+        v-if="ability.can('update', 'Patient')"
+        variant="ghost"
+        @click="openStatus"
+      >
+        Status
+      </HButton>
+      <HButton
+        v-if="ability.can('update', 'Patient')"
         @click="openEdit"
       >
         <HIcon name="edit" />
         Edit
       </HButton>
-      <HActionMenu v-if="chart">
+      <HActionMenu>
         <template #default="{ close }">
           <button
             v-if="ability.can('update', 'Patient')"
@@ -177,9 +238,17 @@ const today = new Date().toISOString().slice(0, 10)
           >
             Export record
           </button>
+          <button
+            v-if="ability.can('update', 'Patient') && !chart.archived_at"
+            type="button"
+            class="h-action-item is-danger"
+            @click="archivePatient(); close()"
+          >
+            Archive
+          </button>
         </template>
       </HActionMenu>
-    </HPage>
+    </template>
 
     <div
       v-if="formError && !editOpen && !uploadOpen"
@@ -188,15 +257,11 @@ const today = new Date().toISOString().slice(0, 10)
       {{ formError }}
     </div>
 
-    <div
-      v-if="!chart"
-      class="h-alert"
-    >
-      This record could not be loaded.
-    </div>
-
-    <template v-else>
-      <div class="h-detail">
+    <template v-if="chart">
+      <div
+        v-if="tab === 'overview'"
+        class="h-detail"
+      >
         <HCard title="Identity">
           <div class="h-metric">
             <span>Sex</span>
@@ -238,13 +303,28 @@ const today = new Date().toISOString().slice(0, 10)
               <RouterLink
                 v-if="chart.active_bed.facility?.id"
                 class="h-inline-link"
-                :to="{ name: 'facilities-id', params: { id: chart.active_bed.facility.id } }"
+                :to="{ name: 'beds-id', params: { id: chart.active_bed.facility.id } }"
               >
                 {{ chart.active_bed.facility.name }}
               </RouterLink>
               <template v-else>
                 {{ chart.active_bed.facility?.name || 'Assigned' }}
               </template>
+            </strong>
+          </div>
+          <div
+            v-if="chart.active_bed?.ward || chart.active_bed?.facility?.parent"
+            class="h-metric"
+          >
+            <span>Ward</span>
+            <strong>
+              <RouterLink
+                v-if="(chart.active_bed.ward || chart.active_bed.facility.parent).id"
+                class="h-inline-link"
+                :to="{ name: 'wards-id', params: { id: (chart.active_bed.ward || chart.active_bed.facility.parent).id } }"
+              >
+                {{ (chart.active_bed.ward || chart.active_bed.facility.parent).name }}
+              </RouterLink>
             </strong>
           </div>
           <p
@@ -269,6 +349,7 @@ const today = new Date().toISOString().slice(0, 10)
       </div>
 
       <HCard
+        v-if="tab === 'encounters'"
         title="Encounters"
         flush
       >
@@ -284,7 +365,12 @@ const today = new Date().toISOString().slice(0, 10)
           empty="No encounters yet"
         >
           <template #cell-type="{ item }">
-            {{ labelize(item.type) }}
+            <RouterLink
+              class="h-inline-link"
+              :to="{ name: 'encounters-id', params: { id: item.id } }"
+            >
+              {{ labelize(item.type) }}
+            </RouterLink>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -304,6 +390,7 @@ const today = new Date().toISOString().slice(0, 10)
       </HCard>
 
       <HCard
+        v-if="tab === 'orders'"
         title="Orders"
         flush
       >
@@ -317,7 +404,14 @@ const today = new Date().toISOString().slice(0, 10)
           empty="No service orders"
         >
           <template #cell-module_key="{ item }">
-            {{ labelize(item.module_key) }}
+            <RouterLink
+              v-if="['laboratory', 'imaging', 'pharmacy', 'theatre', 'emergency'].includes(item.module_key)"
+              class="h-inline-link"
+              :to="{ name: item.module_key }"
+            >
+              {{ labelize(item.module_key) }}
+            </RouterLink>
+            <span v-else>{{ labelize(item.module_key) }}</span>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -328,6 +422,7 @@ const today = new Date().toISOString().slice(0, 10)
       </HCard>
 
       <HCard
+        v-if="tab === 'pharmacy'"
         title="Prescriptions"
         flush
       >
@@ -340,7 +435,12 @@ const today = new Date().toISOString().slice(0, 10)
           empty="No prescriptions"
         >
           <template #cell-items="{ item }">
-            {{ (item.items || []).map(row => row.medication?.name).join(', ') || '—' }}
+            <RouterLink
+              class="h-inline-link"
+              :to="{ name: 'pharmacy' }"
+            >
+              {{ (item.items || []).map(row => row.medication?.name).join(', ') || 'Prescription' }}
+            </RouterLink>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -351,6 +451,7 @@ const today = new Date().toISOString().slice(0, 10)
       </HCard>
 
       <HCard
+        v-if="tab === 'billing'"
         title="Invoices"
         flush
       >
@@ -374,7 +475,7 @@ const today = new Date().toISOString().slice(0, 10)
               v-if="ability.can('read', 'Invoice')"
               size="sm"
               variant="ghost"
-              @click="openInvoice(item.id)"
+              :to="{ name: 'billing-id', params: { id: item.id } }"
             >
               View
             </HButton>
@@ -382,6 +483,7 @@ const today = new Date().toISOString().slice(0, 10)
         </HTable>
       </HCard>
 
+      <template v-if="tab === 'history'">
       <HCard
         title="Bed history"
         flush
@@ -398,7 +500,7 @@ const today = new Date().toISOString().slice(0, 10)
             <RouterLink
               v-if="item.facility?.id"
               class="h-inline-link"
-              :to="{ name: 'facilities-id', params: { id: item.facility.id } }"
+              :to="{ name: 'beds-id', params: { id: item.facility.id } }"
             >
               {{ item.facility.name }}
             </RouterLink>
@@ -452,6 +554,34 @@ const today = new Date().toISOString().slice(0, 10)
         </HTable>
       </HCard>
 
+      <HCard
+        v-if="chart.referrals?.length"
+        title="Referrals"
+        flush
+      >
+        <HTable
+          :headers="[
+            { title: 'Destination', key: 'to_hospital.name' },
+            { title: 'Status', key: 'status' },
+          ]"
+          :items="chart.referrals"
+          empty="No referrals"
+        >
+          <template #cell-to_hospital.name="{ item }">
+            <RouterLink
+              class="h-inline-link"
+              :to="{ name: 'referrals-id', params: { id: item.id } }"
+            >
+              {{ item.to_hospital?.name || 'Referral' }}
+            </RouterLink>
+          </template>
+          <template #cell-status="{ item }">
+            <HBadge :tone="statusColor(item.status)">
+              {{ labelize(item.status) }}
+            </HBadge>
+          </template>
+        </HTable>
+      </HCard>
       <HCard title="Clinical timeline">
         <ol
           v-if="chart.timeline?.length"
@@ -471,6 +601,7 @@ const today = new Date().toISOString().slice(0, 10)
           message="No timeline events yet"
         />
       </HCard>
+      </template>
     </template>
 
     <HOffcanvas
@@ -645,37 +776,70 @@ const today = new Date().toISOString().slice(0, 10)
       </template>
     </HModal>
 
-    <HOffcanvas
-      v-model="invoiceOpen"
-      :title="invoice?.number || 'Invoice'"
-      size="lg"
+    <HModal
+      v-model="statusOpen"
+      title="Update status"
+      :error="formError"
+      :persistent="saving"
     >
-      <div
-        v-if="invoice"
-        class="h-stack"
-      >
-        <HBadge :tone="statusColor(invoice.status)">
-          {{ labelize(invoice.status) }}
-        </HBadge>
-        <p class="h-muted">
-          Total {{ invoice.total }}
-        </p>
-        <HTable
-          :headers="[
-            { title: 'Description', key: 'description' },
-            { title: 'Qty', key: 'quantity' },
-            { title: 'Amount', key: 'unit_amount' },
-          ]"
-          :items="invoice.items"
-          empty="No line items"
-        />
-      </div>
-    </HOffcanvas>
+      <HSelect
+        v-model="statusForm"
+        :items="['active', 'admitted', 'discharged', 'transferred', 'deceased']"
+        label="Status"
+      />
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="statusOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving"
+          @click="saveStatus"
+        >
+          Save
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      v-model="visitOpen"
+      title="Open visit"
+      :error="formError"
+      :persistent="saving"
+    >
+      <HSelect
+        v-model="visitForm.type"
+        :items="['opd', 'emergency', 'admission', 'follow_up']"
+        label="Visit type"
+      />
+      <HInput
+        v-model="visitForm.chief_complaint"
+        label="Chief complaint"
+      />
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="visitOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving"
+          @click="startVisit"
+        >
+          Start
+        </HButton>
+      </template>
+    </HModal>
 
     <EncounterChart
       v-model="chartOpen"
       :encounter-id="encounterId"
       @saved="load"
     />
-  </div>
+  </HRecord>
 </template>

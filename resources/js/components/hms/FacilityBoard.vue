@@ -1,5 +1,6 @@
 <script setup>
 import EncounterChart from '@/components/hms/EncounterChart.vue'
+import { facilityRecordTo } from '@/utils/helpers'
 import { facilityStatuses, labelize, statusColor } from '@/utils/status'
 
 const props = defineProps({
@@ -18,7 +19,17 @@ const props = defineProps({
 })
 
 const ability = useAbility()
+const router = useRouter()
 const modulesWithOrders = ['emergency', 'theatre', 'laboratory', 'imaging', 'pharmacy']
+const typeSlugs = {
+  wards: 'ward',
+  beds: 'bed',
+  emergency: 'emergency-unit',
+  laboratory: 'lab',
+  imaging: 'imaging',
+  pharmacy: 'pharmacy',
+  theatre: 'theatre',
+}
 
 const emptyBoard = () => ({
   stats: {
@@ -36,6 +47,7 @@ const emptyBoard = () => ({
   departments: [],
   orders: modulesWithOrders.includes(props.moduleKey) ? [] : null,
   assignments: props.moduleKey === 'beds' ? [] : null,
+  beds: [],
 })
 
 const board = ref(emptyBoard())
@@ -67,7 +79,21 @@ const assignmentForm = ref({
   patient_id: null,
   facility_id: null,
 })
+const createOpen = ref(false)
+const createWards = ref([])
+const createForm = ref({
+  name: '',
+  code: '',
+  department_id: null,
+  parent_id: null,
+  status: 'available',
+  capacity: 1,
+  resource_notes: '',
+})
 
+const createSubject = computed(() => (props.moduleKey === 'wards' ? 'Ward' : props.moduleKey === 'beds' ? 'Bed' : 'Facility'))
+const canCreateUnit = computed(() => ability.can('create', 'Facility') || ability.can('create', createSubject.value))
+const createLabel = computed(() => (props.moduleKey === 'wards' ? 'Add ward' : props.moduleKey === 'beds' ? 'Add bed' : `Add ${props.title.toLowerCase()} unit`))
 const utilization = computed(() => {
   if (!board.value.stats.capacity)
     return '0%'
@@ -75,7 +101,7 @@ const utilization = computed(() => {
   return `${Math.round((board.value.stats.utilization / board.value.stats.capacity) * 100)}%`
 })
 
-const availableBeds = computed(() => board.value.facilities.filter(item => item.status === 'available' && item.remaining_capacity > 0))
+const availableBeds = computed(() => board.value.facilities.filter(item => item.status === 'available' && (item.remaining_capacity ?? 0) > 0))
 
 const encounterOptions = computed(() => orderEncounters.value.map(item => ({
   title: `${labelize(item.type)} · ${item.chief_complaint || labelize(item.status)}`,
@@ -98,14 +124,20 @@ watch(() => orderForm.value.patient_id, async id => {
 
 const load = async () => {
   const payload = await $api(`/modules/${props.moduleKey}`)
+  const beds = asList(payload?.beds)
   board.value = {
     ...emptyBoard(),
     ...payload,
     stats: { ...emptyBoard().stats, ...(payload?.stats || {}) },
-    facilities: asList(payload?.facilities),
+    facilities: asList(payload?.facilities).map(item => {
+      const bed = beds.find(row => row.id === item.id)
+
+      return bed ? { ...item, parent: item.parent || bed.parent, patient: bed.patient, assignment: bed.assignment } : item
+    }),
     departments: asList(payload?.departments),
     orders: payload?.orders === undefined ? emptyBoard().orders : asList(payload.orders),
     assignments: payload?.assignments === undefined ? emptyBoard().assignments : asList(payload.assignments),
+    beds,
   }
 
   if (ability.can('read', 'Patient') && (board.value.orders || board.value.assignments))
@@ -133,6 +165,43 @@ const openAssignment = () => {
   formError.value = ''
   assignmentForm.value = { patient_id: null, facility_id: null }
   assignmentOpen.value = true
+}
+
+const openCreate = async () => {
+  formError.value = ''
+  createWards.value = props.moduleKey === 'beds'
+    ? asList(await $api('/facilities', { query: { type: 'ward', per_page: 80 } }).catch(() => []))
+    : []
+  createForm.value = {
+    name: '',
+    code: '',
+    department_id: board.value.departments?.[0]?.id || null,
+    parent_id: null,
+    status: 'available',
+    capacity: 1,
+    resource_notes: '',
+  }
+  createOpen.value = true
+}
+
+const createUnit = async () => {
+  await wrapSave(saving, formError, async () => {
+    const types = asList(await $api('/facility-types'))
+    const slug = typeSlugs[props.moduleKey]
+    const type = types.find(item => item.slug === slug)
+    const created = await $api('/facilities', {
+      method: 'POST',
+      body: {
+        ...createForm.value,
+        facility_type_id: type?.id,
+        parent_id: props.moduleKey === 'beds' ? createForm.value.parent_id : null,
+      },
+    })
+    createOpen.value = false
+    await load()
+    if (created?.id)
+      await router.push(facilityRecordTo({ ...created, type: created.type || { slug } }))
+  })
 }
 
 const saveStatus = async () => {
@@ -201,13 +270,6 @@ const assignBed = async () => {
   })
 }
 
-const discharge = async assignment => {
-  await wrapSave(saving, formError, async () => {
-    await $api(`/bed-assignments/${assignment.id}/discharge`, { method: 'PATCH' })
-    await load()
-  })
-}
-
 const openChart = item => {
   encounterId.value = item.encounter_id || item.encounter?.id
   if (encounterId.value)
@@ -227,15 +289,24 @@ onBeforeUnmount(() => {
     clearInterval(timer)
 })
 
-const headers = [
-  { title: 'Unit', key: 'name' },
-  { title: 'Code', key: 'code' },
-  { title: 'Status', key: 'status' },
-  { title: 'Capacity', key: 'capacity' },
-  { title: 'In use', key: 'current_utilization' },
-  { title: 'Remaining', key: 'remaining_capacity' },
-  { title: 'Actions', key: 'actions' },
-]
+const headers = computed(() => {
+  const cols = [
+    { title: 'Unit', key: 'name' },
+    { title: 'Code', key: 'code' },
+    { title: 'Status', key: 'status' },
+    { title: 'Capacity', key: 'capacity' },
+    { title: 'In use', key: 'current_utilization' },
+    { title: 'Remaining', key: 'remaining_capacity' },
+  ]
+
+  if (props.moduleKey === 'beds')
+    cols.splice(2, 0, { title: 'Ward', key: 'parent.name' }, { title: 'Patient', key: 'patient' })
+
+  cols.push({ title: 'Actions', key: 'actions' })
+
+  return cols
+})
+
 </script>
 
 <template>
@@ -251,10 +322,17 @@ const headers = [
         <HIcon name="refresh" />
         Refresh
       </HButton>
+      <HButton
+        v-if="canCreateUnit && typeSlugs[moduleKey]"
+        @click="openCreate"
+      >
+        <HIcon name="plus" />
+        {{ createLabel }}
+      </HButton>
     </HPage>
 
     <div
-      v-if="formError && !statusOpen && !orderOpen && !assignmentOpen && !resultOpen"
+      v-if="formError && !statusOpen && !orderOpen && !assignmentOpen && !resultOpen && !createOpen"
       class="h-alert"
     >
       {{ formError }}
@@ -304,10 +382,30 @@ const headers = [
         <template #cell-name="{ item }">
           <RouterLink
             class="h-inline-link"
-            :to="{ name: 'facilities-id', params: { id: item.id } }"
+            :to="facilityRecordTo({ ...item, type: item.type || { slug: moduleKey === 'wards' ? 'ward' : moduleKey === 'beds' ? 'bed' : item.type?.slug } })"
           >
             {{ item.name }}
           </RouterLink>
+        </template>
+        <template #cell-parent.name="{ item }">
+          <RouterLink
+            v-if="item.parent?.id"
+            class="h-inline-link"
+            :to="facilityRecordTo({ ...item.parent, type: { slug: 'ward' } })"
+          >
+            {{ item.parent.name }}
+          </RouterLink>
+          <span v-else>Unassigned</span>
+        </template>
+        <template #cell-patient="{ item }">
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.first_name }} {{ item.patient.last_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -315,14 +413,16 @@ const headers = [
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <HButton
-            v-if="ability.can('update', subject)"
-            variant="ghost"
-            size="icon"
-            @click="openStatus(item)"
-          >
-            <HIcon name="edit" />
-          </HButton>
+          <div class="h-actions">
+            <HButton
+              v-if="ability.can('update', subject)"
+              variant="ghost"
+              size="icon"
+              @click="openStatus(item)"
+            >
+              <HIcon name="edit" />
+            </HButton>
+          </div>
         </template>
       </HTable>
     </HCard>
@@ -437,6 +537,7 @@ const headers = [
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Bed', key: 'facility.name' },
+          { title: 'Ward', key: 'ward.name' },
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
         ]"
@@ -453,6 +554,26 @@ const headers = [
           </RouterLink>
           <span v-else>—</span>
         </template>
+        <template #cell-facility.name="{ item }">
+          <RouterLink
+            v-if="item.facility?.id"
+            class="h-inline-link"
+            :to="{ name: 'beds-id', params: { id: item.facility.id } }"
+          >
+            {{ item.facility.name }}
+          </RouterLink>
+          <span v-else>—</span>
+        </template>
+        <template #cell-ward.name="{ item }">
+          <RouterLink
+            v-if="item.ward?.id"
+            class="h-inline-link"
+            :to="{ name: 'wards-id', params: { id: item.ward.id } }"
+          >
+            {{ item.ward.name }}
+          </RouterLink>
+          <span v-else>{{ item.facility?.parent?.name || '—' }}</span>
+        </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
@@ -461,20 +582,20 @@ const headers = [
         <template #cell-actions="{ item }">
           <div class="h-actions">
             <HButton
+              v-if="item.facility?.id"
+              size="sm"
+              variant="ghost"
+              :to="{ name: 'beds-id', params: { id: item.facility.id } }"
+            >
+              Open
+            </HButton>
+            <HButton
               v-if="item.encounter_id || item.encounter"
               size="sm"
               variant="ghost"
               @click="openChart(item)"
             >
               Chart
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Bed') && item.status === 'active'"
-              variant="ghost"
-              size="sm"
-              @click="discharge(item)"
-            >
-              Discharge
             </HButton>
           </div>
         </template>
@@ -614,6 +735,74 @@ const headers = [
           @click="assignBed"
         >
           Assign bed
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      v-model="createOpen"
+      :title="createLabel"
+      :error="formError"
+      :persistent="saving"
+    >
+      <fieldset
+        class="h-stack"
+        :disabled="saving"
+      >
+        <HInput
+          v-model="createForm.name"
+          label="Name"
+          required
+        />
+        <HInput
+          v-model="createForm.code"
+          label="Code"
+          required
+        />
+        <HSelect
+          v-if="moduleKey === 'beds'"
+          v-model="createForm.parent_id"
+          :items="createWards"
+          item-title="name"
+          item-value="id"
+          label="Ward"
+        />
+        <HSelect
+          v-if="board.departments?.length"
+          v-model="createForm.department_id"
+          :items="board.departments"
+          item-title="name"
+          item-value="id"
+          label="Department"
+        />
+        <HSelect
+          v-model="createForm.status"
+          :items="facilityStatuses"
+          label="Status"
+        />
+        <HNumber
+          v-model="createForm.capacity"
+          :label="moduleKey === 'wards' ? 'Planned capacity' : 'Capacity'"
+          :min="1"
+        />
+        <HTextarea
+          v-model="createForm.resource_notes"
+          label="Notes"
+        />
+      </fieldset>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="createOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving || !createForm.name || !createForm.code"
+          @click="createUnit"
+        >
+          Save
         </HButton>
       </template>
     </HModal>

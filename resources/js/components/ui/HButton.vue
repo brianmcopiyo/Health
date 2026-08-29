@@ -11,7 +11,7 @@ defineProps({
 <template>
   <RouterLink
     v-if="to"
-    :to="to"
+    :to="typeof to === 'string' ? { name: to } : to"
     class="h-btn"
     :class="{ 'is-ghost': variant === 'ghost', 'is-danger': variant === 'danger', 'is-ok': variant === 'ok', 'is-small': size === 'sm', 'is-icon': size === 'icon' }"
   >

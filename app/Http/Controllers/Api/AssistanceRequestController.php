@@ -85,7 +85,7 @@ class AssistanceRequestController extends Controller
             'responder',
             'patient:id,mrn,first_name,last_name,status',
             'encounter:id,type,status,chief_complaint',
-            'facility:id,name,code',
+            'facility.type:id,name,slug',
             'facilityType:id,name,slug',
         ]);
     }

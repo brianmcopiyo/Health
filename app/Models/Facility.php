@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToHospital;
+use App\Support\FacilityOccupancy;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
 
 class Facility extends BaseModel
@@ -61,6 +63,31 @@ class Facility extends BaseModel
         return $this->hasMany(self::class, 'parent_id');
     }
 
+    public function beds(): HasMany
+    {
+        return $this->children()->whereHas('type', fn ($query) => $query->where('slug', 'bed'));
+    }
+
+    public function bedAssignments(): HasMany
+    {
+        return $this->hasMany(BedAssignment::class, 'facility_id');
+    }
+
+    public function activeAssignment(): HasOne
+    {
+        return $this->hasOne(BedAssignment::class, 'facility_id')->where('status', 'active');
+    }
+
+    public function encounters(): HasMany
+    {
+        return $this->hasMany(Encounter::class);
+    }
+
+    public function staffAssignments(): HasMany
+    {
+        return $this->hasMany(StaffAssignment::class);
+    }
+
     public function remainingCapacity(): int
     {
         return max(0, $this->capacity - $this->current_utilization);
@@ -113,6 +140,11 @@ class Facility extends BaseModel
             $row->save();
             $this->setRawAttributes($row->getAttributes());
             $this->syncOriginal();
+            $row->loadMissing(['type', 'parent.type']);
+
+            if ($row->type?->slug === 'bed') {
+                FacilityOccupancy::syncForBed($row);
+            }
         });
     }
 

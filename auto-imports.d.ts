@@ -30,7 +30,9 @@ declare global {
   const effectScope: typeof import('vue')['effectScope']
   const errorCatalog: typeof import('./resources/js/utils/errors.js')['errorCatalog']
   const errorText: typeof import('./resources/js/utils/formOptions.js')['errorText']
+  const facilityRecordTo: typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']
   const facilityStatuses: typeof import('./resources/js/utils/status.js')['facilityStatuses']
+  const formatWhen: typeof import('./resources/js/utils/helpers.js')['formatWhen']
   const getByPath: typeof import('./resources/js/utils/helpers.js')['getByPath']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
@@ -96,6 +98,7 @@ declare global {
   const useListHighlight: typeof import('./resources/js/composables/usePopover.js')['useListHighlight']
   const useOverlay: typeof import('./resources/js/composables/useOverlay.js')['useOverlay']
   const usePopover: typeof import('./resources/js/composables/usePopover.js')['usePopover']
+  const useProfilePhoto: typeof import('./resources/js/composables/useProfilePhoto.js')['useProfilePhoto']
   const useRoute: typeof import('vue-router/auto')['useRoute']
   const useRouter: typeof import('vue-router/auto')['useRouter']
   const useSlots: typeof import('vue')['useSlots']
@@ -105,6 +108,7 @@ declare global {
   const watchEffect: typeof import('vue')['watchEffect']
   const watchPostEffect: typeof import('vue')['watchPostEffect']
   const watchSyncEffect: typeof import('vue')['watchSyncEffect']
+  const when: typeof import('./resources/js/utils/records.js')['when']
   const withPageLoad: typeof import('./resources/js/composables/usePageLoad.js')['withPageLoad']
   const wrapSave: typeof import('./resources/js/composables/usePageLoad.js')['wrapSave']
   const writeStored: typeof import('./resources/js/composables/useCookie.js')['writeStored']
@@ -145,7 +149,9 @@ declare module 'vue' {
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
+    readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
+    readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
@@ -211,6 +217,7 @@ declare module 'vue' {
     readonly useListHighlight: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['useListHighlight']>
     readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
     readonly usePopover: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['usePopover']>
+    readonly useProfilePhoto: UnwrapRef<typeof import('./resources/js/composables/useProfilePhoto.js')['useProfilePhoto']>
     readonly useRoute: UnwrapRef<typeof import('vue-router/auto')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
@@ -253,7 +260,9 @@ declare module '@vue/runtime-core' {
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
+    readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
+    readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
@@ -319,6 +328,7 @@ declare module '@vue/runtime-core' {
     readonly useListHighlight: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['useListHighlight']>
     readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
     readonly usePopover: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['usePopover']>
+    readonly useProfilePhoto: UnwrapRef<typeof import('./resources/js/composables/useProfilePhoto.js')['useProfilePhoto']>
     readonly useRoute: UnwrapRef<typeof import('vue-router/auto')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>

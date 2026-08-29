@@ -1,4 +1,5 @@
 <script setup>
+import { facilityRecordTo } from '@/utils/helpers'
 import { labelize, statusColor } from '@/utils/status'
 
 definePage({
@@ -18,6 +19,11 @@ const responseNotes = ref('')
 const destinationFacilityId = ref(null)
 const facilities = ref([])
 const manageOpen = ref(false)
+const tab = ref('overview')
+const tabs = [
+  { title: 'Overview', value: 'overview' },
+  { title: 'Related', value: 'related' },
+]
 
 const isDestination = computed(() => userData.value?.hospitalId === referral.value?.to_hospital_id)
 const isOrigin = computed(() => userData.value?.hospitalId === referral.value?.from_hospital_id)
@@ -58,35 +64,31 @@ await withPageLoad(load)
 </script>
 
 <template>
-  <div>
-    <HPage
-      :title="referral?.patient?.full_name || referral?.patient_name || 'Referral'"
-      :subtitle="referral ? `${referral.from_hospital?.name} → ${referral.to_hospital?.name}` : ''"
+  <HRecord
+    :title="referral?.patient?.full_name || referral?.patient_name || 'Referral'"
+    :subtitle="referral ? `${referral.from_hospital?.name} → ${referral.to_hospital?.name}` : ''"
+    :status="referral?.status"
+    :back="{ name: 'referrals' }"
+    back-label="Referrals"
+    :tabs="tabs"
+    :tab="tab"
+    :missing="!referral"
+    @update:tab="tab = $event"
+  >
+    <template
+      v-if="referral"
+      #actions
     >
-      <HButton
-        variant="ghost"
-        :to="{ name: 'referrals' }"
-      >
-        <HIcon name="back" />
-        Referrals
-      </HButton>
-      <HButton
-        v-if="referral"
-        @click="openManage"
-      >
+      <HButton @click="openManage">
         Manage
       </HButton>
-    </HPage>
+    </template>
 
-    <div
-      v-if="!referral"
-      class="h-alert"
-    >
-      This referral could not be loaded.
-    </div>
-
-    <template v-else>
-      <div class="h-detail">
+    <template v-if="referral">
+      <div
+        v-if="tab === 'overview'"
+        class="h-detail"
+      >
         <HCard title="Transfer">
           <div class="h-metric">
             <span>Status</span>
@@ -102,7 +104,18 @@ await withPageLoad(load)
           </div>
           <div class="h-metric">
             <span>Destination unit</span>
-            <strong>{{ referral.destination_facility?.name || 'Not assigned' }}</strong>
+            <strong>
+              <RouterLink
+                v-if="referral.destination_facility?.id"
+                class="h-inline-link"
+                :to="facilityRecordTo(referral.destination_facility)"
+              >
+                {{ referral.destination_facility.name }}
+              </RouterLink>
+              <template v-else>
+                Not assigned
+              </template>
+            </strong>
           </div>
           <p>{{ referral.reason }}</p>
           <p
@@ -113,6 +126,11 @@ await withPageLoad(load)
           </p>
         </HCard>
 
+      </div>
+      <div
+        v-if="tab === 'related'"
+        class="h-detail"
+      >
         <HCard title="Related">
           <div class="h-metric">
             <span>Patient</span>
@@ -131,11 +149,31 @@ await withPageLoad(load)
           </div>
           <div class="h-metric">
             <span>Encounter</span>
-            <strong>{{ referral.encounter ? `${labelize(referral.encounter.type)} · ${referral.encounter.chief_complaint || labelize(referral.encounter.status)}` : '—' }}</strong>
+            <strong>
+              <RouterLink
+                v-if="referral.encounter?.id"
+                class="h-inline-link"
+                :to="{ name: 'encounters-id', params: { id: referral.encounter.id } }"
+              >
+                {{ labelize(referral.encounter.type) }} · {{ referral.encounter.chief_complaint || labelize(referral.encounter.status) }}
+              </RouterLink>
+              <template v-else>—</template>
+            </strong>
           </div>
           <div class="h-metric">
             <span>Ambulance</span>
-            <strong>{{ referral.ambulance_trip?.ambulance?.vehicle_code || referral.ambulance_trip?.id || 'Not dispatched' }}</strong>
+            <strong>
+              <RouterLink
+                v-if="referral.ambulance_trip?.ambulance_id || referral.ambulance_trip?.ambulance?.id"
+                class="h-inline-link"
+                :to="{ name: 'ambulances-id', params: { id: referral.ambulance_trip.ambulance_id || referral.ambulance_trip.ambulance.id } }"
+              >
+                {{ referral.ambulance_trip.ambulance?.vehicle_code || 'Trip' }}
+              </RouterLink>
+              <template v-else>
+                {{ referral.ambulance_trip?.id || 'Not dispatched' }}
+              </template>
+            </strong>
           </div>
         </HCard>
       </div>
@@ -215,5 +253,5 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HModal>
-  </div>
+  </HRecord>
 </template>

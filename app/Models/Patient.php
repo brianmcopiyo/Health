@@ -41,6 +41,7 @@ class Patient extends BaseModel
         'next_of_kin_relation',
         'status',
         'notes',
+        'archived_at',
     ];
 
     protected $hidden = [

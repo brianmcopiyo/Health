@@ -11,11 +11,17 @@ use App\Models\Hospital;
 use App\Models\Invoice;
 use App\Models\Patient;
 use App\Models\Referral;
+use App\Support\DashboardBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
+    public function command(Request $request)
+    {
+        return response()->json((new DashboardBuilder($request->user()))->payload());
+    }
+
     public function show(Request $request)
     {
         $user = $request->user();

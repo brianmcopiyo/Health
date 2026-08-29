@@ -151,6 +151,21 @@ class PrescriptionController extends Controller
         return Medication::query()->orderBy('name')->get(['id', 'hospital_id', 'name', 'form', 'strength', 'sku', 'unit_price', 'stock_qty', 'reorder_level']);
     }
 
+    public function updateMedication(Request $request, Medication $medication)
+    {
+        abort_unless($request->user()->hasPermission('update', 'Pharmacy'), 403, 'This action is unauthorized.');
+
+        $data = $request->validate([
+            'stock_qty' => ['sometimes', 'integer', 'min:0'],
+            'reorder_level' => ['sometimes', 'integer', 'min:0'],
+            'unit_price' => ['sometimes', 'integer', 'min:0'],
+        ]);
+
+        $medication->update($data);
+
+        return $medication->refresh();
+    }
+
     public function services()
     {
         return ClinicalService::query()->where('is_active', true)->orderBy('name')->get(['id', 'hospital_id', 'name', 'code', 'category', 'unit_price', 'is_active']);

@@ -76,6 +76,11 @@ class Encounter extends BaseModel
         return $this->belongsTo(self::class, 'parent_encounter_id');
     }
 
+    public function childEncounters(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_encounter_id');
+    }
+
     public function referral(): BelongsTo
     {
         return $this->belongsTo(Referral::class);

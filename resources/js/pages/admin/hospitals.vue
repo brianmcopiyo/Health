@@ -106,8 +106,23 @@ await withPageLoad(load)
             {{ item.is_active ? 'Active' : 'Inactive' }}
           </HBadge>
         </template>
+        <template #cell-name="{ item }">
+          <RouterLink
+            class="h-inline-link"
+            :to="{ name: 'admin-hospitals-id', params: { id: item.id } }"
+          >
+            {{ item.name }}
+          </RouterLink>
+        </template>
         <template #cell-actions="{ item }">
           <div class="h-actions">
+            <HButton
+              variant="ghost"
+              size="sm"
+              :to="{ name: 'admin-hospitals-id', params: { id: item.id } }"
+            >
+              View
+            </HButton>
             <HButton
               variant="ghost"
               size="icon"

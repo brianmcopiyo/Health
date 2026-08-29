@@ -6,6 +6,7 @@ use App\Models\Ambulance;
 use App\Models\AssistanceRequest;
 use App\Models\Facility;
 use App\Models\Hospital;
+use App\Models\Patient;
 use App\Models\Referral;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -266,6 +267,46 @@ class HealthOperationsTest extends TestCase
     {
         Sanctum::actingAs($this->user('doctor@riverside.test'));
         $this->getJson('/api/reports')->assertOk()->assertJsonStructure(['facilities', 'referrals', 'assistance', 'ambulances', 'patients']);
+        $this->getJson('/api/dashboard')->assertOk()->assertJsonStructure(['panels', 'kpis', 'occupancy', 'encounters']);
+    }
+
+    public function test_command_dashboard_is_role_aware_and_uses_live_occupancy(): void
+    {
+        Sanctum::actingAs($this->user('nurse@riverside.test'));
+        $nurse = $this->getJson('/api/dashboard')->assertOk()->json();
+        $this->assertContains('occupancy', $nurse['panels']);
+        $this->assertContains('emergency', $nurse['panels']);
+        $this->assertNotContains('billing', $nurse['panels']);
+        $this->assertNotContains('laboratory', $nurse['panels']);
+        $this->assertNull($nurse['billing']);
+        $this->assertSame(max(0, $nurse['occupancy']['capacity'] - $nurse['occupancy']['used']), $nurse['occupancy']['remaining']);
+
+        Sanctum::actingAs($this->user('lab@riverside.test'));
+        $lab = $this->getJson('/api/dashboard')->assertOk()->json();
+        $this->assertContains('laboratory', $lab['panels']);
+        $this->assertNotContains('pharmacy', $lab['panels']);
+        $this->assertNotContains('billing', $lab['panels']);
+        $this->assertSame([], $lab['pharmacy']);
+
+        Sanctum::actingAs($this->user('admin@riverside.test'));
+        $admin = $this->getJson('/api/dashboard')->assertOk()->json();
+        $beds = Facility::query()->whereHas('type', fn ($query) => $query->where('slug', 'bed'))->get();
+        $this->assertContains('billing', $admin['panels']);
+        $this->assertSame((int) $beds->sum('capacity'), $admin['occupancy']['capacity']);
+        $this->assertSame((int) $beds->sum('current_utilization'), $admin['occupancy']['used']);
+        $this->assertSame(max(0, $admin['occupancy']['capacity'] - $admin['occupancy']['used']), $admin['occupancy']['remaining']);
+        $this->assertCount(7, $admin['charts']['encounters']);
+
+        Sanctum::actingAs($this->user('admin@lakeside.test'));
+        $lakeside = $this->getJson('/api/dashboard')->assertOk()->json();
+        $riverside = Patient::withoutGlobalScope('hospital')->where('mrn', 'RGH-0001')->firstOrFail();
+        $this->assertFalse(collect($lakeside['patients'])->pluck('id')->contains($riverside->id));
+
+        Sanctum::actingAs($this->user('platform@health.test'));
+        $platform = $this->getJson('/api/dashboard')->assertOk()->json();
+        $this->assertSame([], $platform['patients']);
+        $this->assertSame([], $platform['encounters']);
+        $this->assertNull($platform['occupancy']);
     }
 
     public function test_role_workspace_and_navigation_are_scoped(): void
@@ -418,6 +459,44 @@ class HealthOperationsTest extends TestCase
         $this->getJson('/api/ambulance-trips')->assertOk();
         $this->getJson('/api/invoices')->assertOk();
         $this->getJson('/api/reports')->assertOk();
+    }
+
+    public function test_navigation_follows_workflow_priority(): void
+    {
+        $admin = collect($this->postJson('/api/auth/login', [
+            'email' => 'admin@riverside.test',
+            'password' => 'password',
+        ])->assertOk()->json('navigation'))->pluck('title')->filter()->values();
+
+        $this->assertSame('Dashboard', $admin->first());
+        $this->assertTrue($admin->search('Patients') < $admin->search('Reception'));
+        $this->assertTrue($admin->search('Reception') < $admin->search('OPD'));
+        $this->assertTrue($admin->search('OPD') < $admin->search('Emergency'));
+        $this->assertTrue($admin->search('Wards') < $admin->search('Laboratory'));
+        $this->assertTrue($admin->search('Laboratory') < $admin->search('Pharmacy'));
+        $this->assertTrue($admin->search('Pharmacy') < $admin->search('Theatre'));
+        $this->assertTrue($admin->search('Billing') < $admin->search('Users'));
+        $this->assertSame('Roles', $admin->last());
+        $this->assertFalse($admin->contains('Hospitals'));
+
+        $nurse = collect($this->postJson('/api/auth/login', [
+            'email' => 'nurse@riverside.test',
+            'password' => 'password',
+        ])->assertOk()->json('navigation'))->pluck('title')->filter()->values();
+
+        $this->assertSame('Dashboard', $nurse->first());
+        $this->assertTrue($nurse->search('Patients') < $nurse->search('Wards'));
+        $this->assertTrue($nurse->search('Wards') < $nurse->search('Emergency'));
+        $this->assertFalse($nurse->contains('Users'));
+        $this->assertFalse($nurse->contains('Laboratory'));
+        $this->assertSame($nurse->values()->all(), $nurse->filter()->values()->all());
+
+        $lab = collect($this->postJson('/api/auth/login', [
+            'email' => 'lab@riverside.test',
+            'password' => 'password',
+        ])->assertOk()->json('navigation'))->pluck('title')->filter()->values();
+
+        $this->assertSame(['Dashboard', 'Patients', 'Laboratory'], $lab->all());
     }
 
     public function test_nurse_navigation_excludes_admin_modules(): void

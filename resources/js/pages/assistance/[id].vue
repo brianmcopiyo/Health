@@ -1,4 +1,5 @@
 <script setup>
+import { facilityRecordTo } from '@/utils/helpers'
 import { labelize, statusColor } from '@/utils/status'
 
 definePage({
@@ -16,6 +17,11 @@ const saving = ref(false)
 const formError = ref('')
 const responseNotes = ref('')
 const manageOpen = ref(false)
+const tab = ref('overview')
+const tabs = [
+  { title: 'Overview', value: 'overview' },
+  { title: 'Related', value: 'related' },
+]
 
 const isDestination = computed(() => userData.value?.hospitalId === request.value?.to_hospital_id)
 const isOrigin = computed(() => userData.value?.hospitalId === request.value?.from_hospital_id)
@@ -48,35 +54,31 @@ await withPageLoad(load)
 </script>
 
 <template>
-  <div>
-    <HPage
-      :title="request?.title || 'Assistance'"
-      :subtitle="request ? `${request.from_hospital?.name} → ${request.to_hospital?.name}` : ''"
+  <HRecord
+    :title="request?.title || 'Assistance'"
+    :subtitle="request ? `${request.from_hospital?.name} → ${request.to_hospital?.name}` : ''"
+    :status="request?.status"
+    :back="{ name: 'assistance' }"
+    back-label="Assistance"
+    :tabs="tabs"
+    :tab="tab"
+    :missing="!request"
+    @update:tab="tab = $event"
+  >
+    <template
+      v-if="request"
+      #actions
     >
-      <HButton
-        variant="ghost"
-        :to="{ name: 'assistance' }"
-      >
-        <HIcon name="back" />
-        Assistance
-      </HButton>
-      <HButton
-        v-if="request"
-        @click="openManage"
-      >
+      <HButton @click="openManage">
         Manage
       </HButton>
-    </HPage>
+    </template>
 
-    <div
-      v-if="!request"
-      class="h-alert"
-    >
-      This request could not be loaded.
-    </div>
-
-    <template v-else>
-      <div class="h-detail">
+    <template v-if="request">
+      <div
+        v-if="tab === 'overview'"
+        class="h-detail"
+      >
         <HCard title="Request">
           <div class="h-metric">
             <span>Status</span>
@@ -92,7 +94,18 @@ await withPageLoad(load)
           </div>
           <div class="h-metric">
             <span>Resource</span>
-            <strong>{{ request.facility_type?.name || request.facility?.name || '—' }}</strong>
+            <strong>
+              <RouterLink
+                v-if="request.facility?.id"
+                class="h-inline-link"
+                :to="facilityRecordTo(request.facility)"
+              >
+                {{ request.facility.name }}
+              </RouterLink>
+              <template v-else>
+                {{ request.facility_type?.name || '—' }}
+              </template>
+            </strong>
           </div>
           <p>{{ request.description || 'No details provided.' }}</p>
           <p
@@ -103,6 +116,11 @@ await withPageLoad(load)
           </p>
         </HCard>
 
+      </div>
+      <div
+        v-if="tab === 'related'"
+        class="h-detail"
+      >
         <HCard title="Related">
           <div class="h-metric">
             <span>Patient</span>
@@ -121,7 +139,16 @@ await withPageLoad(load)
           </div>
           <div class="h-metric">
             <span>Encounter</span>
-            <strong>{{ request.encounter ? `${labelize(request.encounter.type)} · ${request.encounter.chief_complaint || labelize(request.encounter.status)}` : '—' }}</strong>
+            <strong>
+              <RouterLink
+                v-if="request.encounter?.id"
+                class="h-inline-link"
+                :to="{ name: 'encounters-id', params: { id: request.encounter.id } }"
+              >
+                {{ labelize(request.encounter.type) }} · {{ request.encounter.chief_complaint || labelize(request.encounter.status) }}
+              </RouterLink>
+              <template v-else>—</template>
+            </strong>
           </div>
         </HCard>
       </div>
@@ -171,5 +198,5 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HModal>
-  </div>
+  </HRecord>
 </template>

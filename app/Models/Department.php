@@ -46,6 +46,16 @@ class Department extends BaseModel
         return $this->hasMany(Facility::class);
     }
 
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
+
+    public function encounters(): HasMany
+    {
+        return $this->hasMany(Encounter::class);
+    }
+
     public static function platformBypassesTenant(): bool
     {
         return true;

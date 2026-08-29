@@ -100,16 +100,40 @@ await withPageLoad(load)
           { title: 'Module', key: 'module_key' },
           { title: 'Active', key: 'is_active' },
           { title: 'Facilities', key: 'facilities_count' },
+          { title: 'Staff', key: 'users_count' },
           { title: 'Actions', key: 'actions' },
         ]"
         :items="departments"
         empty="No departments configured"
       >
+        <template #cell-name="{ item }">
+          <RouterLink
+            class="h-inline-link"
+            :to="{ name: 'admin-departments-id', params: { id: item.id } }"
+          >
+            {{ item.name }}
+          </RouterLink>
+        </template>
         <template #cell-is_active="{ item }">
           {{ item.is_active ? 'Yes' : 'No' }}
         </template>
+        <template #cell-facilities_count="{ item }">
+          <RouterLink
+            class="h-inline-link"
+            :to="{ name: 'facilities', query: { department_id: item.id } }"
+          >
+            {{ item.facilities_count }}
+          </RouterLink>
+        </template>
         <template #cell-actions="{ item }">
           <div class="h-actions">
+            <HButton
+              variant="ghost"
+              size="sm"
+              :to="{ name: 'admin-departments-id', params: { id: item.id } }"
+            >
+              View
+            </HButton>
             <HButton
               v-if="ability.can('manage', 'Department')"
               variant="ghost"
@@ -225,5 +249,6 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HModal>
+
   </div>
 </template>

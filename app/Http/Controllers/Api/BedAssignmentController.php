@@ -126,4 +126,55 @@ class BedAssignmentController extends Controller
 
         return $bedAssignment->refresh()->load(['patient', 'facility', 'assignedBy']);
     }
+
+    public function transfer(Request $request, BedAssignment $bedAssignment)
+    {
+        abort_unless($bedAssignment->status === 'active', 422, 'Assignment is already closed.');
+
+        $data = $request->validate([
+            'facility_id' => ['required', TenantRules::inHospital('facilities')],
+            'nurse_id' => ['nullable', 'exists:users,id'],
+        ]);
+
+        abort_if((string) $data['facility_id'] === (string) $bedAssignment->facility_id, 422, 'Select a different bed.');
+
+        $assignment = DB::transaction(function () use ($data, $request, $bedAssignment) {
+            $current = BedAssignment::query()->lockForUpdate()->findOrFail($bedAssignment->id);
+            abort_unless($current->status === 'active', 422, 'Assignment is already closed.');
+
+            $destination = Facility::query()->with(['type', 'parent'])->lockForUpdate()->findOrFail($data['facility_id']);
+            abort_unless($destination->type?->slug === 'bed', 422, 'Select a bed.');
+            abort_unless($destination->isAvailableFor(1), 422, 'The destination bed is not available.');
+
+            $current->update([
+                'status' => 'transferred',
+                'discharged_at' => now(),
+            ]);
+
+            $origin = Facility::query()->with('type')->lockForUpdate()->find($current->facility_id);
+            $origin?->adjustUtilization(-1);
+
+            $next = BedAssignment::query()->create([
+                'hospital_id' => $current->hospital_id,
+                'patient_id' => $current->patient_id,
+                'facility_id' => $destination->id,
+                'ward_id' => $destination->parent_id,
+                'encounter_id' => $current->encounter_id,
+                'assigned_by' => $request->user()->id,
+                'nurse_id' => $data['nurse_id'] ?? $current->nurse_id ?? $request->user()->id,
+                'status' => 'active',
+                'assigned_at' => now(),
+            ]);
+
+            $destination->adjustUtilization(1);
+            Audit::record('transferred', $next, [
+                'from_facility_id' => $current->facility_id,
+                'to_facility_id' => $destination->id,
+            ]);
+
+            return $next;
+        });
+
+        return $assignment->load(['patient', 'facility.parent', 'ward', 'assignedBy', 'encounter', 'nurse']);
+    }
 }

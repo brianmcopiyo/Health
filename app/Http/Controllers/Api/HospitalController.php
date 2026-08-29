@@ -64,7 +64,26 @@ class HospitalController extends Controller
     {
         abort_unless($request->user()->isPlatformAdmin(), 403, 'This action is unauthorized.');
 
-        return $hospital;
+        $hospital->load([
+            'departments:id,hospital_id,name,slug,module_key,is_active',
+            'facilities.type:id,name,slug',
+            'users:id,name,email,job_title,role_id,hospital_id',
+            'users.role:id,name,slug',
+            'ambulances:id,hospital_id,vehicle_code,vehicle_type,status,capacity',
+            'roles:id,hospital_id,name,slug,workspace',
+        ]);
+
+        $beds = $hospital->facilities->filter(fn ($facility) => $facility->type?->slug === 'bed');
+
+        return [
+            ...$hospital->toArray(),
+            'capacity' => [
+                'facilities' => $hospital->facilities->count(),
+                'beds' => $beds->sum('capacity'),
+                'occupied' => $beds->sum('current_utilization'),
+                'staff' => $hospital->users->count(),
+            ],
+        ];
     }
 
     public function update(Request $request, Hospital $hospital)

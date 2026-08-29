@@ -12,4 +12,21 @@ return [
     'retention_years' => (int) env('HMS_RETENTION_YEARS', 7),
     'max_upload_kb' => (int) env('HMS_MAX_UPLOAD_KB', 10240),
     'upload_mimes' => ['pdf', 'jpg', 'jpeg', 'png', 'txt', 'doc', 'docx'],
+    'navigation' => [
+        'workspace_section_rank' => 15,
+        'always_visible' => ['admin'],
+        'platform_keys' => ['admin', 'reports', 'users', 'roles', 'hospitals'],
+        'sections' => [
+            'home' => ['title' => null, 'rank' => 0],
+            'care' => ['title' => 'Care', 'rank' => 10],
+            'clinical' => ['title' => 'Clinical', 'rank' => 20],
+            'inpatient' => ['title' => 'Inpatient', 'rank' => 30],
+            'diagnostics' => ['title' => 'Diagnostics', 'rank' => 40],
+            'pharmacy' => ['title' => 'Pharmacy', 'rank' => 50],
+            'theatre' => ['title' => 'Theatre', 'rank' => 60],
+            'network' => ['title' => 'Network', 'rank' => 70],
+            'finance' => ['title' => 'Finance', 'rank' => 80],
+            'admin' => ['title' => 'Administration', 'rank' => 90],
+        ],
+    ],
 ];

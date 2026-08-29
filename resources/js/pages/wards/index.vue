@@ -60,6 +60,16 @@ await withPageLoad(load)
           </RouterLink>
           <span v-else>—</span>
         </template>
+        <template #cell-facility.name="{ item }">
+          <RouterLink
+            v-if="item.facility?.id"
+            class="h-inline-link"
+            :to="{ name: 'beds-id', params: { id: item.facility.id } }"
+          >
+            {{ item.facility.name }}
+          </RouterLink>
+          <span v-else>—</span>
+        </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}

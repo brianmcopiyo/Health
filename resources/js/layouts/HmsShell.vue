@@ -189,10 +189,14 @@ onBeforeUnmount(() => {
       <nav class="hms-nav">
         <section
           v-for="group in navGroups"
-          :key="group.heading"
+          :key="group.section || group.heading"
           class="hms-nav-group"
+          :class="[`is-${group.section || 'item'}`, { 'is-untitled': !group.heading }]"
         >
-          <p class="hms-nav-label">
+          <p
+            v-if="group.heading"
+            class="hms-nav-label"
+          >
             {{ group.heading }}
           </p>
           <RouterLink

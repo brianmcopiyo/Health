@@ -34,6 +34,12 @@ const form = ref({
   notes: '',
   staff: [],
 })
+const tab = ref('overview')
+const tabs = [
+  { title: 'Overview', value: 'overview' },
+  { title: 'Crew', value: 'crew' },
+  { title: 'Trips', value: 'trips' },
+]
 const dispatchForm = ref({
   origin: '',
   destination: '',
@@ -191,32 +197,35 @@ await withPageLoad(load)
 </script>
 
 <template>
-  <div>
-    <HPage
-      :title="ambulance?.vehicle_code || 'Ambulance'"
-      :subtitle="ambulance?.vehicle_type || ''"
+  <HRecord
+    :title="ambulance?.vehicle_code || 'Ambulance'"
+    :subtitle="ambulance?.vehicle_type || ''"
+    :status="ambulance?.status"
+    :back="{ name: 'ambulances' }"
+    back-label="Fleet"
+    :tabs="tabs"
+    :tab="tab"
+    :missing="!ambulance"
+    @update:tab="tab = $event"
+  >
+    <template
+      v-if="ambulance"
+      #actions
     >
       <HButton
-        variant="ghost"
-        :to="{ name: 'ambulances' }"
-      >
-        <HIcon name="back" />
-        Fleet
-      </HButton>
-      <HButton
-        v-if="ambulance && ability.can('update', 'Ambulance')"
+        v-if="ability.can('update', 'Ambulance')"
         @click="openEdit"
       >
         <HIcon name="edit" />
         Edit
       </HButton>
       <HButton
-        v-if="ambulance && ability.can('dispatch', 'Ambulance') && ambulance.status === 'available'"
+        v-if="ability.can('dispatch', 'Ambulance') && ambulance.status === 'available'"
         @click="openDispatch"
       >
         Dispatch
       </HButton>
-      <HActionMenu v-if="ambulance && ability.can('manage', 'Ambulance')">
+      <HActionMenu v-if="ability.can('manage', 'Ambulance')">
         <template #default="{ close }">
           <button
             type="button"
@@ -227,7 +236,7 @@ await withPageLoad(load)
           </button>
         </template>
       </HActionMenu>
-    </HPage>
+    </template>
 
     <div
       v-if="formError && !editOpen && !dispatchOpen && !completing && !removing"
@@ -237,14 +246,7 @@ await withPageLoad(load)
     </div>
 
     <div
-      v-if="!ambulance"
-      class="h-alert"
-    >
-      This ambulance could not be loaded.
-    </div>
-
-    <div
-      v-else
+      v-if="ambulance && tab === 'overview'"
       class="h-detail"
     >
       <HCard title="Vehicle">
@@ -262,28 +264,39 @@ await withPageLoad(load)
           >
             {{ ambulance.notes }}
           </p>
-          <h3 class="h-section-title">
-            Crew
-          </h3>
-          <div
-            v-for="member in ambulance.staff"
-            :key="member.id"
-          >
-            {{ member.user?.name }} · {{ member.assignment_role }}
-          </div>
-          <div
-            v-if="!ambulance.staff?.length"
-            class="h-muted"
-          >
-            No crew assigned.
-          </div>
         </div>
       </HCard>
+    </div>
 
-      <HCard
-        title="Trip history"
-        flush
+    <HCard
+      v-if="ambulance && tab === 'crew'"
+      title="Crew"
+    >
+      <div
+        v-for="member in ambulance.staff"
+        :key="member.id"
       >
+        <RouterLink
+          v-if="member.user?.id"
+          class="h-inline-link"
+          :to="{ name: 'admin-users-id', params: { id: member.user.id } }"
+        >
+          {{ member.user.name }}
+        </RouterLink>
+        <span v-else>{{ member.user?.name }}</span>
+        · {{ member.assignment_role }}
+      </div>
+      <HEmpty
+        v-if="!ambulance.staff?.length"
+        message="No crew assigned"
+      />
+    </HCard>
+
+    <HCard
+      v-if="ambulance && tab === 'trips'"
+      title="Trip history"
+      flush
+    >
         <HTable
           :headers="[
             { title: 'Patient', key: 'patient.first_name' },
@@ -347,7 +360,6 @@ await withPageLoad(load)
           </template>
         </HTable>
       </HCard>
-    </div>
 
     <HOffcanvas
       v-model="editOpen"
@@ -568,5 +580,5 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HModal>
-  </div>
+  </HRecord>
 </template>

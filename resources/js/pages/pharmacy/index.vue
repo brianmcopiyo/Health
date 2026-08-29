@@ -14,10 +14,29 @@ const prescriptions = ref([])
 const medications = ref([])
 const saving = ref(false)
 const formError = ref('')
+const stockOpen = ref(false)
+const stockForm = ref({ id: null, stock_qty: 0, reorder_level: 0 })
 
 const load = async () => {
   prescriptions.value = asList(await $api('/prescriptions', { query: { queue: true, per_page: 50 } }))
   medications.value = asList(await $api('/medications'))
+}
+
+const openStock = item => {
+  formError.value = ''
+  stockForm.value = { id: item.id, stock_qty: item.stock_qty, reorder_level: item.reorder_level }
+  stockOpen.value = true
+}
+
+const saveStock = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/medications/${stockForm.value.id}`, {
+      method: 'PATCH',
+      body: { stock_qty: stockForm.value.stock_qty, reorder_level: stockForm.value.reorder_level },
+    })
+    stockOpen.value = false
+    await load()
+  })
 }
 
 const updateRx = async (item, status) => {
@@ -120,10 +139,55 @@ await withPageLoad(load)
           { title: 'Strength', key: 'strength' },
           { title: 'Stock', key: 'stock_qty' },
           { title: 'Reorder at', key: 'reorder_level' },
+          { title: 'Actions', key: 'actions' },
         ]"
         :items="medications"
         empty="No formulary items"
-      />
+      >
+        <template #cell-actions="{ item }">
+          <HButton
+            v-if="ability.can('update', 'Pharmacy')"
+            variant="ghost"
+            size="sm"
+            @click="openStock(item)"
+          >
+            Adjust
+          </HButton>
+        </template>
+      </HTable>
     </HCard>
+
+    <HModal
+      v-model="stockOpen"
+      title="Adjust stock"
+      :error="formError"
+      :persistent="saving"
+    >
+      <HNumber
+        v-model="stockForm.stock_qty"
+        label="Stock quantity"
+        :min="0"
+      />
+      <HNumber
+        v-model="stockForm.reorder_level"
+        label="Reorder level"
+        :min="0"
+      />
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="stockOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving"
+          @click="saveStock"
+        >
+          Save
+        </HButton>
+      </template>
+    </HModal>
   </div>
 </template>

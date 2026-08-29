@@ -50,7 +50,7 @@ class AmbulanceController extends Controller
     public function show(Ambulance $ambulance)
     {
         return $this->serialize(
-            $ambulance->load(['staff.user', 'hospital', 'trips.driver', 'trips.destinationHospital', 'trips.patient'])
+            $ambulance->load(['staff.user', 'hospital', 'trips.driver', 'trips.destinationHospital', 'trips.patient', 'trips.referral:id,status,from_hospital_id,to_hospital_id', 'trips.encounter:id,type,status'])
         );
     }
 

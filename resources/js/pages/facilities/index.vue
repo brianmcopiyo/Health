@@ -1,4 +1,5 @@
 <script setup>
+import { facilityRecordTo } from '@/utils/helpers'
 import { facilityStatuses, labelize, statusColor } from '@/utils/status'
 
 definePage({
@@ -8,6 +9,7 @@ definePage({
   },
 })
 
+const route = useRoute()
 const ability = useAbility()
 const facilities = ref([])
 const types = ref([])
@@ -53,6 +55,8 @@ const load = async () => {
     query.status = status.value
   if (typeId.value)
     query.facility_type_id = typeId.value
+  if (route.query.department_id)
+    query.department_id = route.query.department_id
 
   const [items, facilityTypes] = await Promise.all([
     $api('/facilities', { query }),
@@ -174,6 +178,14 @@ await withPageLoad(load)
         :items="facilities"
         empty="No facilities match these filters"
       >
+        <template #cell-name="{ item }">
+          <RouterLink
+            class="h-inline-link"
+            :to="facilityRecordTo(item)"
+          >
+            {{ item.name }}
+          </RouterLink>
+        </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
@@ -184,7 +196,7 @@ await withPageLoad(load)
             <HButton
               variant="ghost"
               size="icon"
-              :to="{ name: 'facilities-id', params: { id: item.id } }"
+              :to="facilityRecordTo(item)"
             >
               <HIcon name="eye" />
             </HButton>

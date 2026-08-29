@@ -9,7 +9,7 @@ class BedAssignment extends BaseModel
 {
     use BelongsToHospital;
 
-    public const STATUSES = ['active', 'discharged'];
+    public const STATUSES = ['active', 'discharged', 'transferred'];
 
     protected $fillable = [
         'hospital_id',

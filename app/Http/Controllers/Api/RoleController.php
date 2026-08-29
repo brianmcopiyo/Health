@@ -24,6 +24,18 @@ class RoleController extends Controller
         return $query->get();
     }
 
+    public function show(Request $request, Role $role)
+    {
+        abort_unless($role->isVisibleTo($request->user()), 403, 'This action is unauthorized.');
+
+        return $role->load([
+            'permissions',
+            'users:id,name,email,job_title,role_id,department_id',
+            'users.department:id,name',
+            'hospital:id,name,code',
+        ]);
+    }
+
     public function permissions(Request $request)
     {
         $query = Permission::query()->orderBy('group')->orderBy('name');

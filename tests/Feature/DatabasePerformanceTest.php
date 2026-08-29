@@ -98,6 +98,17 @@ class DatabasePerformanceTest extends TestCase
             ->assertJsonStructure(['data', 'current_page', 'total']);
         $this->getJson('/api/service-orders?module=laboratory&status=requested&per_page=25')->assertOk();
         $this->getJson('/api/invoices?status=draft&per_page=25')->assertOk();
+
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $command = $this->getJson('/api/dashboard')->assertOk()->json();
+        $count = count(DB::getQueryLog());
+        DB::disableQueryLog();
+
+        $this->assertLessThan(80, $count);
+        $this->assertLessThanOrEqual(8, count($command['patients']));
+        $this->assertLessThanOrEqual(8, count($command['encounters']));
+        $this->assertLessThanOrEqual(8, count($command['laboratory']));
     }
 
     public function test_patient_allergy_updates_preserve_history(): void

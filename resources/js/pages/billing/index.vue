@@ -29,7 +29,6 @@ const payForm = ref({
   amount: 0,
   method: 'cash',
 })
-const viewing = ref(null)
 
 const encounterOptions = computed(() => encounters.value.map(item => ({
   title: `${labelize(item.type)} · ${item.chief_complaint || labelize(item.status)}`,
@@ -83,21 +82,13 @@ const save = async () => {
 const updateStatus = async (invoice, status) => {
   await wrapSave(saving, formError, async () => {
     await $api(`/invoices/${invoice.id}/status`, { method: 'PATCH', body: { status } })
-    if (viewing.value?.id === invoice.id)
-      viewing.value = await $api(`/invoices/${invoice.id}`)
     await load()
   })
-}
-
-const openInvoice = async invoice => {
-  viewing.value = await $api(`/invoices/${invoice.id}`)
 }
 
 const cancelInvoice = async invoice => {
   await wrapSave(saving, formError, async () => {
     await $api(`/invoices/${invoice.id}/status`, { method: 'PATCH', body: { status: 'cancelled' } })
-    if (viewing.value?.id === invoice.id)
-      viewing.value = await $api(`/invoices/${invoice.id}`)
     await load()
   })
 }
@@ -164,6 +155,14 @@ await withPageLoad(load)
         :items="invoices"
         empty="No invoices yet"
       >
+        <template #cell-number="{ item }">
+          <RouterLink
+            class="h-inline-link"
+            :to="{ name: 'billing-id', params: { id: item.id } }"
+          >
+            {{ item.number }}
+          </RouterLink>
+        </template>
         <template #cell-patient.first_name="{ item }">
           <RouterLink
             v-if="item.patient?.id"
@@ -187,7 +186,7 @@ await withPageLoad(load)
             <HButton
               variant="ghost"
               size="sm"
-              @click="openInvoice(item)"
+              :to="{ name: 'billing-id', params: { id: item.id } }"
             >
               View
             </HButton>
@@ -334,72 +333,5 @@ await withPageLoad(load)
       </template>
     </HModal>
 
-    <HOffcanvas
-      :model-value="Boolean(viewing)"
-      :title="viewing?.number || 'Invoice'"
-      size="lg"
-      @update:model-value="val => { if (!val) viewing = null }"
-    >
-      <div
-        v-if="viewing"
-        class="h-stack"
-      >
-        <HBadge :tone="statusColor(viewing.status)">
-          {{ labelize(viewing.status) }}
-        </HBadge>
-        <p class="h-muted">
-          Total {{ viewing.total }}
-        </p>
-        <p v-if="viewing.patient">
-          <RouterLink
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: viewing.patient.id } }"
-          >
-            {{ viewing.patient.first_name }} {{ viewing.patient.last_name }}
-          </RouterLink>
-        </p>
-        <p
-          v-if="viewing.encounter"
-          class="h-muted"
-        >
-          {{ labelize(viewing.encounter.type) }} · {{ viewing.encounter.chief_complaint || labelize(viewing.encounter.status) }}
-        </p>
-        <HTable
-          :headers="[
-            { title: 'Description', key: 'description' },
-            { title: 'Qty', key: 'quantity' },
-            { title: 'Amount', key: 'unit_amount' },
-          ]"
-          :items="viewing.items"
-          empty="No line items"
-        />
-        <h4>Payments</h4>
-        <HTable
-          :headers="[
-            { title: 'Amount', key: 'amount' },
-            { title: 'Method', key: 'method' },
-          ]"
-          :items="viewing.payments"
-          empty="No payments recorded"
-        />
-        <div class="h-actions">
-          <HButton
-            v-if="ability.can('update', 'Invoice') && viewing.status === 'draft'"
-            size="sm"
-            @click="updateStatus(viewing, 'issued')"
-          >
-            Issue
-          </HButton>
-          <HButton
-            v-if="ability.can('update', 'Invoice') && viewing.status !== 'paid' && viewing.status !== 'cancelled'"
-            size="sm"
-            variant="ghost"
-            @click="openPay(viewing)"
-          >
-            Record payment
-          </HButton>
-        </div>
-      </div>
-    </HOffcanvas>
   </div>
 </template>

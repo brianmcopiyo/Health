@@ -124,8 +124,23 @@ await withPageLoad(load)
         :items="users"
         empty="No users in this hospital"
       >
+        <template #cell-name="{ item }">
+          <RouterLink
+            class="h-inline-link"
+            :to="{ name: 'admin-users-id', params: { id: item.id } }"
+          >
+            {{ item.name }}
+          </RouterLink>
+        </template>
         <template #cell-actions="{ item }">
           <div class="h-actions">
+            <HButton
+              variant="ghost"
+              size="sm"
+              :to="{ name: 'admin-users-id', params: { id: item.id } }"
+            >
+              View
+            </HButton>
             <HButton
               v-if="ability.can('manage', 'User')"
               variant="ghost"
@@ -251,5 +266,6 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HModal>
+
   </div>
 </template>

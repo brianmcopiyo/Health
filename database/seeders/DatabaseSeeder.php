@@ -156,6 +156,11 @@ class DatabaseSeeder extends Seeder
             'status' => 'pending',
             'created_by' => $userModels['manager@riverside.test']->id,
         ]);
+
+        Facility::withoutGlobalScope('hospital')
+            ->whereHas('type', fn ($query) => $query->where('slug', 'ward'))
+            ->get()
+            ->each(fn (Facility $ward) => \App\Support\FacilityOccupancy::syncWard($ward));
     }
 
     private function createHospitalUser(string $name, string $email, string $password, string $roleSlug, Hospital $hospital, array $roles, string $jobTitle): User

@@ -182,10 +182,10 @@ class ReferralController extends Controller
             'fromHospital',
             'toHospital',
             'requiredFacilityType',
-            'destinationFacility',
+            'destinationFacility.type:id,name,slug',
             'creator',
             'reviewer',
-            'ambulanceTrip',
+            'ambulanceTrip.ambulance:id,vehicle_code,status',
             'patient:id,mrn,first_name,last_name,status',
             'encounter:id,type,status,chief_complaint',
         ]);
