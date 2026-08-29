@@ -112,23 +112,12 @@ const today = new Date().toISOString().slice(0, 10)
     </HPage>
 
     <HCard flush>
-      <HToolbar>
-        <HInput
-          v-model="search"
-          class="is-search"
-          label="Search"
-          placeholder="Search MRN, name or phone"
-          icon="search"
-          clearable
-          @keyup.enter="page = 1; load()"
-        />
-        <HButton
-          variant="ghost"
-          @click="page = 1; load()"
-        >
-          Search
-        </HButton>
-      </HToolbar>
+      <HListToolbar
+        v-model:search="search"
+        search-placeholder="Search MRN, name or phone"
+        search-button
+        @search="page = 1; load()"
+      />
       <HTable
         :loading="pending"
         :headers="[

@@ -22,8 +22,14 @@ const load = async () => {
   meta.value = asPageMeta(payload)
 }
 
-const setScope = value => {
-  scope.value = value
+const filterValues = computed({
+  get: () => ({ scope: scope.value }),
+  set: next => {
+    scope.value = next.scope
+  },
+})
+
+const applyFilters = () => {
   page.value = 1
   load()
 }
@@ -39,16 +45,16 @@ const { pending } = usePageQuery(load)
     />
 
     <HCard flush>
-      <HToolbar>
-        <HSegmented
-          :model-value="scope"
-          :options="[
+      <HListToolbar
+        v-model:values="filterValues"
+        :filters="[
+          { key: 'scope', type: 'segmented', empty: 'open', options: [
             { value: 'open', title: 'Open' },
             { value: 'all', title: 'All' },
-          ]"
-          @update:model-value="setScope"
-        />
-      </HToolbar>
+          ] },
+        ]"
+        @change="applyFilters"
+      />
       <HTable
         :loading="pending"
         :headers="[

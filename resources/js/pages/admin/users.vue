@@ -11,6 +11,7 @@ const userData = useCookie('userData')
 const users = ref([])
 const meta = ref(asPageMeta())
 const page = ref(1)
+const search = ref('')
 const roles = ref([])
 const hospitals = ref([])
 const formOpen = ref(false)
@@ -37,7 +38,7 @@ const headers = [
 ]
 
 const load = async () => {
-  const payload = await $api('/users', { query: { page: page.value } })
+  const payload = await $api('/users', { query: { page: page.value, q: search.value || undefined } })
   users.value = asList(payload)
   meta.value = asPageMeta(payload)
   if (ability.can('manage', 'User'))
@@ -120,6 +121,12 @@ const { pending } = usePageQuery(load)
     </HPage>
 
     <HCard flush>
+      <HListToolbar
+        v-model:search="search"
+        search-placeholder="Search name or email"
+        search-button
+        @search="page = 1; load()"
+      />
       <HTable
         :loading="pending"
         :headers="headers"

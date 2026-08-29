@@ -33,6 +33,7 @@ declare module 'vue' {
     HIcon: typeof import('./resources/js/components/ui/HIcon.vue')['default']
     HInput: typeof import('./resources/js/components/ui/HInput.vue')['default']
     HLinkCard: typeof import('./resources/js/components/ui/HLinkCard.vue')['default']
+    HListToolbar: typeof import('./resources/js/components/ui/HListToolbar.vue')['default']
     HLoading: typeof import('./resources/js/components/ui/HLoading.vue')['default']
     HModal: typeof import('./resources/js/components/ui/HModal.vue')['default']
     HmsShell: typeof import('./resources/js/layouts/HmsShell.vue')['default']

@@ -102,10 +102,12 @@ const updateStatus = async status => {
   })
 }
 
-const setDirection = value => {
-  direction.value = value
-  load()
-}
+const filterValues = computed({
+  get: () => ({ direction: direction.value }),
+  set: next => {
+    direction.value = next.direction
+  },
+})
 
 const { pending } = usePageQuery(load)
 </script>
@@ -126,17 +128,17 @@ const { pending } = usePageQuery(load)
     </HPage>
 
     <HCard flush>
-      <HToolbar>
-        <HSegmented
-          :model-value="direction"
-          :options="[
+      <HListToolbar
+        v-model:values="filterValues"
+        :filters="[
+          { key: 'direction', type: 'segmented', empty: 'all', options: [
             { value: 'all', title: 'All' },
             { value: 'incoming', title: 'Incoming' },
             { value: 'outgoing', title: 'Outgoing' },
-          ]"
-          @update:model-value="setDirection"
-        />
-      </HToolbar>
+          ] },
+        ]"
+        @change="load"
+      />
       <HTable
         :loading="pending"
         :headers="headers"

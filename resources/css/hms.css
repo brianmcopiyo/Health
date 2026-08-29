@@ -2086,6 +2086,13 @@ a.h-card.h-stat:hover {
 .h-toolbar .h-control {
   min-height: var(--control-h);
 }
+.h-toolbar-filters > .h-btn {
+  min-height: var(--control-h);
+  height: var(--control-h);
+}
+.h-toolbar-filters > .h-field > .h-field-meta:not(:has(*)) {
+  display: none;
+}
 
 .h-tabs {
   display: flex;

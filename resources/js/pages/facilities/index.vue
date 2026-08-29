@@ -127,6 +127,14 @@ const removeFacility = async () => {
   })
 }
 
+const filterValues = computed({
+  get: () => ({ typeId: typeId.value, status: status.value }),
+  set: next => {
+    typeId.value = next.typeId
+    status.value = next.status
+  },
+})
+
 const { pending } = usePageQuery(load)
 </script>
 
@@ -146,33 +154,17 @@ const { pending } = usePageQuery(load)
     </HPage>
 
     <HCard flush>
-      <HToolbar>
-        <HInput
-          v-model="search"
-          class="is-search"
-          label="Search"
-          icon="search"
-          clearable
-          placeholder="Search facilities"
-          @update:model-value="load"
-        />
-        <HSelect
-          v-model="typeId"
-          :items="types"
-          item-title="name"
-          item-value="id"
-          label="Type"
-          placeholder="All types"
-          @update:model-value="load"
-        />
-        <HSelect
-          v-model="status"
-          :items="facilityStatuses"
-          label="Status"
-          placeholder="All statuses"
-          @update:model-value="load"
-        />
-      </HToolbar>
+      <HListToolbar
+        v-model:search="search"
+        v-model:values="filterValues"
+        search-placeholder="Search facilities"
+        search-mode="live"
+        :filters="[
+          { key: 'typeId', type: 'select', label: 'Type', placeholder: 'All types', items: types, itemTitle: 'name', itemValue: 'id' },
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', items: facilityStatuses },
+        ]"
+        @change="load"
+      />
       <HTable
         :loading="pending"
         :headers="headers"
