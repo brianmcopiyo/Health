@@ -11,10 +11,12 @@ use App\Models\Encounter;
 use App\Models\EncounterClinician;
 use App\Models\Facility;
 use App\Models\Vital;
+use App\Support\Access;
 use App\Support\Audit;
 use App\Support\ChargeLedger;
 use App\Support\ClinicalPayload;
 use App\Support\QueryList;
+use App\Support\Redactor;
 use App\Support\TenantRules;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -27,14 +29,14 @@ class EncounterController extends Controller
         $type = $request->string('type')->toString();
         $mine = $request->boolean('mine');
 
-        $query = Encounter::query()
+        $query = Access::encounterQuery($request->user(), Encounter::query()
             ->with([
                 'patient:id,hospital_id,mrn,first_name,last_name,sex,status',
                 'clinician:id,name',
                 'facility:id,name,code,status',
                 'department:id,name',
             ])
-            ->latest();
+            ->latest(), $type ?: null);
 
         if ($type) {
             $subject = $this->subjectForType($type);
@@ -87,6 +89,7 @@ class EncounterController extends Controller
             'notes' => ['nullable', 'string'],
             'parent_encounter_id' => ['nullable', TenantRules::inHospital('encounters')],
         ]);
+        unset($data['hospital_id']);
 
         $subject = $this->subjectForType($data['type']);
         abort_unless(
@@ -132,8 +135,9 @@ class EncounterController extends Controller
     public function show(Encounter $encounter)
     {
         $this->authorizeEncounter($encounter, request()->user(), 'read');
+        Audit::viewed($encounter, ['type' => $encounter->type]);
 
-        return ClinicalPayload::encounter($encounter);
+        return $this->present($encounter, request()->user());
     }
 
     public function update(Request $request, Encounter $encounter)
@@ -165,7 +169,7 @@ class EncounterController extends Controller
             }
         });
 
-        return ClinicalPayload::encounter($encounter->refresh());
+        return $this->present($encounter->refresh(), $request->user());
     }
 
     public function storeVitals(Request $request, Encounter $encounter)
@@ -295,7 +299,7 @@ class EncounterController extends Controller
             return $admission;
         });
 
-        return response()->json(ClinicalPayload::encounter($admission), 201);
+        return response()->json($this->present($admission, $request->user()), 201);
     }
 
     public function discharge(Request $request, Encounter $encounter)
@@ -334,12 +338,22 @@ class EncounterController extends Controller
             Audit::record('discharged', $encounter);
         });
 
-        return ClinicalPayload::encounter($encounter->refresh());
+        return $this->present($encounter->refresh(), $request->user());
     }
 
     public function invoice(Encounter $encounter)
     {
-        $this->authorizeEncounter($encounter, request()->user(), 'read');
+        $user = request()->user();
+        $this->authorizeEncounter($encounter, $user, 'read');
+        abort_unless(
+            $user->hasPermission('read', 'Invoice')
+            || $user->hasPermission('create', 'Invoice')
+            || $user->hasPermission('update', 'Opd')
+            || $user->hasPermission('update', 'Emergency')
+            || $user->hasPermission('update', 'Ward'),
+            403,
+            'This action is unauthorized.'
+        );
 
         $invoice = ChargeLedger::openInvoice($encounter);
 
@@ -348,16 +362,23 @@ class EncounterController extends Controller
 
     private function authorizeEncounter(Encounter $encounter, $user, string $action): void
     {
-        $subject = $this->subjectForType($encounter->type);
-        abort_unless(
-            $user->hasPermission($action, $subject)
-            || $user->hasPermission('update', 'Opd')
-            || $user->hasPermission('update', 'Emergency')
-            || $user->hasPermission('update', 'Ward')
-            || $user->hasPermission('read', 'Patient'),
-            403,
-            'This action is unauthorized.'
-        );
+        if ($action === 'update') {
+            abort_unless(Access::canUpdateEncounter($user, $encounter), 403, 'This action is unauthorized.');
+
+            return;
+        }
+
+        abort_unless(Access::canViewEncounter($user, $encounter), 403, 'This action is unauthorized.');
+    }
+
+    private function present(Encounter $encounter, $user): array
+    {
+        $payload = json_decode(json_encode(ClinicalPayload::encounter($encounter)), true) ?: [];
+        if (isset($payload['patient']) && is_array($payload['patient'])) {
+            $payload['patient'] = Redactor::patient($payload['patient'], $user);
+        }
+
+        return Redactor::encounter($payload, $user);
     }
 
     private function subjectForType(string $type): string

@@ -41,4 +41,9 @@ class Medication extends Model
         $row->save();
         $this->stock_qty = $row->stock_qty;
     }
+
+    public static function platformBypassesTenant(): bool
+    {
+        return true;
+    }
 }

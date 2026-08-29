@@ -116,4 +116,9 @@ class Facility extends Model
             $this->syncOriginal();
         });
     }
+
+    public static function platformBypassesTenant(): bool
+    {
+        return true;
+    }
 }

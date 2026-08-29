@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +42,8 @@ class Encounter extends Model
             'completed_at' => 'datetime',
             'admitted_at' => 'datetime',
             'discharged_at' => 'datetime',
+            'chief_complaint' => Encrypted::class,
+            'notes' => Encrypted::class,
         ];
     }
 

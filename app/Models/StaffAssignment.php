@@ -38,4 +38,9 @@ class StaffAssignment extends Model
     {
         return $this->belongsTo(Facility::class);
     }
+
+    public static function platformBypassesTenant(): bool
+    {
+        return true;
+    }
 }

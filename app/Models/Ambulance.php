@@ -51,4 +51,9 @@ class Ambulance extends Model
             ->latest('id')
             ->first();
     }
+
+    public static function platformBypassesTenant(): bool
+    {
+        return true;
+    }
 }

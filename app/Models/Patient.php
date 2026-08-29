@@ -2,7 +2,9 @@
 
 namespace App\Models;
 
+use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
+use App\Support\FieldCrypt;
 use App\Support\PatientTimeline;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -42,11 +44,37 @@ class Patient extends Model
         'notes',
     ];
 
+    protected $hidden = [
+        'phone_index',
+        'phone_tail_index',
+        'email_index',
+        'national_id_index',
+    ];
+
     protected function casts(): array
     {
         return [
             'date_of_birth' => 'date',
+            'phone' => Encrypted::class.':phone_index=phone,phone_tail_index=phone_tail',
+            'email' => Encrypted::class.':email_index=email',
+            'national_id' => Encrypted::class.':national_id_index=national_id',
+            'address' => Encrypted::class,
+            'emergency_contact_name' => Encrypted::class,
+            'emergency_contact_phone' => Encrypted::class,
+            'next_of_kin_name' => Encrypted::class,
+            'next_of_kin_phone' => Encrypted::class,
+            'notes' => Encrypted::class,
+            'retention_until' => 'datetime',
+            'archived_at' => 'datetime',
+            'purged_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $patient) {
+            $patient->retention_until ??= now()->addYears((int) config('hms.retention_years', 7));
+        });
     }
 
     public function hospital(): BelongsTo
@@ -92,13 +120,29 @@ class Patient extends Model
         }
 
         $prefix = addcslashes($term, '%_').'%';
+        $phone = FieldCrypt::normalizePhone($term);
+        $email = FieldCrypt::normalizeEmail($term);
+        $nid = FieldCrypt::normalizeNationalId($term);
 
-        return $query->where(function (Builder $builder) use ($term, $prefix) {
+        return $query->where(function (Builder $builder) use ($term, $prefix, $phone, $email, $nid) {
             $builder->where('mrn', 'like', $prefix)
-                ->orWhere('phone', 'like', $prefix)
-                ->orWhere('national_id', $term)
                 ->orWhere('first_name', 'like', $prefix)
                 ->orWhere('last_name', 'like', $prefix);
+
+            if ($phone) {
+                $builder->orWhere('phone_index', FieldCrypt::blindIndex($phone));
+                if (strlen($phone) === 4) {
+                    $builder->orWhere('phone_tail_index', FieldCrypt::blindIndex($phone));
+                }
+            }
+
+            if ($email && str_contains($email, '@')) {
+                $builder->orWhere('email_index', FieldCrypt::blindIndex($email));
+            }
+
+            if ($nid) {
+                $builder->orWhere('national_id_index', FieldCrypt::blindIndex($nid));
+            }
         });
     }
 
@@ -140,6 +184,11 @@ class Patient extends Model
     public function ambulanceTrips(): HasMany
     {
         return $this->hasMany(AmbulanceTrip::class);
+    }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(ClinicalDocument::class);
     }
 
     public function getFullNameAttribute(): string

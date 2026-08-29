@@ -19,6 +19,7 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <env name="APP_DEBUG" value="false"/>
         <env name="APP_KEY" value="base64:2fl+KTV4K1bDqV0s3y3n0mF3y0n8pQ1s2tU3vW4xY5z="/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
@@ -30,5 +31,9 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="HMS_ENCRYPTION_KEY" value="base64:YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY="/>
+        <env name="HMS_ENCRYPTION_KEY_ID" value="k1"/>
+        <env name="HMS_SEARCH_KEY" value="base64:QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWXoxMjM0NTY="/>
+        <env name="SANCTUM_EXPIRATION" value="480"/>
     </php>
 </phpunit>

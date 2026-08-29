@@ -6,9 +6,12 @@ use App\Http\Controllers\Controller;
 use App\Models\Patient;
 use App\Models\PatientAllergy;
 use App\Models\PatientCondition;
+use App\Support\Access;
 use App\Support\Audit;
+use App\Support\FieldCrypt;
 use App\Support\HospitalSequence;
 use App\Support\QueryList;
+use App\Support\Redactor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -18,7 +21,7 @@ class PatientController extends Controller
     public function index(Request $request)
     {
         $compact = $request->boolean('compact');
-        $query = Patient::query()->latest();
+        $query = Access::patientQuery($request->user(), Patient::query()->latest(), $compact);
 
         if ($compact) {
             $query->select([
@@ -51,7 +54,9 @@ class PatientController extends Controller
         }
 
         $paginator = QueryList::paginate($query, $request, $compact ? 50 : 25);
-        $paginator->getCollection()->transform(fn (Patient $patient) => $this->serialize($patient, true));
+        $paginator->getCollection()->transform(
+            fn (Patient $patient) => Redactor::patient($this->serialize($patient, true), $request->user(), true)
+        );
 
         return $paginator;
     }
@@ -59,6 +64,7 @@ class PatientController extends Controller
     public function store(Request $request)
     {
         $data = $this->validated($request);
+        unset($data['hospital_id']);
         $data['hospital_id'] = $request->user()->hospital_id;
         $data['mrn'] = $data['mrn'] ?? HospitalSequence::nextMrn($request->user()->hospital);
 
@@ -74,11 +80,16 @@ class PatientController extends Controller
             return $patient;
         });
 
-        return response()->json($this->serialize($patient->load(['allergies', 'conditions'])), 201);
+        return response()->json(
+            Redactor::patient($this->serialize($patient->load(['allergies', 'conditions'])), $request->user()),
+            201
+        );
     }
 
-    public function show(Patient $patient)
+    public function show(Request $request, Patient $patient)
     {
+        abort_unless(Access::canViewPatient($request->user(), $patient), 403, 'This action is unauthorized.');
+
         $patient->load([
             'allergies.notedBy:id,name',
             'conditions.recordedBy:id,name',
@@ -92,13 +103,17 @@ class PatientController extends Controller
         $payload = $this->serialize($patient);
         $payload['timeline'] = $patient->timeline();
         $payload['active_bed'] = $patient->activeBed()?->load('facility:id,name,code,status');
+        Audit::viewed($patient, ['mrn' => $patient->mrn]);
 
-        return $payload;
+        return Redactor::patient($payload, $request->user());
     }
 
     public function update(Request $request, Patient $patient)
     {
+        abort_unless(Access::canUpdatePatient($request->user(), $patient), 403, 'This action is unauthorized.');
+
         $data = $this->validated($request, $patient);
+        unset($data['hospital_id']);
         $allergies = $data['allergies'] ?? null;
         $conditions = $data['conditions'] ?? null;
         unset($data['allergies'], $data['conditions']);
@@ -113,7 +128,21 @@ class PatientController extends Controller
             Audit::record('updated', $patient, array_keys($data));
         });
 
-        return $this->serialize($patient->refresh()->load(['allergies', 'conditions']));
+        return Redactor::patient($this->serialize($patient->refresh()->load(['allergies', 'conditions'])), $request->user());
+    }
+
+    public function export(Request $request, Patient $patient)
+    {
+        abort_unless(Access::canExportPatient($request->user(), $patient), 403, 'This action is unauthorized.');
+
+        $patient->load(['allergies', 'conditions', 'encounters', 'orders', 'prescriptions.items', 'invoices.items']);
+        $payload = $this->serialize($patient);
+        $payload['timeline'] = $patient->timeline();
+        Audit::exported($patient, ['mrn' => $patient->mrn, 'format' => 'json']);
+
+        return response()->json(Redactor::patient($payload, $request->user()))
+            ->header('Content-Disposition', 'attachment; filename="'.$patient->mrn.'.json"')
+            ->header('Cache-Control', 'no-store, private');
     }
 
     private function validated(Request $request, ?Patient $patient = null): array
@@ -137,7 +166,20 @@ class PatientController extends Controller
                 'nullable',
                 'string',
                 'max:80',
-                Rule::unique('patients', 'national_id')->where(fn ($query) => $query->where('hospital_id', $hospitalId))->ignore($patient?->id),
+                function (string $attribute, mixed $value, \Closure $fail) use ($hospitalId, $patient) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    $index = FieldCrypt::blindIndex(FieldCrypt::normalizeNationalId((string) $value));
+                    $exists = Patient::query()
+                        ->where('hospital_id', $hospitalId)
+                        ->where('national_id_index', $index)
+                        ->when($patient, fn ($query) => $query->where('id', '!=', $patient->id))
+                        ->exists();
+                    if ($exists) {
+                        $fail('The national id has already been taken.');
+                    }
+                },
             ],
             'blood_group' => ['nullable', 'string', 'max:8'],
             'marital_status' => ['nullable', 'string', 'max:40'],
@@ -167,17 +209,16 @@ class PatientController extends Controller
     {
         if ($allergies) {
             $incoming = collect($allergies)->map(fn ($row) => mb_strtolower(trim($row['allergen'])));
-            $patient->allergies()->where('is_current', true)->get()->each(function (PatientAllergy $row) use ($incoming) {
-                if (! $incoming->contains(mb_strtolower(trim($row->allergen)))) {
+            $current = $patient->allergies()->where('is_current', true)->get();
+            $current->each(function (PatientAllergy $row) use ($incoming) {
+                if (! $incoming->contains(mb_strtolower(trim((string) $row->allergen)))) {
                     $row->update(['is_current' => false]);
                 }
             });
 
             foreach ($allergies as $allergy) {
-                $match = $patient->allergies()
-                    ->where('is_current', true)
-                    ->whereRaw('lower(allergen) = ?', [mb_strtolower(trim($allergy['allergen']))])
-                    ->first();
+                $needle = mb_strtolower(trim($allergy['allergen']));
+                $match = $current->first(fn (PatientAllergy $row) => mb_strtolower(trim((string) $row->allergen)) === $needle);
 
                 $payload = [
                     'hospital_id' => $patient->hospital_id,
@@ -193,24 +234,24 @@ class PatientController extends Controller
                 if ($match) {
                     $match->update($payload);
                 } else {
-                    PatientAllergy::query()->create($payload);
+                    $created = PatientAllergy::query()->create($payload);
+                    $current->push($created);
                 }
             }
         }
 
         if ($conditions) {
             $incoming = collect($conditions)->map(fn ($row) => mb_strtolower(trim($row['name'])));
-            $patient->conditions()->where('status', 'active')->get()->each(function (PatientCondition $row) use ($incoming) {
-                if (! $incoming->contains(mb_strtolower(trim($row->name)))) {
+            $rows = $patient->conditions()->whereIn('status', ['active', 'resolved'])->get();
+            $rows->each(function (PatientCondition $row) use ($incoming) {
+                if (! $incoming->contains(mb_strtolower(trim((string) $row->name)))) {
                     $row->update(['status' => 'resolved']);
                 }
             });
 
             foreach ($conditions as $condition) {
-                $match = $patient->conditions()
-                    ->whereIn('status', ['active', 'resolved'])
-                    ->whereRaw('lower(name) = ?', [mb_strtolower(trim($condition['name']))])
-                    ->first();
+                $needle = mb_strtolower(trim($condition['name']));
+                $match = $rows->first(fn (PatientCondition $row) => mb_strtolower(trim((string) $row->name)) === $needle);
 
                 $payload = [
                     'hospital_id' => $patient->hospital_id,
@@ -225,7 +266,8 @@ class PatientController extends Controller
                 if ($match) {
                     $match->update($payload);
                 } else {
-                    PatientCondition::query()->create($payload);
+                    $created = PatientCondition::query()->create($payload);
+                    $rows->push($created);
                 }
             }
         }

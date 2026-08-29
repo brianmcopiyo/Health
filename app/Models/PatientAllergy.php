@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -19,6 +20,8 @@ class PatientAllergy extends Model
         return [
             'noted_at' => 'datetime',
             'is_current' => 'boolean',
+            'allergen' => Encrypted::class,
+            'reaction' => Encrypted::class,
         ];
     }
 

@@ -46,4 +46,9 @@ class Department extends Model
     {
         return $this->hasMany(Facility::class);
     }
+
+    public static function platformBypassesTenant(): bool
+    {
+        return true;
+    }
 }

@@ -5,6 +5,8 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,16 +15,39 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
+    ->withCommands([
+        \App\Console\Commands\RotateEncryption::class,
+        \App\Console\Commands\EncryptedBackup::class,
+        \App\Console\Commands\PurgeExpiredRecords::class,
+    ])
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->redirectGuestsTo('/login');
         $middleware->alias([
             'permission' => \App\Http\Middleware\EnsurePermission::class,
         ]);
+        $middleware->append([
+            \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\ForceHttps::class,
+        ]);
+        $middleware->throttleApi();
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         $exceptions->render(function (AuthenticationException $exception, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json(['message' => 'Unauthenticated.'], 401);
+            }
+        });
+
+        $exceptions->render(function (\Throwable $exception, Request $request) {
+            if (
+                $request->is('api/*')
+                && app()->environment('production')
+                && ! $exception instanceof ValidationException
+                && ! $exception instanceof AuthenticationException
+                && ! $exception instanceof HttpExceptionInterface
+            ) {
+                return response()->json(['message' => 'A server error occurred.'], 500);
             }
         });
     })->create();

@@ -32,7 +32,7 @@ class AuthController extends Controller
         }
 
         $user->tokens()->delete();
-        $token = $user->createToken('auth-token')->plainTextToken;
+        $token = $user->createToken('auth-token', ['*'], now()->addMinutes((int) config('hms.token_minutes', 480)))->plainTextToken;
 
         return response()->json(array_merge($user->toSessionPayload(), [
             'accessToken' => $token,

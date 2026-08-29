@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ClinicalService;
 use App\Models\Encounter;
 use App\Models\ServiceOrder;
+use App\Support\Access;
 use App\Support\ChargeLedger;
 use App\Support\ModuleCatalog;
 use App\Support\QueryList;
@@ -67,6 +68,13 @@ class ServiceOrderController extends Controller
 
         $encounter = ! empty($data['encounter_id']) ? Encounter::query()->findOrFail($data['encounter_id']) : null;
         $service = ! empty($data['service_id']) ? ClinicalService::query()->find($data['service_id']) : null;
+        $patientId = $data['patient_id'] ?? $encounter?->patient_id;
+        abort_unless($patientId, 422, 'Patient and test or item are required.');
+        $patient = \App\Models\Patient::query()->findOrFail($patientId);
+        abort_unless(Access::canViewPatient($request->user(), $patient), 403, 'This action is unauthorized.');
+        if ($encounter) {
+            abort_unless(Access::canViewEncounter($request->user(), $encounter) || Access::canUpdateEncounter($request->user(), $encounter), 403, 'This action is unauthorized.');
+        }
 
         $order = ServiceOrder::query()->create([
             'hospital_id' => $request->user()->hospital_id,

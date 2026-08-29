@@ -16,6 +16,8 @@ class AuditEvent extends Model
         'auditable_type',
         'auditable_id',
         'action',
+        'ip_address',
+        'user_agent',
         'payload',
         'created_at',
     ];

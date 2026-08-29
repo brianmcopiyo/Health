@@ -28,4 +28,9 @@ class ClinicalService extends Model
     {
         return $this->belongsTo(Department::class);
     }
+
+    public static function platformBypassesTenant(): bool
+    {
+        return true;
+    }
 }

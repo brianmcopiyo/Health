@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Encrypted;
 use App\Models\Concerns\VisibleOnHospitalNetwork;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -41,6 +42,9 @@ class Referral extends Model
         return [
             'required_capacity' => 'integer',
             'reviewed_at' => 'datetime',
+            'patient_name' => Encrypted::class,
+            'reason' => Encrypted::class,
+            'response_notes' => Encrypted::class,
         ];
     }
 

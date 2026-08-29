@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -39,6 +40,8 @@ class ServiceOrder extends Model
             'collected_at' => 'datetime',
             'scheduled_at' => 'datetime',
             'completed_at' => 'datetime',
+            'result' => Encrypted::class,
+            'notes' => Encrypted::class,
         ];
     }
 

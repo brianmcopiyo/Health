@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Hospital;
 use App\Models\User;
+use App\Support\FieldCrypt;
 use App\Support\HospitalSequence;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -23,13 +24,16 @@ class VolumeSeeder extends Seeder
         $patientRows = [];
         for ($i = 0; $i < $count; $i++) {
             $n = $start + $i;
+            $phone = '555-'.str_pad((string) (2000 + $i), 4, '0', STR_PAD_LEFT);
             $patientRows[] = [
                 'hospital_id' => $hospital->id,
                 'mrn' => sprintf('%s-%04d', $hospital->code, $n),
                 'first_name' => $i % 40 === 0 ? 'Patience' : 'Kofi',
                 'last_name' => $i % 40 === 0 ? 'Patton' : 'Boateng',
                 'sex' => $i % 2 === 0 ? 'male' : 'female',
-                'phone' => '555-'.str_pad((string) (2000 + $i), 4, '0', STR_PAD_LEFT),
+                'phone' => FieldCrypt::encrypt($phone),
+                'phone_index' => FieldCrypt::blindIndex(FieldCrypt::normalizePhone($phone)),
+                'phone_tail_index' => FieldCrypt::blindIndex(FieldCrypt::phoneTail(FieldCrypt::normalizePhone($phone))),
                 'status' => $i % 17 === 0 ? 'admitted' : 'active',
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -62,7 +66,7 @@ class VolumeSeeder extends Seeder
                 'clinician_id' => $doctor->id,
                 'type' => $type,
                 'status' => $status,
-                'chief_complaint' => $type === 'emergency' ? 'Acute pain' : 'Follow-up review',
+                'chief_complaint' => FieldCrypt::encrypt($type === 'emergency' ? 'Acute pain' : 'Follow-up review'),
                 'created_at' => $now,
                 'updated_at' => $now,
             ];

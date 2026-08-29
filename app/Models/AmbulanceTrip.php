@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -42,6 +43,8 @@ class AmbulanceTrip extends Model
             'dispatched_at' => 'datetime',
             'arrived_at' => 'datetime',
             'completed_at' => 'datetime',
+            'handover_notes' => Encrypted::class,
+            'notes' => Encrypted::class,
         ];
     }
 

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -16,7 +17,11 @@ class PatientCondition extends Model
 
     protected function casts(): array
     {
-        return ['diagnosed_on' => 'date'];
+        return [
+            'diagnosed_on' => 'date',
+            'name' => Encrypted::class,
+            'notes' => Encrypted::class,
+        ];
     }
 
     public function patient(): BelongsTo

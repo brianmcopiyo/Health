@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BedAssignmentController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\DepartmentController;
+use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EncounterController;
 use App\Http\Controllers\Api\FacilityController;
 use App\Http\Controllers\Api\HospitalController;
@@ -20,7 +21,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\WorkspaceController;
 use Illuminate\Support\Facades\Route;
 
-Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -76,6 +77,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/patients', [PatientController::class, 'store'])->middleware('permission:create,Patient');
     Route::get('/patients/{patient}', [PatientController::class, 'show'])->middleware('permission:read,Patient');
     Route::put('/patients/{patient}', [PatientController::class, 'update'])->middleware('permission:update,Patient');
+    Route::get('/patients/{patient}/export', [PatientController::class, 'export'])->middleware('permission:manage,Patient');
+    Route::get('/patients/{patient}/documents', [DocumentController::class, 'index'])->middleware('permission:read,Patient');
+    Route::post('/patients/{patient}/documents', [DocumentController::class, 'store'])->middleware('permission:update,Patient');
+    Route::get('/documents/{clinicalDocument}/download', [DocumentController::class, 'download'])->middleware('permission:read,Patient');
 
     Route::get('/encounters', [EncounterController::class, 'index']);
     Route::post('/encounters', [EncounterController::class, 'store']);

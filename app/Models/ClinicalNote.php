@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +19,7 @@ class ClinicalNote extends Model
 
     protected function casts(): array
     {
-        return ['recorded_at' => 'datetime'];
+        return ['recorded_at' => 'datetime', 'body' => Encrypted::class];
     }
 
     public function patient(): BelongsTo

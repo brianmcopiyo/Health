@@ -11,11 +11,15 @@ trait BelongsToHospital
         static::addGlobalScope('hospital', function (Builder $builder) {
             $user = auth()->user();
 
-            if (! $user || $user->isPlatformAdmin()) {
+            if (! $user) {
                 return;
             }
 
-            if (! $user->hospital_id) {
+            if ($user->isPlatformAdmin() && static::platformBypassesTenant()) {
+                return;
+            }
+
+            if ($user->isPlatformAdmin() || ! $user->hospital_id) {
                 $builder->whereRaw('0 = 1');
 
                 return;
@@ -31,5 +35,10 @@ trait BelongsToHospital
                 $model->hospital_id = $user->hospital_id;
             }
         });
+    }
+
+    public static function platformBypassesTenant(): bool
+    {
+        return false;
     }
 }

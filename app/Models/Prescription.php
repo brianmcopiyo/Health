@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -24,6 +25,7 @@ class Prescription extends Model
             'prescribed_at' => 'datetime',
             'verified_at' => 'datetime',
             'dispensed_at' => 'datetime',
+            'notes' => Encrypted::class,
         ];
     }
 
