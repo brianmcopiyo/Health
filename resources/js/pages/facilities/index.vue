@@ -127,7 +127,7 @@ const removeFacility = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -174,6 +174,7 @@ await withPageLoad(load)
         />
       </HToolbar>
       <HTable
+        :loading="pending"
         :headers="headers"
         :items="facilities"
         empty="No facilities match these filters"
@@ -233,29 +234,30 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
+          span
           v-model="form.name"
           label="Name"
+          placeholder="e.g. Surgical Ward"
           required
         />
-        <div class="h-form-grid">
-          <HInput
-            v-model="form.code"
-            label="Code"
-            required
-          />
-          <HSelect
-            v-model="form.facility_type_id"
-            :items="types"
-            item-title="name"
-            item-value="id"
-            label="Type"
-            required
-          />
-        </div>
+        <HInput
+          v-model="form.code"
+          label="Code"
+          placeholder="e.g. WARD-B"
+          required
+        />
+        <HSelect
+          v-model="form.facility_type_id"
+          :items="types"
+          item-title="name"
+          item-value="id"
+          label="Type"
+          required
+        />
         <HSelect
           v-model="form.parent_id"
           :items="facilities.filter(item => item.id !== editing?.id)"
@@ -270,26 +272,28 @@ await withPageLoad(load)
           item-value="id"
           label="Department"
         />
-        <div class="h-form-grid is-3">
-          <HSelect
-            v-model="form.status"
-            :items="facilityStatuses"
-            label="Status"
-          />
-          <HNumber
-            v-model="form.capacity"
-            label="Capacity"
-            :min="1"
-          />
-          <HNumber
-            v-model="form.current_utilization"
-            label="Current utilization"
-            :min="0"
-          />
-        </div>
+        <HSelect
+          v-model="form.status"
+          :items="facilityStatuses"
+          label="Status"
+        />
+        <HNumber
+          v-model="form.capacity"
+          label="Capacity"
+          placeholder="e.g. 24"
+          :min="1"
+        />
+        <HNumber
+          v-model="form.current_utilization"
+          label="Current utilization"
+          placeholder="e.g. 18"
+          :min="0"
+        />
         <HTextarea
+          span
           v-model="form.resource_notes"
           label="Resource availability"
+          placeholder="Beds, equipment or hours available"
           hint="Visible to referral and assistance matching"
         />
       </fieldset>

@@ -19,13 +19,14 @@ useOverlay(isOpen, close)
 
 <template>
   <Teleport to="body">
-    <div
-      v-if="modelValue"
-      class="h-overlay is-drawer"
-      role="dialog"
-      aria-modal="true"
-      @click.self="close"
-    >
+    <Transition name="h-drawer">
+      <div
+        v-if="modelValue"
+        class="h-overlay is-drawer"
+        role="dialog"
+        aria-modal="true"
+        @click.self="close"
+      >
       <aside
         class="h-offcanvas"
         :class="`is-${size}`"
@@ -51,12 +52,14 @@ useOverlay(isOpen, close)
           </HButton>
         </div>
         <div class="h-overlay-body">
-          <div
-            v-if="error"
-            class="h-alert"
-          >
-            {{ error }}
-          </div>
+          <HTransition name="h-fade">
+            <div
+              v-if="error"
+              class="h-alert"
+            >
+              {{ error }}
+            </div>
+          </HTransition>
           <slot />
         </div>
         <div
@@ -67,5 +70,6 @@ useOverlay(isOpen, close)
         </div>
       </aside>
     </div>
+    </Transition>
   </Teleport>
 </template>

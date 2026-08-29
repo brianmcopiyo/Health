@@ -68,7 +68,7 @@ const restoreDefaults = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -95,6 +95,7 @@ await withPageLoad(load)
 
     <HCard flush>
       <HTable
+        :loading="pending"
         :headers="[
           { title: 'Name', key: 'name' },
           { title: 'Module', key: 'module_key' },
@@ -162,12 +163,13 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
           v-model="form.name"
           label="Name"
+          placeholder="e.g. Emergency"
           required
         />
         <HSelect
@@ -179,6 +181,7 @@ await withPageLoad(load)
           required
         />
         <HSwitch
+          span
           v-model="form.is_active"
           label="Department is active"
         />

@@ -80,7 +80,7 @@ const removeHospital = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -97,6 +97,7 @@ await withPageLoad(load)
 
     <HCard flush>
       <HTable
+        :loading="pending"
         :headers="headers"
         :items="hospitals"
         empty="No hospitals registered"
@@ -150,44 +151,53 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
           v-model="form.name"
           label="Name"
+          placeholder="e.g. Riverside General"
           required
         />
         <HInput
           v-model="form.code"
           label="Code"
+          placeholder="e.g. RGH"
           required
         />
         <HInput
           v-model="form.city"
           label="City"
+          placeholder="e.g. Accra"
         />
         <HInput
           v-model="form.region"
           label="Region"
+          placeholder="e.g. Greater Accra"
         />
         <HInput
           v-model="form.phone"
           label="Phone"
           type="tel"
           icon="phone"
+          placeholder="e.g. 030 255 0100"
         />
         <HInput
           v-model="form.email"
           label="Email"
           type="email"
           icon="mail"
+          placeholder="e.g. info@hospital.org"
         />
         <HTextarea
+          span
           v-model="form.address"
           label="Address"
+          placeholder="Street, city or area"
         />
         <HSwitch
+          span
           v-model="form.is_active"
           label="Hospital is active"
           hint="Inactive hospitals cannot receive referrals"

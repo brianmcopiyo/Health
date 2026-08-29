@@ -1,5 +1,5 @@
 <script setup>
-import { errorText, useFieldId } from '@/utils/formOptions'
+import { errorText, fieldPlaceholder, useFieldId } from '@/utils/formOptions'
 
 const props = defineProps({
   modelValue: { type: [String, null], default: '' },
@@ -14,11 +14,13 @@ const props = defineProps({
   loading: Boolean,
   rows: { type: [Number, String], default: 3 },
   maxlength: [Number, String],
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
 const id = useFieldId('ht')
 const message = computed(() => errorText(props.error))
+const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'textarea'))
 const describedBy = computed(() => {
   const ids = []
   if (props.description || props.hint)
@@ -40,6 +42,7 @@ const describedBy = computed(() => {
     :optional="optional"
     :html-for="id"
     :disabled="disabled"
+    :span="span"
   >
     <div
       class="h-control is-textarea"
@@ -49,7 +52,7 @@ const describedBy = computed(() => {
         :id="id"
         :value="modelValue ?? ''"
         :rows="rows"
-        :placeholder="placeholder"
+        :placeholder="resolvedPlaceholder"
         :disabled="disabled || loading"
         :required="required"
         :maxlength="maxlength"

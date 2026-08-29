@@ -7,6 +7,7 @@ export {}
 declare global {
   const $api: typeof import('./resources/js/utils/api.js')['$api']
   const EffectScope: typeof import('vue')['EffectScope']
+  const LOAD_HINT_DELAY: typeof import('./resources/js/composables/usePageLoad.js')['LOAD_HINT_DELAY']
   const ambulanceStatuses: typeof import('./resources/js/utils/status.js')['ambulanceStatuses']
   const applySession: typeof import('./resources/js/utils/session.js')['applySession']
   const asList: typeof import('./resources/js/composables/usePageLoad.js')['asList']
@@ -32,6 +33,7 @@ declare global {
   const errorText: typeof import('./resources/js/utils/formOptions.js')['errorText']
   const facilityRecordTo: typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']
   const facilityStatuses: typeof import('./resources/js/utils/status.js')['facilityStatuses']
+  const fieldPlaceholder: typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']
   const formatWhen: typeof import('./resources/js/utils/helpers.js')['formatWhen']
   const getByPath: typeof import('./resources/js/utils/helpers.js')['getByPath']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
@@ -46,6 +48,7 @@ declare global {
   const kinshipOptions: typeof import('./resources/js/utils/clinicalOptions.js')['kinshipOptions']
   const labelize: typeof import('./resources/js/utils/status.js')['labelize']
   const markRaw: typeof import('vue')['markRaw']
+  const motionNames: typeof import('./resources/js/composables/useMotion.js')['motionNames']
   const nextTick: typeof import('vue')['nextTick']
   const normalizeOptions: typeof import('./resources/js/utils/formOptions.js')['normalizeOptions']
   const onActivated: typeof import('vue')['onActivated']
@@ -65,8 +68,9 @@ declare global {
   const onUpdated: typeof import('vue')['onUpdated']
   const pageErrorRoute: typeof import('./resources/js/utils/errors.js')['pageErrorRoute']
   const pageLoadError: typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']
-  const pageLoading: typeof import('./resources/js/composables/usePageLoad.js')['pageLoading']
   const paymentMethods: typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']
+  const popoverStyle: typeof import('./resources/js/composables/usePopover.js')['popoverStyle']
+  const prefersReducedMotion: typeof import('./resources/js/composables/useMotion.js')['prefersReducedMotion']
   const provide: typeof import('vue')['provide']
   const reactive: typeof import('vue')['reactive']
   const readonly: typeof import('vue')['readonly']
@@ -94,14 +98,17 @@ declare global {
   const useCookie: typeof import('./resources/js/composables/useCookie.js')['useCookie']
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
+  const useDelayedVisible: typeof import('./resources/js/composables/usePageLoad.js')['useDelayedVisible']
   const useFieldId: typeof import('./resources/js/utils/formOptions.js')['useFieldId']
   const useListHighlight: typeof import('./resources/js/composables/usePopover.js')['useListHighlight']
   const useOverlay: typeof import('./resources/js/composables/useOverlay.js')['useOverlay']
+  const usePageQuery: typeof import('./resources/js/composables/usePageLoad.js')['usePageQuery']
   const usePopover: typeof import('./resources/js/composables/usePopover.js')['usePopover']
   const useProfilePhoto: typeof import('./resources/js/composables/useProfilePhoto.js')['useProfilePhoto']
   const useRoute: typeof import('vue-router/auto')['useRoute']
   const useRouter: typeof import('vue-router/auto')['useRouter']
   const useSlots: typeof import('vue')['useSlots']
+  const useToast: typeof import('./resources/js/composables/useToast.js')['useToast']
   const vehicleTypes: typeof import('./resources/js/utils/clinicalOptions.js')['vehicleTypes']
   const visitTypeOptions: typeof import('./resources/js/utils/clinicalOptions.js')['visitTypeOptions']
   const watch: typeof import('vue')['watch']
@@ -126,6 +133,7 @@ declare module 'vue' {
   interface ComponentCustomProperties {
     readonly $api: UnwrapRef<typeof import('./resources/js/utils/api.js')['$api']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly LOAD_HINT_DELAY: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['LOAD_HINT_DELAY']>
     readonly ambulanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['ambulanceStatuses']>
     readonly applySession: UnwrapRef<typeof import('./resources/js/utils/session.js')['applySession']>
     readonly asList: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['asList']>
@@ -151,6 +159,7 @@ declare module 'vue' {
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
     readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
+    readonly fieldPlaceholder: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']>
     readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
@@ -165,6 +174,7 @@ declare module 'vue' {
     readonly kinshipOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['kinshipOptions']>
     readonly labelize: UnwrapRef<typeof import('./resources/js/utils/status.js')['labelize']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
+    readonly motionNames: UnwrapRef<typeof import('./resources/js/composables/useMotion.js')['motionNames']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly normalizeOptions: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['normalizeOptions']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
@@ -184,8 +194,9 @@ declare module 'vue' {
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly pageErrorRoute: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorRoute']>
     readonly pageLoadError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']>
-    readonly pageLoading: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoading']>
     readonly paymentMethods: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']>
+    readonly popoverStyle: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['popoverStyle']>
+    readonly prefersReducedMotion: UnwrapRef<typeof import('./resources/js/composables/useMotion.js')['prefersReducedMotion']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
@@ -213,14 +224,17 @@ declare module 'vue' {
     readonly useCookie: UnwrapRef<typeof import('./resources/js/composables/useCookie.js')['useCookie']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useDelayedVisible: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['useDelayedVisible']>
     readonly useFieldId: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['useFieldId']>
     readonly useListHighlight: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['useListHighlight']>
     readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
+    readonly usePageQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['usePageQuery']>
     readonly usePopover: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['usePopover']>
     readonly useProfilePhoto: UnwrapRef<typeof import('./resources/js/composables/useProfilePhoto.js')['useProfilePhoto']>
     readonly useRoute: UnwrapRef<typeof import('vue-router/auto')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useToast: UnwrapRef<typeof import('./resources/js/composables/useToast.js')['useToast']>
     readonly vehicleTypes: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['vehicleTypes']>
     readonly visitTypeOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['visitTypeOptions']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>
@@ -237,6 +251,7 @@ declare module '@vue/runtime-core' {
   interface ComponentCustomProperties {
     readonly $api: UnwrapRef<typeof import('./resources/js/utils/api.js')['$api']>
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly LOAD_HINT_DELAY: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['LOAD_HINT_DELAY']>
     readonly ambulanceStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['ambulanceStatuses']>
     readonly applySession: UnwrapRef<typeof import('./resources/js/utils/session.js')['applySession']>
     readonly asList: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['asList']>
@@ -262,6 +277,7 @@ declare module '@vue/runtime-core' {
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
     readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
+    readonly fieldPlaceholder: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']>
     readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
@@ -276,6 +292,7 @@ declare module '@vue/runtime-core' {
     readonly kinshipOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['kinshipOptions']>
     readonly labelize: UnwrapRef<typeof import('./resources/js/utils/status.js')['labelize']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
+    readonly motionNames: UnwrapRef<typeof import('./resources/js/composables/useMotion.js')['motionNames']>
     readonly nextTick: UnwrapRef<typeof import('vue')['nextTick']>
     readonly normalizeOptions: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['normalizeOptions']>
     readonly onActivated: UnwrapRef<typeof import('vue')['onActivated']>
@@ -295,8 +312,9 @@ declare module '@vue/runtime-core' {
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly pageErrorRoute: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorRoute']>
     readonly pageLoadError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']>
-    readonly pageLoading: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoading']>
     readonly paymentMethods: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']>
+    readonly popoverStyle: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['popoverStyle']>
+    readonly prefersReducedMotion: UnwrapRef<typeof import('./resources/js/composables/useMotion.js')['prefersReducedMotion']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
@@ -324,14 +342,17 @@ declare module '@vue/runtime-core' {
     readonly useCookie: UnwrapRef<typeof import('./resources/js/composables/useCookie.js')['useCookie']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
+    readonly useDelayedVisible: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['useDelayedVisible']>
     readonly useFieldId: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['useFieldId']>
     readonly useListHighlight: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['useListHighlight']>
     readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
+    readonly usePageQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['usePageQuery']>
     readonly usePopover: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['usePopover']>
     readonly useProfilePhoto: UnwrapRef<typeof import('./resources/js/composables/useProfilePhoto.js')['useProfilePhoto']>
     readonly useRoute: UnwrapRef<typeof import('vue-router/auto')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useToast: UnwrapRef<typeof import('./resources/js/composables/useToast.js')['useToast']>
     readonly vehicleTypes: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['vehicleTypes']>
     readonly visitTypeOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['visitTypeOptions']>
     readonly watch: UnwrapRef<typeof import('vue')['watch']>

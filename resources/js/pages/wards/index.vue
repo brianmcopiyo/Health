@@ -25,7 +25,7 @@ const openChart = item => {
     chartOpen.value = true
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -41,6 +41,7 @@ await withPageLoad(load)
       flush
     >
       <HTable
+        :loading="pending"
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Bed', key: 'facility.name' },

@@ -1,6 +1,6 @@
 <script setup>
 import { useListHighlight, usePopover } from '@/composables/usePopover'
-import { errorText, normalizeOptions, sameValue, useFieldId } from '@/utils/formOptions'
+import { errorText, fieldPlaceholder, normalizeOptions, sameValue, useFieldId } from '@/utils/formOptions'
 
 const props = defineProps({
   modelValue: { default: null },
@@ -11,20 +11,24 @@ const props = defineProps({
   items: { type: Array, default: () => [] },
   itemTitle: { type: String, default: 'title' },
   itemValue: { type: String, default: 'value' },
-  placeholder: { type: String, default: 'Select' },
+  placeholder: String,
   required: Boolean,
   optional: Boolean,
   disabled: Boolean,
   loading: Boolean,
   clearable: { type: Boolean, default: true },
   searchable: { type: Boolean, default: undefined },
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
 const id = useFieldId('hs')
 const query = ref('')
 const searchRef = ref(null)
-const { open, triggerRef, panelRef, coords, setOpen, toggle, close } = usePopover()
+const { open, triggerRef, coords, bindPanel, setOpen, toggle, close } = usePopover({
+  matchWidth: true,
+  minWidth: 198,
+})
 const options = computed(() => normalizeOptions(props.items, props.itemTitle, props.itemValue))
 const showSearch = computed(() => props.searchable ?? options.value.length > 5)
 const filtered = computed(() => {
@@ -36,6 +40,8 @@ const filtered = computed(() => {
 })
 const { move, current, isActive } = useListHighlight(filtered, open)
 const selected = computed(() => options.value.find(item => sameValue(item.value, props.modelValue)) || null)
+const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'select'))
+const searchPlaceholder = computed(() => fieldPlaceholder(null, props.label, 'search'))
 const message = computed(() => errorText(props.error))
 
 watch(open, value => {
@@ -96,6 +102,7 @@ const onSearchKey = event => {
     :optional="optional"
     :html-for="id"
     :disabled="disabled"
+    :span="span"
   >
     <div
       :id="id"
@@ -111,7 +118,7 @@ const onSearchKey = event => {
       @keydown="onTriggerKey"
     >
       <span :class="{ 'is-placeholder': !selected }">
-        {{ selected?.title || placeholder }}
+        {{ selected?.title || resolvedPlaceholder }}
       </span>
       <button
         v-if="clearable && selected && !disabled"
@@ -131,53 +138,50 @@ const onSearchKey = event => {
         name="chevron"
       />
     </div>
-    <Teleport to="body">
+    <HPopover
+      :show="open"
+      :coords="coords"
+      :bind-panel="bindPanel"
+    >
       <div
-        v-if="open"
-        ref="panelRef"
-        class="h-popover"
-        :style="{ top: `${coords.top}px`, left: `${coords.left}px`, width: `${coords.width}px`, maxHeight: `${coords.maxHeight}px` }"
+        v-if="showSearch"
+        class="h-popover-search"
       >
-        <div
-          v-if="showSearch"
-          class="h-popover-search"
+        <HIcon name="search" />
+        <input
+          ref="searchRef"
+          v-model="query"
+          type="search"
+          :placeholder="searchPlaceholder"
+          @keydown="onSearchKey"
         >
-          <HIcon name="search" />
-          <input
-            ref="searchRef"
-            v-model="query"
-            type="search"
-            placeholder="Search"
-            @keydown="onSearchKey"
-          >
-        </div>
-        <ul
-          class="h-list"
-          role="listbox"
-        >
-          <li
-            v-for="option in filtered"
-            :key="String(option.value)"
-            class="h-list-item"
-            :class="{ 'is-on': sameValue(option.value, modelValue), 'is-active': isActive(option) }"
-            role="option"
-            :aria-selected="sameValue(option.value, modelValue)"
-            @mousedown.prevent="choose(option)"
-          >
-            <span>{{ option.title }}</span>
-            <HIcon
-              v-if="sameValue(option.value, modelValue)"
-              name="check"
-            />
-          </li>
-          <li
-            v-if="!filtered.length"
-            class="h-list-empty"
-          >
-            No matching options
-          </li>
-        </ul>
       </div>
-    </Teleport>
+      <ul
+        class="h-list"
+        role="listbox"
+      >
+        <li
+          v-for="option in filtered"
+          :key="String(option.value)"
+          class="h-list-item"
+          :class="{ 'is-on': sameValue(option.value, modelValue), 'is-active': isActive(option) }"
+          role="option"
+          :aria-selected="sameValue(option.value, modelValue)"
+          @mousedown.prevent="choose(option)"
+        >
+          <span>{{ option.title }}</span>
+          <HIcon
+            v-if="sameValue(option.value, modelValue)"
+            name="check"
+          />
+        </li>
+        <li
+          v-if="!filtered.length"
+          class="h-list-empty"
+        >
+          No matching options
+        </li>
+      </ul>
+    </HPopover>
   </HField>
 </template>

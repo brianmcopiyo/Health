@@ -10,9 +10,13 @@ defineProps({
     role="status"
   >
     <div
-      class="h-spinner"
+      class="h-loader"
       aria-hidden="true"
-    />
+    >
+      <span />
+      <span />
+      <span />
+    </div>
     <span class="h-sr">{{ label }}</span>
   </div>
 </template>

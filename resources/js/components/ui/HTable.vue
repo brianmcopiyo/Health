@@ -1,11 +1,15 @@
 <script setup>
 import { getByPath } from '@/utils/helpers'
 
-defineProps({
+const props = defineProps({
   headers: { type: Array, default: () => [] },
   items: { type: Array, default: () => [] },
   empty: { type: String, default: 'No records yet' },
+  loading: Boolean,
+  rows: { type: Number, default: 8 },
 })
+
+const hint = useDelayedVisible(() => props.loading)
 
 const fitKeys = new Set([
   'actions',
@@ -96,7 +100,23 @@ const colClass = header => {
         </tr>
       </thead>
       <tbody>
-        <tr v-if="!items.length">
+        <template v-if="(hint || loading) && !items.length">
+          <tr
+            v-for="n in rows"
+            :key="`skel-${n}`"
+            class="h-skel-row"
+            :class="{ 'is-hold': !hint }"
+          >
+            <td
+              v-for="header in headers"
+              :key="header.key"
+              :class="colClass(header)"
+            >
+              <span class="h-skeleton is-cell" />
+            </td>
+          </tr>
+        </template>
+        <tr v-else-if="!items.length">
           <td
             :colspan="headers.length"
             class="h-empty"
@@ -104,10 +124,11 @@ const colClass = header => {
             {{ empty }}
           </td>
         </tr>
-        <tr
-          v-for="(item, index) in items"
-          :key="item.id ?? index"
-        >
+        <template v-else>
+          <tr
+            v-for="(item, index) in items"
+            :key="item.id ?? index"
+          >
           <td
             v-for="header in headers"
             :key="header.key"
@@ -121,6 +142,7 @@ const colClass = header => {
             </slot>
           </td>
         </tr>
+        </template>
       </tbody>
     </table>
   </div>

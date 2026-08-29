@@ -71,18 +71,22 @@ const login = async () => {
         <h1>
           Welcome back
         </h1>
-        <div
-          v-if="route.query.reason === 'expired' && !formError"
-          class="h-alert"
-        >
-          Your session ended. Sign in to return to your workspace.
-        </div>
-        <div
-          v-if="formError"
-          class="h-alert"
-        >
-          {{ formError }}
-        </div>
+        <HTransition name="h-fade">
+          <div
+            v-if="route.query.reason === 'expired' && !formError"
+            class="h-alert"
+          >
+            Your session ended. Sign in to return to your workspace.
+          </div>
+        </HTransition>
+        <HTransition name="h-fade">
+          <div
+            v-if="formError"
+            class="h-alert"
+          >
+            {{ formError }}
+          </div>
+        </HTransition>
         <div class="h-stack">
           <HInput
             v-model="credentials.email"
@@ -103,6 +107,7 @@ const login = async () => {
             icon="lock"
             autocomplete="current-password"
             required
+            placeholder="Enter password"
             :error="errors.password"
             :disabled="submitting"
             :loading="submitting"

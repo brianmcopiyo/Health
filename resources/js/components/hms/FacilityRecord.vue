@@ -241,8 +241,8 @@ const openChart = item => {
     chartOpen.value = true
 }
 
-watch(() => route.params.id, () => withPageLoad(load))
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
+watch(() => route.params.id, () => run())
 </script>
 
 <template>
@@ -254,70 +254,10 @@ await withPageLoad(load)
     :back-label="listLabel"
     :tabs="tabs"
     :tab="tab"
-    :missing="!record"
+    :loading="pending"
+    :missing="!pending && !record"
     @update:tab="tab = $event"
   >
-    <template
-      v-if="record"
-      #actions
-    >
-      <HButton
-        v-if="isWard && ability.can('create', 'Bed')"
-        variant="ghost"
-        @click="openAssign"
-      >
-        Assign bed
-      </HButton>
-      <HButton
-        v-if="isBed && ability.can('create', 'Bed') && !record.assignment"
-        variant="ghost"
-        @click="openAssign"
-      >
-        Assign patient
-      </HButton>
-      <HButton
-        v-if="ability.can('update', 'Facility') || (isWard && ability.can('update', 'Ward')) || (isBed && ability.can('update', 'Bed'))"
-        variant="ghost"
-        @click="openStatus"
-      >
-        Status
-      </HButton>
-      <HButton
-        v-if="ability.can('update', 'Facility')"
-        @click="openEdit"
-      >
-        Edit
-      </HButton>
-      <HActionMenu v-if="record && (ability.can('manage', 'Facility') || (isBed && ability.can('update', 'Facility')))">
-        <template #default="{ close }">
-          <button
-            v-if="isBed && ability.can('update', 'Facility')"
-            type="button"
-            class="h-action-item"
-            @click="openMove(); close()"
-          >
-            Move ward
-          </button>
-          <button
-            v-if="isBed && record.parent_id && ability.can('update', 'Facility')"
-            type="button"
-            class="h-action-item"
-            @click="unassignWard(); close()"
-          >
-            Unassign ward
-          </button>
-          <button
-            v-if="ability.can('manage', 'Facility')"
-            type="button"
-            class="h-action-item is-danger"
-            @click="formError = ''; removing = true; close()"
-          >
-            Remove
-          </button>
-        </template>
-      </HActionMenu>
-    </template>
-
     <div
       v-if="formError && !statusOpen && !editOpen && !assignOpen && !moveOpen && !bedOpen && !transferOpen"
       class="h-alert"
@@ -349,7 +289,55 @@ await withPageLoad(load)
         />
       </HGrid>
       <div class="h-detail">
-        <HCard title="Status">
+        <HCard title="Unit">
+          <template
+            v-if="ability.can('update', 'Facility') || (isWard && ability.can('update', 'Ward')) || (isBed && ability.can('update', 'Bed')) || ability.can('manage', 'Facility')"
+            #actions
+          >
+            <HButton
+              v-if="ability.can('update', 'Facility') || (isWard && ability.can('update', 'Ward')) || (isBed && ability.can('update', 'Bed'))"
+              variant="ghost"
+              size="sm"
+              @click="openStatus"
+            >
+              Update status
+            </HButton>
+            <HButton
+              v-if="ability.can('update', 'Facility')"
+              size="sm"
+              @click="openEdit"
+            >
+              Edit
+            </HButton>
+            <HActionMenu v-if="ability.can('manage', 'Facility') || (isBed && ability.can('update', 'Facility'))">
+              <template #default="{ close }">
+                <button
+                  v-if="isBed && ability.can('update', 'Facility')"
+                  type="button"
+                  class="h-action-item"
+                  @click="openMove(); close()"
+                >
+                  Move ward
+                </button>
+                <button
+                  v-if="isBed && record.parent_id && ability.can('update', 'Facility')"
+                  type="button"
+                  class="h-action-item"
+                  @click="unassignWard(); close()"
+                >
+                  Unassign ward
+                </button>
+                <button
+                  v-if="ability.can('manage', 'Facility')"
+                  type="button"
+                  class="h-action-item is-danger"
+                  @click="formError = ''; removing = true; close()"
+                >
+                  Remove
+                </button>
+              </template>
+            </HActionMenu>
+          </template>
           <p>{{ record.resource_notes || 'No resource notes yet.' }}</p>
           <p
             v-if="record.notes"
@@ -445,6 +433,17 @@ await withPageLoad(load)
       title="Current occupants"
       flush
     >
+      <template
+        v-if="isWard && ability.can('create', 'Bed')"
+        #actions
+      >
+        <HButton
+          size="sm"
+          @click="openAssign"
+        >
+          Assign bed
+        </HButton>
+      </template>
       <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
@@ -513,6 +512,17 @@ await withPageLoad(load)
       v-if="record && tab === 'patient'"
       title="Current patient"
     >
+      <template
+        v-if="isBed && ability.can('create', 'Bed') && !record.assignment"
+        #actions
+      >
+        <HButton
+          size="sm"
+          @click="openAssign"
+        >
+          Assign patient
+        </HButton>
+      </template>
       <template v-if="record.assignment">
         <div class="h-metric">
           <span>Patient</span>
@@ -688,21 +698,26 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <HSelect
-        v-model="statusForm.status"
-        :items="facilityStatuses"
-        label="Status"
-      />
-      <HNumber
-        v-if="!isWard"
-        v-model="statusForm.current_utilization"
-        label="Current utilization"
-        :min="0"
-      />
-      <HTextarea
-        v-model="statusForm.resource_notes"
-        label="Resource notes"
-      />
+      <HFormGrid>
+        <HSelect
+          v-model="statusForm.status"
+          :items="facilityStatuses"
+          label="Status"
+        />
+        <HNumber
+          v-if="!isWard"
+          v-model="statusForm.current_utilization"
+          label="Current utilization"
+          placeholder="e.g. 18"
+          :min="0"
+        />
+        <HTextarea
+          span
+          v-model="statusForm.resource_notes"
+          label="Resource notes"
+          placeholder="Beds, equipment or hours available"
+        />
+      </HFormGrid>
       <template #actions>
         <HButton
           variant="ghost"
@@ -726,37 +741,42 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <HInput
-        v-model="form.name"
-        label="Name"
-        required
-      />
-      <HInput
-        v-model="form.code"
-        label="Code"
-        required
-      />
-      <HSelect
-        v-model="form.department_id"
-        :items="departments"
-        item-title="name"
-        item-value="id"
-        label="Department"
-      />
-      <HSelect
-        v-if="isBed"
-        v-model="form.parent_id"
-        :items="parents"
-        item-title="name"
-        item-value="id"
-        label="Ward"
-      />
-      <HNumber
-        v-if="!isWard"
-        v-model="form.capacity"
-        label="Capacity"
-        :min="1"
-      />
+      <HFormGrid>
+        <HInput
+          v-model="form.name"
+          label="Name"
+          :placeholder="isBed ? 'e.g. Bed 12' : 'e.g. Surgical Ward'"
+          required
+        />
+        <HInput
+          v-model="form.code"
+          label="Code"
+          :placeholder="isBed ? 'e.g. B-12' : 'e.g. WARD-B'"
+          required
+        />
+        <HSelect
+          v-model="form.department_id"
+          :items="departments"
+          item-title="name"
+          item-value="id"
+          label="Department"
+        />
+        <HSelect
+          v-if="isBed"
+          v-model="form.parent_id"
+          :items="parents"
+          item-title="name"
+          item-value="id"
+          label="Ward"
+        />
+        <HNumber
+          v-if="!isWard"
+          v-model="form.capacity"
+          label="Capacity"
+          placeholder="e.g. 1"
+          :min="1"
+        />
+      </HFormGrid>
       <template #actions>
         <HButton
           variant="ghost"
@@ -780,23 +800,25 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <HSelect
-        v-model="assignForm.patient_id"
-        :items="patients"
-        item-title="full_name"
-        item-value="id"
-        label="Patient"
-        required
-      />
-      <HSelect
-        v-if="isWard"
-        v-model="assignForm.facility_id"
-        :items="availableBeds"
-        item-title="name"
-        item-value="id"
-        label="Bed"
-        required
-      />
+      <HFormGrid>
+        <HSelect
+          v-model="assignForm.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+          required
+        />
+        <HSelect
+          v-if="isWard"
+          v-model="assignForm.facility_id"
+          :items="availableBeds"
+          item-title="name"
+          item-value="id"
+          label="Bed"
+          required
+        />
+      </HFormGrid>
       <template #actions>
         <HButton
           variant="ghost"
@@ -881,16 +903,20 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <HInput
-        v-model="bedForm.name"
-        label="Name"
-        required
-      />
-      <HInput
-        v-model="bedForm.code"
-        label="Code"
-        required
-      />
+      <HFormGrid>
+        <HInput
+          v-model="bedForm.name"
+          label="Name"
+          placeholder="e.g. Bed 12"
+          required
+        />
+        <HInput
+          v-model="bedForm.code"
+          label="Code"
+          placeholder="e.g. B-12"
+          required
+        />
+      </HFormGrid>
       <template #actions>
         <HButton
           variant="ghost"

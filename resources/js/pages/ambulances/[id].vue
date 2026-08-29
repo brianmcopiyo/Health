@@ -193,7 +193,7 @@ const removeVehicle = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -205,39 +205,10 @@ await withPageLoad(load)
     back-label="Fleet"
     :tabs="tabs"
     :tab="tab"
-    :missing="!ambulance"
+    :loading="pending"
+    :missing="!pending && !ambulance"
     @update:tab="tab = $event"
   >
-    <template
-      v-if="ambulance"
-      #actions
-    >
-      <HButton
-        v-if="ability.can('update', 'Ambulance')"
-        @click="openEdit"
-      >
-        <HIcon name="edit" />
-        Edit
-      </HButton>
-      <HButton
-        v-if="ability.can('dispatch', 'Ambulance') && ambulance.status === 'available'"
-        @click="openDispatch"
-      >
-        Dispatch
-      </HButton>
-      <HActionMenu v-if="ability.can('manage', 'Ambulance')">
-        <template #default="{ close }">
-          <button
-            type="button"
-            class="h-action-item is-danger"
-            @click="formError = ''; removing = true; close()"
-          >
-            Remove
-          </button>
-        </template>
-      </HActionMenu>
-    </template>
-
     <div
       v-if="formError && !editOpen && !dispatchOpen && !completing && !removing"
       class="h-alert"
@@ -250,10 +221,39 @@ await withPageLoad(load)
       class="h-detail"
     >
       <HCard title="Vehicle">
+        <template
+          v-if="ability.can('update', 'Ambulance') || ability.can('dispatch', 'Ambulance') || ability.can('manage', 'Ambulance')"
+          #actions
+        >
+          <HButton
+            v-if="ability.can('dispatch', 'Ambulance') && ambulance.status === 'available'"
+            size="sm"
+            @click="openDispatch"
+          >
+            Dispatch
+          </HButton>
+          <HButton
+            v-if="ability.can('update', 'Ambulance')"
+            variant="ghost"
+            size="sm"
+            @click="openEdit"
+          >
+            <HIcon name="edit" />
+            Edit
+          </HButton>
+          <HActionMenu v-if="ability.can('manage', 'Ambulance')">
+            <template #default="{ close }">
+              <button
+                type="button"
+                class="h-action-item is-danger"
+                @click="formError = ''; removing = true; close()"
+              >
+                Remove
+              </button>
+            </template>
+          </HActionMenu>
+        </template>
         <div class="h-stack">
-          <HBadge :tone="statusColor(ambulance.status)">
-            {{ labelize(ambulance.status) }}
-          </HBadge>
           <div class="h-metric">
             <span>Capacity</span>
             <strong>{{ ambulance.capacity }}</strong>
@@ -368,12 +368,13 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
           v-model="form.vehicle_code"
           label="Vehicle code"
+          placeholder="e.g. AMB-04"
           required
         />
         <HCombobox
@@ -389,17 +390,20 @@ await withPageLoad(load)
         <HNumber
           v-model="form.capacity"
           label="Capacity"
+          placeholder="e.g. 2"
           :min="1"
         />
         <HTextarea
+          span
           v-model="form.notes"
           label="Notes"
+          placeholder="Equipment or crew notes"
         />
         <h4>Crew</h4>
         <fieldset
           v-for="(member, index) in form.staff"
           :key="index"
-          class="h-form-grid"
+          class="h-form-grid is-span"
           :disabled="saving"
         >
           <HSelect
@@ -412,6 +416,7 @@ await withPageLoad(load)
           <HInput
             v-model="member.assignment_role"
             label="Role"
+            placeholder="e.g. Driver"
           />
         </fieldset>
         <HButton
@@ -446,7 +451,7 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HSelect
@@ -472,15 +477,18 @@ await withPageLoad(load)
         <HInput
           v-model="dispatchForm.origin"
           label="Origin"
+          placeholder="e.g. Riverside A&E"
           required
         />
         <HInput
           v-model="dispatchForm.pickup_location"
           label="Pickup location"
+          placeholder="e.g. Gate 2"
         />
         <HInput
           v-model="dispatchForm.destination"
           label="Destination"
+          placeholder="e.g. Ridge Hospital"
           required
         />
         <HSelect
@@ -498,8 +506,10 @@ await withPageLoad(load)
           label="Driver"
         />
         <HTextarea
+          span
           v-model="dispatchForm.notes"
           label="Notes"
+          placeholder="Dispatch instructions"
         />
       </fieldset>
       <template #actions>
@@ -537,6 +547,7 @@ await withPageLoad(load)
         <HTextarea
           v-model="handoverNotes"
           label="Handover notes"
+          placeholder="Condition on arrival"
         />
       </fieldset>
       <template #actions>

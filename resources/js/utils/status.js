@@ -40,6 +40,11 @@ export const statusColor = status => {
     transferred: 'primary',
     admitted: 'warning',
     more_info: 'info',
+    busy: 'warning',
+    away: 'secondary',
+    archived: 'secondary',
+    inactive: 'secondary',
+    system: 'info',
   }
 
   return map[status] || 'secondary'

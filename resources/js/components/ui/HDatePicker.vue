@@ -1,6 +1,6 @@
 <script setup>
 import { usePopover } from '@/composables/usePopover'
-import { errorText, useFieldId } from '@/utils/formOptions'
+import { errorText, fieldPlaceholder, useFieldId } from '@/utils/formOptions'
 
 const props = defineProps({
   modelValue: { default: '' },
@@ -8,17 +8,21 @@ const props = defineProps({
   hint: String,
   description: String,
   error: [String, Array],
-  placeholder: { type: String, default: 'Select date' },
+  placeholder: String,
   required: Boolean,
   optional: Boolean,
   disabled: Boolean,
   min: String,
   max: String,
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
 const id = useFieldId('hd')
-const { open, triggerRef, panelRef, coords, toggle, close } = usePopover()
+const { open, triggerRef, coords, bindPanel, toggle, close } = usePopover({
+  matchWidth: false,
+  minWidth: 280,
+})
 const cursor = ref(new Date())
 
 const parse = value => {
@@ -29,6 +33,7 @@ const parse = value => {
 }
 
 const selected = computed(() => parse(props.modelValue))
+const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'date'))
 
 watch(() => props.modelValue, value => {
   const date = parse(value)
@@ -110,6 +115,7 @@ const clear = event => {
     :optional="optional"
     :html-for="id"
     :disabled="disabled"
+    :span="span"
   >
     <div
       :id="id"
@@ -126,7 +132,7 @@ const clear = event => {
     >
       <HIcon name="calendar" />
       <span :class="{ 'is-placeholder': !display }">
-        {{ display || placeholder }}
+        {{ display || resolvedPlaceholder }}
       </span>
       <button
         v-if="modelValue"
@@ -138,52 +144,50 @@ const clear = event => {
         <HIcon name="x" />
       </button>
     </div>
-    <Teleport to="body">
-      <div
-        v-if="open"
-        ref="panelRef"
-        class="h-popover h-calendar"
-        :style="{ top: `${coords.top}px`, left: `${coords.left}px`, width: `${Math.max(coords.width, 280)}px` }"
-      >
-        <div class="h-cal-head">
-          <button
-            class="h-control-btn"
-            type="button"
-            aria-label="Previous month"
-            @click="shift(-1)"
-          >
-            <HIcon name="chevronLeft" />
-          </button>
-          <strong>{{ monthLabel }}</strong>
-          <button
-            class="h-control-btn"
-            type="button"
-            aria-label="Next month"
-            @click="shift(1)"
-          >
-            <HIcon name="chevronRight" />
-          </button>
-        </div>
-        <div class="h-cal-grid h-cal-week">
-          <span
-            v-for="day in ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']"
-            :key="day"
-          >{{ day }}</span>
-        </div>
-        <div class="h-cal-grid">
-          <button
-            v-for="(date, index) in cells"
-            :key="index"
-            type="button"
-            class="h-cal-day"
-            :class="{ 'is-on': isSame(date), 'is-today': isToday(date) }"
-            :disabled="!date || blocked(date)"
-            @click="choose(date)"
-          >
-            {{ date ? date.getDate() : '' }}
-          </button>
-        </div>
+    <HPopover
+      :show="open"
+      :coords="coords"
+      :bind-panel="bindPanel"
+      panel-class="h-calendar"
+    >
+      <div class="h-cal-head">
+        <button
+          class="h-control-btn"
+          type="button"
+          aria-label="Previous month"
+          @click="shift(-1)"
+        >
+          <HIcon name="chevronLeft" />
+        </button>
+        <strong>{{ monthLabel }}</strong>
+        <button
+          class="h-control-btn"
+          type="button"
+          aria-label="Next month"
+          @click="shift(1)"
+        >
+          <HIcon name="chevronRight" />
+        </button>
       </div>
-    </Teleport>
+      <div class="h-cal-grid h-cal-week">
+        <span
+          v-for="day in ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']"
+          :key="day"
+        >{{ day }}</span>
+      </div>
+      <div class="h-cal-grid">
+        <button
+          v-for="(date, index) in cells"
+          :key="index"
+          type="button"
+          class="h-cal-day"
+          :class="{ 'is-on': isSame(date), 'is-today': isToday(date) }"
+          :disabled="!date || blocked(date)"
+          @click="choose(date)"
+        >
+          {{ date ? date.getDate() : '' }}
+        </button>
+      </div>
+    </HPopover>
   </HField>
 </template>

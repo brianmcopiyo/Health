@@ -34,7 +34,15 @@ const load = async () => {
   }
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
+const showSkel = useDelayedVisible(pending)
+const typeHeaders = [
+  { title: 'Type', key: 'type.name' },
+  { title: 'Units', key: 'total' },
+  { title: 'Capacity', key: 'capacity' },
+  { title: 'In use', key: 'utilization' },
+  { title: 'Remaining', key: 'remaining' },
+]
 
 const utilization = computed(() => {
   if (!stats.value.facilities.capacity)
@@ -68,12 +76,14 @@ const utilization = computed(() => {
         title="Available facilities"
         :value="stats.facilities.available"
         hint="Units ready to receive patients"
+        :loading="pending"
       />
       <HStat
         icon="users"
         title="Active patients"
         :value="stats.patients.active"
         hint="Currently under care"
+        :loading="pending"
       />
       <HStat
         icon="chart"
@@ -81,53 +91,94 @@ const utilization = computed(() => {
         :value="utilization"
         hint="Of rated facility capacity"
         :tone="Number.parseInt(utilization, 10) >= 80 ? 'warn' : ''"
+        :loading="pending"
       />
       <HStat
         icon="ambulance"
         title="Ambulances ready"
         :value="stats.ambulances.available"
         hint="Vehicles available to dispatch"
+        :loading="pending"
       />
     </HGrid>
 
     <HGrid cols="3">
       <HCard title="Referrals">
-        <div class="h-metric">
-          <span>Pending incoming</span>
-          <HBadge tone="warning">
-            {{ stats.referrals.incoming }}
-          </HBadge>
-        </div>
-        <div class="h-metric">
-          <span>Accepted</span>
-          <strong>{{ stats.referrals.accepted }}</strong>
-        </div>
-        <div class="h-metric">
-          <span>In transit</span>
-          <strong>{{ stats.referrals.in_transit }}</strong>
-        </div>
+        <template v-if="pending">
+          <div
+            v-for="n in 3"
+            :key="n"
+            class="h-metric"
+            :class="{ 'is-hold': !showSkel }"
+          >
+            <span class="h-skeleton is-label" />
+            <strong class="h-skeleton is-value" />
+          </div>
+        </template>
+        <template v-else>
+          <div class="h-metric">
+            <span>Pending incoming</span>
+            <HBadge tone="warning">
+              {{ stats.referrals.incoming }}
+            </HBadge>
+          </div>
+          <div class="h-metric">
+            <span>Accepted</span>
+            <strong>{{ stats.referrals.accepted }}</strong>
+          </div>
+          <div class="h-metric">
+            <span>In transit</span>
+            <strong>{{ stats.referrals.in_transit }}</strong>
+          </div>
+        </template>
       </HCard>
       <HCard title="Assistance">
-        <div class="h-metric">
-          <span>Open requests</span>
-          <HBadge tone="warning">
-            {{ stats.assistance.pending }}
-          </HBadge>
-        </div>
-        <div class="h-metric">
-          <span>Accepted</span>
-          <strong>{{ stats.assistance.accepted }}</strong>
-        </div>
+        <template v-if="pending">
+          <div
+            v-for="n in 2"
+            :key="n"
+            class="h-metric"
+            :class="{ 'is-hold': !showSkel }"
+          >
+            <span class="h-skeleton is-label" />
+            <strong class="h-skeleton is-value" />
+          </div>
+        </template>
+        <template v-else>
+          <div class="h-metric">
+            <span>Open requests</span>
+            <HBadge tone="warning">
+              {{ stats.assistance.pending }}
+            </HBadge>
+          </div>
+          <div class="h-metric">
+            <span>Accepted</span>
+            <strong>{{ stats.assistance.accepted }}</strong>
+          </div>
+        </template>
       </HCard>
       <HCard title="Clinical activity">
-        <div class="h-metric">
-          <span>OPD waiting</span>
-          <strong>{{ stats.encounters.opd }}</strong>
-        </div>
-        <div class="h-metric">
-          <span>Emergency active</span>
-          <strong>{{ stats.encounters.emergency }}</strong>
-        </div>
+        <template v-if="pending">
+          <div
+            v-for="n in 2"
+            :key="n"
+            class="h-metric"
+            :class="{ 'is-hold': !showSkel }"
+          >
+            <span class="h-skeleton is-label" />
+            <strong class="h-skeleton is-value" />
+          </div>
+        </template>
+        <template v-else>
+          <div class="h-metric">
+            <span>OPD waiting</span>
+            <strong>{{ stats.encounters.opd }}</strong>
+          </div>
+          <div class="h-metric">
+            <span>Emergency active</span>
+            <strong>{{ stats.encounters.emergency }}</strong>
+          </div>
+        </template>
       </HCard>
     </HGrid>
 
@@ -136,13 +187,8 @@ const utilization = computed(() => {
       flush
     >
       <HTable
-        :headers="[
-          { title: 'Type', key: 'type.name' },
-          { title: 'Units', key: 'total' },
-          { title: 'Capacity', key: 'capacity' },
-          { title: 'In use', key: 'utilization' },
-          { title: 'Remaining', key: 'remaining' },
-        ]"
+        :loading="pending"
+        :headers="typeHeaders"
         :items="stats.facilitiesByType.map(row => ({ ...row, remaining: Math.max(0, row.capacity - row.utilization) }))"
         empty="No facility utilization yet"
       />

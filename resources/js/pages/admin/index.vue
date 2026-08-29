@@ -50,24 +50,26 @@ const load = async () => {
   dash.value = await $api('/dashboard')
 }
 
+const { pending, run } = usePageQuery(load)
+const skelHeaders = [
+  { title: 'Patient', key: 'name' },
+  { title: 'Status', key: 'status' },
+  { title: 'When', key: 'at' },
+]
+
 const refresh = async () => {
   refreshing.value = true
   try {
-    await withPageLoad(load, { silent: true })
+    await run({ silent: true })
   }
   finally {
     refreshing.value = false
   }
 }
-
-await withPageLoad(load)
 </script>
 
 <template>
-  <div
-    v-if="dash"
-    class="h-dash-page"
-  >
+  <div class="h-dash-page">
     <HPage
       title="Dashboard"
       :subtitle="subtitle"
@@ -85,6 +87,42 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
+    <template v-if="pending && !dash">
+      <HGrid
+        cols="4"
+        kind="stats"
+      >
+        <HStat
+          v-for="n in 4"
+          :key="n"
+          :loading="true"
+        />
+      </HGrid>
+      <div class="h-dash">
+        <HCard
+          flush
+          class="h-dash-lg"
+        >
+          <HTable
+            :loading="true"
+            :headers="skelHeaders"
+            :items="[]"
+          />
+        </HCard>
+        <HCard
+          flush
+          class="h-dash-lg"
+        >
+          <HTable
+            :loading="true"
+            :headers="skelHeaders"
+            :items="[]"
+          />
+        </HCard>
+      </div>
+    </template>
+
+    <template v-else-if="dash">
     <section
       v-if="shown('alerts') && dash.alerts.length"
       class="h-dash-alerts"
@@ -908,5 +946,6 @@ await withPageLoad(load)
         :to="card.to"
       />
     </HGrid>
+    </template>
   </div>
 </template>

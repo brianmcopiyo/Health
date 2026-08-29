@@ -27,11 +27,25 @@ const openChart = id => {
   chartOpen.value = true
 }
 
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
+const mineHeaders = [
+  { title: 'Patient', key: 'patient.first_name' },
+  { title: 'Type', key: 'type' },
+  { title: 'Complaint', key: 'chief_complaint' },
+  { title: 'Status', key: 'status' },
+  { title: 'Actions', key: 'actions' },
+]
+const queueHeaders = [
+  { title: 'Patient', key: 'patient.first_name' },
+  { title: 'Complaint', key: 'chief_complaint' },
+  { title: 'Clinician', key: 'clinician.name' },
+  { title: 'Status', key: 'status' },
+  { title: 'Actions', key: 'actions' },
+]
 
 let timer
 onMounted(() => {
-  timer = setInterval(() => { withPageLoad(load, { silent: true }) }, 15000)
+  timer = setInterval(() => { run({ silent: true }) }, 15000)
 })
 onBeforeUnmount(() => {
   if (timer)
@@ -52,13 +66,8 @@ onBeforeUnmount(() => {
       flush
     >
       <HTable
-        :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Type', key: 'type' },
-          { title: 'Complaint', key: 'chief_complaint' },
-          { title: 'Status', key: 'status' },
-          { title: 'Actions', key: 'actions' },
-        ]"
+        :loading="pending"
+        :headers="mineHeaders"
         :items="mine"
         empty="No patients currently assigned to you"
       >
@@ -93,13 +102,8 @@ onBeforeUnmount(() => {
       flush
     >
       <HTable
-        :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Complaint', key: 'chief_complaint' },
-          { title: 'Clinician', key: 'clinician.name' },
-          { title: 'Status', key: 'status' },
-          { title: 'Actions', key: 'actions' },
-        ]"
+        :loading="pending"
+        :headers="queueHeaders"
         :items="encounters"
         empty="No patients waiting in OPD"
       >

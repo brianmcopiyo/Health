@@ -1,5 +1,5 @@
 <script setup>
-import { errorText, useFieldId } from '@/utils/formOptions'
+import { errorText, fieldPlaceholder, useFieldId } from '@/utils/formOptions'
 
 const props = defineProps({
   modelValue: { default: null },
@@ -7,16 +7,18 @@ const props = defineProps({
   hint: String,
   description: String,
   error: [String, Array],
-  placeholder: { type: String, default: 'Drop files or browse' },
+  placeholder: String,
   required: Boolean,
   optional: Boolean,
   disabled: Boolean,
   accept: String,
   multiple: Boolean,
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
 const id = useFieldId('hf')
+const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'file'))
 const dragging = ref(false)
 
 const files = computed(() => {
@@ -62,6 +64,7 @@ const remove = index => {
     :optional="optional"
     :html-for="id"
     :disabled="disabled"
+    :span="span"
   >
     <label
       class="h-file"
@@ -82,7 +85,7 @@ const remove = index => {
         @change="onChange"
       >
       <HIcon name="upload" />
-      <span>{{ placeholder }}</span>
+      <span>{{ resolvedPlaceholder }}</span>
     </label>
     <ul
       v-if="files.length"

@@ -230,7 +230,7 @@ const completeTrip = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -253,6 +253,7 @@ await withPageLoad(load)
       flush
     >
       <HTable
+        :loading="pending"
         :headers="headers"
         :items="ambulances"
         empty="No ambulances registered"
@@ -308,6 +309,7 @@ await withPageLoad(load)
       flush
     >
       <HTable
+        :loading="pending"
         :headers="tripHeaders"
         :items="trips"
         empty="No trips recorded"
@@ -372,12 +374,13 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
           v-model="form.vehicle_code"
           label="Vehicle code"
+          placeholder="e.g. AMB-04"
           required
         />
         <HCombobox
@@ -393,17 +396,20 @@ await withPageLoad(load)
         <HNumber
           v-model="form.capacity"
           label="Capacity"
+          placeholder="e.g. 2"
           :min="1"
         />
         <HTextarea
+          span
           v-model="form.notes"
           label="Notes"
+          placeholder="Equipment or crew notes"
         />
         <h4>Crew</h4>
         <fieldset
           v-for="(member, index) in form.staff"
           :key="index"
-          class="h-form-grid"
+          class="h-form-grid is-span"
           :disabled="saving"
         >
           <HSelect
@@ -416,6 +422,7 @@ await withPageLoad(load)
           <HInput
             v-model="member.assignment_role"
             label="Role"
+            placeholder="e.g. Driver"
           />
         </fieldset>
         <HButton
@@ -452,7 +459,7 @@ await withPageLoad(load)
     >
       <fieldset
         v-if="dispatching"
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HSelect
@@ -478,15 +485,18 @@ await withPageLoad(load)
         <HInput
           v-model="dispatchForm.origin"
           label="Origin"
+          placeholder="e.g. Riverside A&E"
           required
         />
         <HInput
           v-model="dispatchForm.pickup_location"
           label="Pickup location"
+          placeholder="e.g. Gate 2"
         />
         <HInput
           v-model="dispatchForm.destination"
           label="Destination"
+          placeholder="e.g. Ridge Hospital"
           required
         />
         <HSelect
@@ -504,8 +514,10 @@ await withPageLoad(load)
           label="Driver"
         />
         <HTextarea
+          span
           v-model="dispatchForm.notes"
           label="Notes"
+          placeholder="Dispatch instructions"
         />
       </fieldset>
       <template #actions>
@@ -543,6 +555,7 @@ await withPageLoad(load)
         <HTextarea
           v-model="handoverNotes"
           label="Handover notes"
+          placeholder="Condition on arrival"
         />
       </fieldset>
       <template #actions>

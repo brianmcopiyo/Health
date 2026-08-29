@@ -107,7 +107,7 @@ const setDirection = value => {
   load()
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -138,6 +138,7 @@ await withPageLoad(load)
         />
       </HToolbar>
       <HTable
+        :loading="pending"
         :headers="headers"
         :items="items"
         empty="No assistance requests yet"
@@ -188,7 +189,7 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HSelect
@@ -215,6 +216,7 @@ await withPageLoad(load)
         <HNumber
           v-model="form.quantity"
           label="Quantity"
+          placeholder="e.g. 1"
           :min="1"
         />
         <HSelect
@@ -233,13 +235,17 @@ await withPageLoad(load)
           label="Encounter"
         />
         <HInput
+          span
           v-model="form.title"
           label="Title"
+          placeholder="e.g. ICU bed needed"
           required
         />
         <HTextarea
+          span
           v-model="form.description"
           label="Details"
+          placeholder="What support is needed"
         />
       </fieldset>
       <template #actions>
@@ -277,6 +283,7 @@ await withPageLoad(load)
         <HTextarea
           v-model="responseNotes"
           label="Response notes"
+          placeholder="How you are responding"
         />
       </div>
       <template #actions>

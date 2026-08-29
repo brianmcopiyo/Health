@@ -87,7 +87,7 @@ const openChart = id => {
   chartOpen.value = true
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -117,6 +117,7 @@ await withPageLoad(load)
       flush
     >
       <HTable
+        :loading="pending"
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Type', key: 'type' },
@@ -161,20 +162,23 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
           v-model="patientForm.first_name"
           label="First name"
+          placeholder="Enter first name"
           required
         />
         <HInput
           v-model="patientForm.last_name"
           label="Last name"
+          placeholder="Enter last name"
           required
         />
         <HRadioGroup
+          span
           v-model="patientForm.sex"
           :items="sexOptions"
           label="Sex"
@@ -184,20 +188,24 @@ await withPageLoad(load)
           label="Phone"
           type="tel"
           icon="phone"
+          placeholder="e.g. 024 555 0100"
         />
         <HCombobox
           v-model="patientForm.blood_group"
           :items="bloodGroups"
           label="Blood group"
+          placeholder="Type or select blood group"
         />
         <HInput
           v-model="patientForm.next_of_kin_name"
           label="Next of kin"
+          placeholder="Full name"
         />
         <HInput
           v-model="patientForm.next_of_kin_phone"
           label="Next of kin phone"
           type="tel"
+          placeholder="e.g. 024 555 0100"
         />
       </fieldset>
       <template #actions>
@@ -224,7 +232,7 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HSelect
@@ -235,22 +243,24 @@ await withPageLoad(load)
           label="Patient"
           required
         />
-        <HRadioGroup
-          v-model="visitForm.type"
-          :items="visitTypeOptions"
-          label="Visit type"
-        />
-        <HInput
-          v-model="visitForm.chief_complaint"
-          label="Chief complaint"
-          placeholder="Why is the patient here?"
-        />
         <HSelect
           v-model="visitForm.clinician_id"
           :items="staff"
           item-title="name"
           item-value="id"
           label="Clinician"
+        />
+        <HRadioGroup
+          span
+          v-model="visitForm.type"
+          :items="visitTypeOptions"
+          label="Visit type"
+        />
+        <HInput
+          span
+          v-model="visitForm.chief_complaint"
+          label="Chief complaint"
+          placeholder="Why is the patient here?"
         />
       </fieldset>
       <template #actions>

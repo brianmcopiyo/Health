@@ -1,5 +1,5 @@
 <script setup>
-import { errorText, useFieldId } from '@/utils/formOptions'
+import { errorText, fieldPlaceholder, useFieldId } from '@/utils/formOptions'
 
 const props = defineProps({
   modelValue: { default: '' },
@@ -18,6 +18,7 @@ const props = defineProps({
   autocomplete: String,
   maxlength: [Number, String],
   name: String,
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -43,6 +44,11 @@ const describedBy = computed(() => {
 })
 
 const display = computed(() => props.modelValue ?? '')
+const resolvedPlaceholder = computed(() => fieldPlaceholder(
+  props.placeholder,
+  props.label,
+  props.icon === 'search' || props.type === 'search' ? 'search' : 'text',
+))
 
 const onInput = event => {
   const value = event.target.value
@@ -66,6 +72,7 @@ const clear = () => emit('update:modelValue', props.type === 'number' ? null : '
     :optional="optional"
     :html-for="id"
     :disabled="disabled"
+    :span="span"
   >
     <div
       class="h-control"
@@ -80,7 +87,7 @@ const clear = () => emit('update:modelValue', props.type === 'number' ? null : '
         :id="id"
         :value="display"
         :type="inputType"
-        :placeholder="placeholder"
+        :placeholder="resolvedPlaceholder"
         :disabled="disabled || loading"
         :required="required"
         :autocomplete="autocomplete"

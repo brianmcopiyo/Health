@@ -1,6 +1,6 @@
 <script setup>
 import { useListHighlight, usePopover } from '@/composables/usePopover'
-import { errorText, normalizeOptions, sameValue, useFieldId } from '@/utils/formOptions'
+import { errorText, fieldPlaceholder, normalizeOptions, sameValue, useFieldId } from '@/utils/formOptions'
 
 const props = defineProps({
   modelValue: { type: Array, default: () => [] },
@@ -11,20 +11,24 @@ const props = defineProps({
   items: { type: Array, default: () => [] },
   itemTitle: { type: String, default: 'title' },
   itemValue: { type: String, default: 'value' },
-  placeholder: { type: String, default: 'Select' },
+  placeholder: String,
   required: Boolean,
   optional: Boolean,
   disabled: Boolean,
   loading: Boolean,
   searchable: { type: Boolean, default: true },
   selectAll: { type: Boolean, default: true },
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
 const id = useFieldId('hm')
 const query = ref('')
 const searchRef = ref(null)
-const { open, triggerRef, panelRef, coords, setOpen, toggle, close } = usePopover()
+const { open, triggerRef, coords, bindPanel, setOpen, toggle, close } = usePopover({
+  matchWidth: true,
+  minWidth: 198,
+})
 const options = computed(() => normalizeOptions(props.items, props.itemTitle, props.itemValue))
 const selected = computed(() => props.modelValue || [])
 const filtered = computed(() => {
@@ -35,6 +39,8 @@ const filtered = computed(() => {
   return options.value.filter(item => item.title.toLowerCase().includes(term))
 })
 const { move, current, isActive } = useListHighlight(filtered, open)
+const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'multi'))
+const searchPlaceholder = computed(() => fieldPlaceholder(null, props.label, 'search'))
 const message = computed(() => errorText(props.error))
 const selectedOptions = computed(() => options.value.filter(item => selected.value.some(value => sameValue(value, item.value))))
 const allFilteredSelected = computed(() => filtered.value.length > 0 && filtered.value.every(item => selected.value.some(value => sameValue(value, item.value))))
@@ -117,6 +123,7 @@ const onSearchKey = event => {
     :optional="optional"
     :html-for="id"
     :disabled="disabled"
+    :span="span"
   >
     <div
       :id="id"
@@ -152,73 +159,70 @@ const onSearchKey = event => {
           v-if="!selectedOptions.length"
           class="is-placeholder"
         >
-          {{ placeholder }}
+          {{ resolvedPlaceholder }}
         </span>
       </div>
       <HIcon name="chevron" />
     </div>
-    <Teleport to="body">
+    <HPopover
+      :show="open"
+      :coords="coords"
+      :bind-panel="bindPanel"
+    >
       <div
-        v-if="open"
-        ref="panelRef"
-        class="h-popover"
-        :style="{ top: `${coords.top}px`, left: `${coords.left}px`, width: `${coords.width}px`, maxHeight: `${coords.maxHeight}px` }"
+        v-if="searchable"
+        class="h-popover-search"
       >
-        <div
-          v-if="searchable"
-          class="h-popover-search"
+        <HIcon name="search" />
+        <input
+          ref="searchRef"
+          v-model="query"
+          type="search"
+          :placeholder="searchPlaceholder"
+          @keydown="onSearchKey"
         >
-          <HIcon name="search" />
-          <input
-            ref="searchRef"
-            v-model="query"
-            type="search"
-            placeholder="Search"
-            @keydown="onSearchKey"
-          >
-        </div>
-        <button
-          v-if="selectAll && filtered.length"
-          class="h-list-action"
-          type="button"
-          @click="toggleAll"
-        >
-          {{ allFilteredSelected ? 'Clear visible' : 'Select all visible' }}
-        </button>
-        <ul
-          class="h-list"
-          role="listbox"
-          aria-multiselectable="true"
-        >
-          <li
-            v-for="option in filtered"
-            :key="String(option.value)"
-            class="h-list-item"
-            :class="{ 'is-on': isChecked(option), 'is-active': isActive(option) }"
-            role="option"
-            :aria-selected="isChecked(option)"
-            @mousedown.prevent="toggleValue(option)"
-          >
-            <span
-              class="h-check-box"
-              :class="{ 'is-on': isChecked(option) }"
-            >
-              <HIcon
-                v-if="isChecked(option)"
-                name="check"
-                :size="12"
-              />
-            </span>
-            {{ option.title }}
-          </li>
-          <li
-            v-if="!filtered.length"
-            class="h-list-empty"
-          >
-            No matching options
-          </li>
-        </ul>
       </div>
-    </Teleport>
+      <button
+        v-if="selectAll && filtered.length"
+        class="h-list-action"
+        type="button"
+        @click="toggleAll"
+      >
+        {{ allFilteredSelected ? 'Clear visible' : 'Select all visible' }}
+      </button>
+      <ul
+        class="h-list"
+        role="listbox"
+        aria-multiselectable="true"
+      >
+        <li
+          v-for="option in filtered"
+          :key="String(option.value)"
+          class="h-list-item"
+          :class="{ 'is-on': isChecked(option), 'is-active': isActive(option) }"
+          role="option"
+          :aria-selected="isChecked(option)"
+          @mousedown.prevent="toggleValue(option)"
+        >
+          <span
+            class="h-check-box"
+            :class="{ 'is-on': isChecked(option) }"
+          >
+            <HIcon
+              v-if="isChecked(option)"
+              name="check"
+              :size="12"
+            />
+          </span>
+          {{ option.title }}
+        </li>
+        <li
+          v-if="!filtered.length"
+          class="h-list-empty"
+        >
+          No matching options
+        </li>
+      </ul>
+    </HPopover>
   </HField>
 </template>

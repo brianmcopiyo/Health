@@ -1,6 +1,6 @@
 <script setup>
 import { usePopover } from '@/composables/usePopover'
-import { errorText, useFieldId } from '@/utils/formOptions'
+import { errorText, fieldPlaceholder, useFieldId } from '@/utils/formOptions'
 
 const props = defineProps({
   modelValue: { default: '' },
@@ -8,16 +8,20 @@ const props = defineProps({
   hint: String,
   description: String,
   error: [String, Array],
-  placeholder: { type: String, default: 'Select time' },
+  placeholder: String,
   required: Boolean,
   optional: Boolean,
   disabled: Boolean,
   minuteStep: { type: Number, default: 5 },
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
 const id = useFieldId('hm')
-const { open, triggerRef, panelRef, coords, toggle, close } = usePopover()
+const { open, triggerRef, coords, bindPanel, toggle, close } = usePopover({
+  matchWidth: false,
+  minWidth: 220,
+})
 
 const parts = computed(() => {
   const match = String(props.modelValue || '').match(/^(\d{1,2}):(\d{2})$/)
@@ -37,6 +41,7 @@ const choose = (hour, minute) => {
 }
 
 const display = computed(() => props.modelValue || '')
+const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'time'))
 </script>
 
 <template>
@@ -49,6 +54,7 @@ const display = computed(() => props.modelValue || '')
     :optional="optional"
     :html-for="id"
     :disabled="disabled"
+    :span="span"
   >
     <button
       :id="id"
@@ -62,45 +68,43 @@ const display = computed(() => props.modelValue || '')
     >
       <HIcon name="clock" />
       <span :class="{ 'is-placeholder': !display }">
-        {{ display || placeholder }}
+        {{ display || resolvedPlaceholder }}
       </span>
     </button>
-    <Teleport to="body">
-      <div
-        v-if="open"
-        ref="panelRef"
-        class="h-popover h-time"
-        :style="{ top: `${coords.top}px`, left: `${coords.left}px`, width: `${Math.max(coords.width, 220)}px` }"
-      >
-        <div class="h-time-cols">
-          <div>
-            <p>Hour</p>
-            <button
-              v-for="hour in hours"
-              :key="hour"
-              type="button"
-              class="h-list-item"
-              :class="{ 'is-on': parts.hour === hour }"
-              @click="choose(hour, parts.minute)"
-            >
-              {{ String(hour).padStart(2, '0') }}
-            </button>
-          </div>
-          <div>
-            <p>Minute</p>
-            <button
-              v-for="minute in minutes"
-              :key="minute"
-              type="button"
-              class="h-list-item"
-              :class="{ 'is-on': parts.minute === minute }"
-              @click="choose(parts.hour, minute); close()"
-            >
-              {{ String(minute).padStart(2, '0') }}
-            </button>
-          </div>
+    <HPopover
+      :show="open"
+      :coords="coords"
+      :bind-panel="bindPanel"
+      panel-class="h-time"
+    >
+      <div class="h-time-cols">
+        <div>
+          <p>Hour</p>
+          <button
+            v-for="hour in hours"
+            :key="hour"
+            type="button"
+            class="h-list-item"
+            :class="{ 'is-on': parts.hour === hour }"
+            @click="choose(hour, parts.minute)"
+          >
+            {{ String(hour).padStart(2, '0') }}
+          </button>
+        </div>
+        <div>
+          <p>Minute</p>
+          <button
+            v-for="minute in minutes"
+            :key="minute"
+            type="button"
+            class="h-list-item"
+            :class="{ 'is-on': parts.minute === minute }"
+            @click="choose(parts.hour, minute); close()"
+          >
+            {{ String(minute).padStart(2, '0') }}
+          </button>
         </div>
       </div>
-    </Teleport>
+    </HPopover>
   </HField>
 </template>

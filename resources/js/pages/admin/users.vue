@@ -100,7 +100,7 @@ const removeUser = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -120,6 +120,7 @@ await withPageLoad(load)
 
     <HCard flush>
       <HTable
+        :loading="pending"
         :headers="headers"
         :items="users"
         empty="No users in this hospital"
@@ -173,12 +174,13 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
           v-model="form.name"
           label="Name"
+          placeholder="e.g. Grace Adeyemi"
           required
         />
         <HInput
@@ -186,15 +188,18 @@ await withPageLoad(load)
           label="Email"
           type="email"
           icon="mail"
+          placeholder="e.g. nurse@hospital.org"
           required
         />
         <HInput
+          span
           v-model="form.password"
           :label="editing ? 'New password' : 'Password'"
           :optional="Boolean(editing)"
           :required="!editing"
           type="password"
           icon="lock"
+          placeholder="At least 8 characters"
           :hint="editing ? 'Leave blank to keep the current password' : ''"
         />
         <HSelect
@@ -216,12 +221,14 @@ await withPageLoad(load)
         <HInput
           v-model="form.job_title"
           label="Job title"
+          placeholder="e.g. Charge nurse"
         />
         <HInput
           v-model="form.phone"
           label="Phone"
           type="tel"
           icon="phone"
+          placeholder="e.g. 024 555 0100"
         />
       </fieldset>
       <template #actions>

@@ -276,12 +276,12 @@ const openChart = item => {
     chartOpen.value = true
 }
 
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
 
 let timer
 onMounted(() => {
   timer = setInterval(() => {
-    withPageLoad(load, { silent: true })
+    run({ silent: true })
   }, 15000)
 })
 onBeforeUnmount(() => {
@@ -317,7 +317,7 @@ const headers = computed(() => {
     >
       <HButton
         variant="ghost"
-        @click="load"
+        @click="run({ silent: true })"
       >
         <HIcon name="refresh" />
         Refresh
@@ -348,24 +348,28 @@ const headers = computed(() => {
         :value="board.stats.available"
         hint="Units ready now"
         tone="ok"
+        :loading="pending"
       />
       <HStat
         icon="users"
         title="Occupied"
         :value="board.stats.occupied"
         hint="Currently assigned"
+        :loading="pending"
       />
       <HStat
         icon="hospital"
         title="Remaining capacity"
         :value="board.stats.remaining"
         hint="Capacity still open"
+        :loading="pending"
       />
       <HStat
         icon="chart"
         title="Utilization"
         :value="utilization"
         hint="Of rated capacity"
+        :loading="pending"
         :tone="Number.parseInt(utilization, 10) >= 80 ? 'warn' : ''"
       />
     </HGrid>
@@ -375,6 +379,7 @@ const headers = computed(() => {
       flush
     >
       <HTable
+        :loading="pending"
         :headers="headers"
         :items="board.facilities"
         empty="No operational units in this module"
@@ -445,6 +450,7 @@ const headers = computed(() => {
         </HButton>
       </template>
       <HTable
+        :loading="pending"
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Item', key: 'item_name' },
@@ -534,6 +540,7 @@ const headers = computed(() => {
         </HButton>
       </template>
       <HTable
+        :loading="pending"
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Bed', key: 'facility.name' },
@@ -609,7 +616,7 @@ const headers = computed(() => {
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HSelect
@@ -620,11 +627,14 @@ const headers = computed(() => {
         <HNumber
           v-model="form.current_utilization"
           label="Current utilization"
+          placeholder="e.g. 18"
           :min="0"
         />
         <HTextarea
+          span
           v-model="form.resource_notes"
           label="Resource notes"
+          placeholder="Beds, equipment or hours available"
         />
       </fieldset>
       <template #actions>
@@ -651,7 +661,7 @@ const headers = computed(() => {
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HSelect
@@ -669,13 +679,17 @@ const headers = computed(() => {
           label="Encounter"
         />
         <HInput
+          span
           v-model="orderForm.item_name"
           label="Test / item"
+          placeholder="e.g. Full blood count"
           required
         />
         <HTextarea
+          span
           v-model="orderForm.notes"
           label="Notes"
+          placeholder="Clinical indication or comments"
         />
       </fieldset>
       <template #actions>
@@ -702,7 +716,7 @@ const headers = computed(() => {
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HSelect
@@ -746,17 +760,19 @@ const headers = computed(() => {
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
           v-model="createForm.name"
           label="Name"
+          :placeholder="moduleKey === 'beds' ? 'e.g. Bed 12' : 'e.g. Surgical Ward'"
           required
         />
         <HInput
           v-model="createForm.code"
           label="Code"
+          :placeholder="moduleKey === 'beds' ? 'e.g. B-12' : 'e.g. WARD-B'"
           required
         />
         <HSelect
@@ -783,11 +799,14 @@ const headers = computed(() => {
         <HNumber
           v-model="createForm.capacity"
           :label="moduleKey === 'wards' ? 'Planned capacity' : 'Capacity'"
+          placeholder="e.g. 24"
           :min="1"
         />
         <HTextarea
+          span
           v-model="createForm.resource_notes"
           label="Notes"
+          placeholder="Beds, equipment or hours available"
         />
       </fieldset>
       <template #actions>
@@ -816,6 +835,7 @@ const headers = computed(() => {
       <HTextarea
         v-model="resultForm.result"
         label="Result"
+        placeholder="Enter the test or procedure result"
       />
       <template #actions>
         <HButton

@@ -233,6 +233,7 @@ class UserController extends Controller
             'email' => $user->email,
             'phone' => $user->phone,
             'job_title' => $user->job_title,
+            'availability' => $user->availability ?: 'available',
             'role_id' => $role?->id ?? $user->role_id,
             'hospital_id' => $hospital?->id ?? $user->hospital_id,
             'role' => $role,

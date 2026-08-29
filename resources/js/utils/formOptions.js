@@ -29,6 +29,50 @@ export const normalizeOptions = (items, itemTitle = 'title', itemValue = 'value'
   })
 }
 
+const spokenLabel = label => {
+  return String(label || '').replace(/[:*]+$/g, '').trim().split(/\s+/).filter(Boolean).map(word => {
+    if (/^[A-Z0-9]{2,}(?:[+/][A-Z0-9]+)*$/.test(word) || /[A-Za-z][0-9]|[0-9][A-Za-z]/.test(word))
+      return word
+
+    return word.toLowerCase()
+  }).join(' ')
+}
+
+export const fieldPlaceholder = (placeholder, label, kind = 'text') => {
+  if (placeholder)
+    return placeholder
+
+  const name = spokenLabel(label)
+  const fallback = {
+    text: '',
+    textarea: '',
+    number: '',
+    select: 'Select an option',
+    multi: 'Select options',
+    combo: 'Type or select',
+    date: 'Select date',
+    time: 'Select time',
+    file: 'Drop files or browse',
+    search: 'Search',
+  }[kind] ?? ''
+
+  if (!name)
+    return fallback
+
+  if (kind === 'select' || kind === 'multi')
+    return `Select ${name}`
+  if (kind === 'combo')
+    return `Type or select ${name}`
+  if (kind === 'date' || kind === 'time')
+    return `Select ${name}`
+  if (kind === 'file')
+    return 'Drop files or browse'
+  if (kind === 'search' || name === 'search' || name.startsWith('search '))
+    return name === 'search' ? 'Search…' : (name.startsWith('search ') ? `Search ${name.slice(7)}` : `Search ${name}`)
+
+  return `Enter ${name}`
+}
+
 export const sameValue = (left, right) => {
   if (left === right)
     return true

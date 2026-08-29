@@ -1,5 +1,5 @@
 <script setup>
-import { errorText, useFieldId } from '@/utils/formOptions'
+import { errorText, fieldPlaceholder, useFieldId } from '@/utils/formOptions'
 
 const props = defineProps({
   modelValue: { default: null },
@@ -15,6 +15,7 @@ const props = defineProps({
   min: { type: [Number, String], default: null },
   max: { type: [Number, String], default: null },
   step: { type: [Number, String], default: 1 },
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -42,6 +43,7 @@ const clamp = value => {
 }
 
 const display = computed(() => (props.modelValue === null || props.modelValue === undefined ? '' : props.modelValue))
+const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'number'))
 
 const setValue = value => emit('update:modelValue', clamp(parse(value)))
 
@@ -65,6 +67,7 @@ const nudge = direction => {
     :optional="optional"
     :html-for="id"
     :disabled="disabled"
+    :span="span"
   >
     <div
       class="h-control is-number"
@@ -84,7 +87,7 @@ const nudge = direction => {
         :value="display"
         type="text"
         inputmode="decimal"
-        :placeholder="placeholder"
+        :placeholder="resolvedPlaceholder"
         :disabled="disabled || loading"
         :required="required"
         :aria-invalid="Boolean(message)"

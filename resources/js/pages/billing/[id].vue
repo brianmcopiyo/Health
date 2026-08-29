@@ -51,8 +51,8 @@ const savePayment = async () => {
   })
 }
 
-watch(() => route.params.id, () => withPageLoad(load))
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
+watch(() => route.params.id, () => run())
 </script>
 
 <template>
@@ -64,28 +64,10 @@ await withPageLoad(load)
     back-label="Billing"
     :tabs="tabs"
     :tab="tab"
-    :missing="!record"
+    :loading="pending"
+    :missing="!pending && !record"
     @update:tab="tab = $event"
   >
-    <template
-      v-if="record"
-      #actions
-    >
-      <HButton
-        v-if="ability.can('update', 'Invoice') && record.status === 'draft'"
-        @click="updateStatus('issued')"
-      >
-        Issue
-      </HButton>
-      <HButton
-        v-if="ability.can('update', 'Invoice') && record.status !== 'paid' && record.status !== 'cancelled'"
-        variant="ghost"
-        @click="openPay"
-      >
-        Record payment
-      </HButton>
-    </template>
-
     <div
       v-if="formError && !payOpen"
       class="h-alert"
@@ -98,6 +80,17 @@ await withPageLoad(load)
       class="h-detail"
     >
       <HCard title="Invoice">
+        <template
+          v-if="ability.can('update', 'Invoice') && record.status === 'draft'"
+          #actions
+        >
+          <HButton
+            size="sm"
+            @click="updateStatus('issued')"
+          >
+            Issue
+          </HButton>
+        </template>
         <div class="h-metric">
           <span>Patient</span>
           <strong>
@@ -152,6 +145,17 @@ await withPageLoad(load)
       title="Payments"
       flush
     >
+      <template
+        v-if="ability.can('update', 'Invoice') && record.status !== 'paid' && record.status !== 'cancelled'"
+        #actions
+      >
+        <HButton
+          size="sm"
+          @click="openPay"
+        >
+          Record payment
+        </HButton>
+      </template>
       <HTable
         :headers="[
           { title: 'Amount', key: 'amount' },
@@ -171,6 +175,7 @@ await withPageLoad(load)
       <HNumber
         v-model="payForm.amount"
         label="Amount"
+        placeholder="e.g. 150.00"
         :min="1"
         required
       />

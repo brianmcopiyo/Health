@@ -10,6 +10,7 @@ const props = defineProps({
   optional: Boolean,
   htmlFor: String,
   disabled: Boolean,
+  span: Boolean,
 })
 
 const fallbackId = useFieldId()
@@ -27,7 +28,7 @@ provide('hField', {
 <template>
   <div
     class="h-field"
-    :class="{ 'is-invalid': message, 'is-disabled': disabled }"
+    :class="{ 'is-invalid': message, 'is-disabled': disabled, 'is-span': span }"
   >
     <label
       v-if="label"
@@ -44,21 +45,25 @@ provide('hField', {
         class="h-opt"
       >Optional</em>
     </label>
-    <p
-      v-if="hintText"
-      class="h-field-hint"
-      :id="`${controlId}-hint`"
-    >
-      {{ hintText }}
-    </p>
     <slot :id="controlId" />
-    <p
-      v-if="message"
-      class="error"
-      :id="`${controlId}-error`"
-      role="alert"
-    >
-      {{ message }}
-    </p>
+    <div class="h-field-meta">
+      <p
+        v-if="hintText"
+        class="h-field-hint"
+        :id="`${controlId}-hint`"
+      >
+        {{ hintText }}
+      </p>
+      <HTransition name="h-fade">
+        <p
+          v-if="message"
+          class="error"
+          :id="`${controlId}-error`"
+          role="alert"
+        >
+          {{ message }}
+        </p>
+      </HTransition>
+    </div>
   </div>
 </template>

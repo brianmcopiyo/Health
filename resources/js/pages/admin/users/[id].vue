@@ -24,19 +24,21 @@ const load = async () => {
   record.value = await $api(`/users/${route.params.id}`)
 }
 
-watch(() => route.params.id, () => withPageLoad(load))
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
+watch(() => route.params.id, () => run())
 </script>
 
 <template>
   <HRecord
     :title="record?.name || 'User'"
     :subtitle="record?.email || ''"
+    :status="record?.availability"
     :back="{ name: 'admin-users' }"
     back-label="Users"
     :tabs="tabs"
     :tab="tab"
-    :missing="!record"
+    :loading="pending"
+    :missing="!pending && !record"
     @update:tab="tab = $event"
   >
     <div

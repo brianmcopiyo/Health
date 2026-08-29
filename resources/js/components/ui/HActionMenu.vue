@@ -1,34 +1,20 @@
 <script setup>
-defineProps({
+const props = defineProps({
   label: { type: String, default: 'More' },
   align: { type: String, default: 'end' },
 })
 
-const open = ref(false)
-const root = ref(null)
-
-const close = () => {
-  open.value = false
-}
-
-const toggle = () => {
-  open.value = !open.value
-}
-
-const onDoc = event => {
-  if (root.value && !root.value.contains(event.target))
-    close()
-}
-
-onMounted(() => document.addEventListener('click', onDoc))
-onBeforeUnmount(() => document.removeEventListener('click', onDoc))
+const { open, triggerRef, coords, bindPanel, toggle, close } = usePopover({
+  align: toRef(props, 'align'),
+  matchWidth: false,
+  minWidth: 196,
+})
 </script>
 
 <template>
   <div
-    ref="root"
+    ref="triggerRef"
     class="h-action-menu"
-    :class="`is-${align}`"
   >
     <HButton
       variant="ghost"
@@ -40,12 +26,14 @@ onBeforeUnmount(() => document.removeEventListener('click', onDoc))
       {{ label }}
       <HIcon name="chevron" />
     </HButton>
-    <div
-      v-if="open"
-      class="h-action-menu-list"
+    <HPopover
+      :show="open"
+      :coords="coords"
+      :bind-panel="bindPanel"
       role="menu"
+      panel-class="is-menu"
     >
       <slot :close="close" />
-    </div>
+    </HPopover>
   </div>
 </template>

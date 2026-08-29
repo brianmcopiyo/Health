@@ -1,6 +1,6 @@
 <script setup>
 import { useListHighlight, usePopover } from '@/composables/usePopover'
-import { errorText, normalizeOptions, sameValue, useFieldId } from '@/utils/formOptions'
+import { errorText, fieldPlaceholder, normalizeOptions, sameValue, useFieldId } from '@/utils/formOptions'
 
 const props = defineProps({
   modelValue: { default: '' },
@@ -11,19 +11,23 @@ const props = defineProps({
   items: { type: Array, default: () => [] },
   itemTitle: { type: String, default: 'title' },
   itemValue: { type: String, default: 'value' },
-  placeholder: { type: String, default: 'Type or select' },
+  placeholder: String,
   required: Boolean,
   optional: Boolean,
   disabled: Boolean,
   loading: Boolean,
   icon: String,
   allowCustom: { type: Boolean, default: true },
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
 const id = useFieldId('hc')
 const query = ref('')
-const { open, triggerRef, panelRef, coords, setOpen, close } = usePopover()
+const { open, triggerRef, coords, bindPanel, setOpen, close } = usePopover({
+  matchWidth: true,
+  minWidth: 198,
+})
 const options = computed(() => normalizeOptions(props.items, props.itemTitle, props.itemValue))
 const filtered = computed(() => {
   const term = String(query.value || '').trim().toLowerCase()
@@ -33,6 +37,7 @@ const filtered = computed(() => {
   return options.value.filter(item => item.title.toLowerCase().includes(term))
 })
 const { move, current, isActive } = useListHighlight(filtered, open)
+const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'combo'))
 const message = computed(() => errorText(props.error))
 const selected = computed(() => options.value.find(item => sameValue(item.value, props.modelValue) || sameValue(item.title, props.modelValue)))
 
@@ -97,6 +102,7 @@ const onKey = event => {
     :optional="optional"
     :html-for="id"
     :disabled="disabled"
+    :span="span"
   >
     <div
       ref="triggerRef"
@@ -112,7 +118,7 @@ const onKey = event => {
         :value="query"
         type="text"
         role="combobox"
-        :placeholder="placeholder"
+        :placeholder="resolvedPlaceholder"
         :disabled="disabled || loading"
         :required="required"
         :aria-expanded="open"
@@ -132,29 +138,26 @@ const onKey = event => {
         name="chevron"
       />
     </div>
-    <Teleport to="body">
-      <div
-        v-if="open && filtered.length"
-        ref="panelRef"
-        class="h-popover"
-        :style="{ top: `${coords.top}px`, left: `${coords.left}px`, width: `${coords.width}px`, maxHeight: `${coords.maxHeight}px` }"
+    <HPopover
+      :show="open && filtered.length"
+      :coords="coords"
+      :bind-panel="bindPanel"
+    >
+      <ul
+        class="h-list"
+        role="listbox"
       >
-        <ul
-          class="h-list"
-          role="listbox"
+        <li
+          v-for="option in filtered"
+          :key="String(option.value)"
+          class="h-list-item"
+          :class="{ 'is-on': sameValue(option.value, modelValue), 'is-active': isActive(option) }"
+          role="option"
+          @mousedown.prevent="choose(option)"
         >
-          <li
-            v-for="option in filtered"
-            :key="String(option.value)"
-            class="h-list-item"
-            :class="{ 'is-on': sameValue(option.value, modelValue), 'is-active': isActive(option) }"
-            role="option"
-            @mousedown.prevent="choose(option)"
-          >
-            {{ option.title }}
-          </li>
-        </ul>
-      </div>
-    </Teleport>
+          {{ option.title }}
+        </li>
+      </ul>
+    </HPopover>
   </HField>
 </template>

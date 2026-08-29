@@ -26,8 +26,8 @@ const load = async () => {
   record.value = await $api(`/encounters/${route.params.id}`)
 }
 
-watch(() => route.params.id, () => withPageLoad(load))
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
+watch(() => route.params.id, () => run())
 </script>
 
 <template>
@@ -39,23 +39,23 @@ await withPageLoad(load)
     back-label="Patients"
     :tabs="tabs"
     :tab="tab"
-    :missing="!record"
+    :loading="pending"
+    :missing="!pending && !record"
     @update:tab="tab = $event"
   >
-    <template
-      v-if="record"
-      #actions
-    >
-      <HButton @click="chartOpen = true">
-        Open chart
-      </HButton>
-    </template>
-
     <div
       v-if="record && tab === 'overview'"
       class="h-detail"
     >
       <HCard title="Visit">
+        <template #actions>
+          <HButton
+            size="sm"
+            @click="chartOpen = true"
+          >
+            Open chart
+          </HButton>
+        </template>
         <div class="h-metric">
           <span>Patient</span>
           <strong>

@@ -25,8 +25,8 @@ const load = async () => {
   record.value = await $api(`/hospitals/${route.params.id}`)
 }
 
-watch(() => route.params.id, () => withPageLoad(load))
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
+watch(() => route.params.id, () => run())
 </script>
 
 <template>
@@ -38,7 +38,8 @@ await withPageLoad(load)
     back-label="Hospitals"
     :tabs="tabs"
     :tab="tab"
-    :missing="!record"
+    :loading="pending"
+    :missing="!pending && !record"
     @update:tab="tab = $event"
   >
     <template v-if="record && tab === 'overview'">

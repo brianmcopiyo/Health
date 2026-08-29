@@ -8,6 +8,7 @@ defineProps({
   description: String,
   error: [String, Array],
   disabled: Boolean,
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -20,6 +21,7 @@ const id = useFieldId('hw')
     :description="description"
     :error="error"
     :disabled="disabled"
+    :span="span"
   >
     <label
       class="h-switch"

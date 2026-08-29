@@ -1,6 +1,6 @@
 <script setup>
 import { facilityRecordTo } from '@/utils/helpers'
-import { labelize, statusColor } from '@/utils/status'
+import { labelize } from '@/utils/status'
 
 definePage({
   meta: {
@@ -50,7 +50,7 @@ const updateStatus = async status => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -62,32 +62,24 @@ await withPageLoad(load)
     back-label="Assistance"
     :tabs="tabs"
     :tab="tab"
-    :missing="!request"
+    :loading="pending"
+    :missing="!pending && !request"
     @update:tab="tab = $event"
   >
-    <template
-      v-if="request"
-      #actions
-    >
-      <HButton @click="openManage">
-        Manage
-      </HButton>
-    </template>
-
     <template v-if="request">
       <div
         v-if="tab === 'overview'"
         class="h-detail"
       >
         <HCard title="Request">
-          <div class="h-metric">
-            <span>Status</span>
-            <strong>
-              <HBadge :tone="statusColor(request.status)">
-                {{ labelize(request.status) }}
-              </HBadge>
-            </strong>
-          </div>
+          <template #actions>
+            <HButton
+              size="sm"
+              @click="openManage"
+            >
+              Manage
+            </HButton>
+          </template>
           <div class="h-metric">
             <span>Type</span>
             <strong>{{ labelize(request.type) }} · {{ request.quantity || 1 }}</strong>
@@ -163,6 +155,7 @@ await withPageLoad(load)
       <HTextarea
         v-model="responseNotes"
         label="Response notes"
+        placeholder="How you are responding"
       />
       <template #actions>
         <HButton

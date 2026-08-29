@@ -178,8 +178,8 @@ const tabs = [
   { title: 'History', value: 'history' },
 ]
 
-watch(() => route.params.id, () => withPageLoad(load))
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
+watch(() => route.params.id, () => run())
 
 const today = new Date().toISOString().slice(0, 10)
 </script>
@@ -189,67 +189,15 @@ const today = new Date().toISOString().slice(0, 10)
     :title="chart ? `${chart.first_name} ${chart.last_name}` : 'Patient'"
     :subtitle="chart ? chart.mrn : ''"
     :status="chart?.status"
+    :statuses="chart?.archived_at && chart?.status !== 'archived' ? ['archived'] : []"
     :back="{ name: 'patients' }"
     back-label="Patients"
     :tabs="tabs"
     :tab="tab"
-    :missing="!chart"
+    :loading="pending"
+    :missing="!pending && !chart"
     @update:tab="tab = $event"
   >
-    <template
-      v-if="chart"
-      #actions
-    >
-      <HButton
-        v-if="ability.can('create', 'Opd') || ability.can('create', 'Reception') || ability.can('create', 'Emergency')"
-        @click="openVisit"
-      >
-        Open visit
-      </HButton>
-      <HButton
-        v-if="ability.can('update', 'Patient')"
-        variant="ghost"
-        @click="openStatus"
-      >
-        Status
-      </HButton>
-      <HButton
-        v-if="ability.can('update', 'Patient')"
-        @click="openEdit"
-      >
-        <HIcon name="edit" />
-        Edit
-      </HButton>
-      <HActionMenu>
-        <template #default="{ close }">
-          <button
-            v-if="ability.can('update', 'Patient')"
-            type="button"
-            class="h-action-item"
-            @click="openUpload(); close()"
-          >
-            Upload document
-          </button>
-          <button
-            v-if="ability.can('manage', 'Patient')"
-            type="button"
-            class="h-action-item"
-            @click="exportRecord(); close()"
-          >
-            Export record
-          </button>
-          <button
-            v-if="ability.can('update', 'Patient') && !chart.archived_at"
-            type="button"
-            class="h-action-item is-danger"
-            @click="archivePatient(); close()"
-          >
-            Archive
-          </button>
-        </template>
-      </HActionMenu>
-    </template>
-
     <div
       v-if="formError && !editOpen && !uploadOpen"
       class="h-alert"
@@ -263,6 +211,48 @@ const today = new Date().toISOString().slice(0, 10)
         class="h-detail"
       >
         <HCard title="Identity">
+          <template
+            v-if="ability.can('update', 'Patient') || ability.can('manage', 'Patient')"
+            #actions
+          >
+            <HButton
+              v-if="ability.can('update', 'Patient')"
+              variant="ghost"
+              size="sm"
+              @click="openEdit"
+            >
+              <HIcon name="edit" />
+              Edit
+            </HButton>
+            <HActionMenu v-if="ability.can('update', 'Patient') || ability.can('manage', 'Patient')">
+              <template #default="{ close }">
+                <button
+                  v-if="ability.can('update', 'Patient')"
+                  type="button"
+                  class="h-action-item"
+                  @click="openStatus(); close()"
+                >
+                  Update status
+                </button>
+                <button
+                  v-if="ability.can('manage', 'Patient')"
+                  type="button"
+                  class="h-action-item"
+                  @click="exportRecord(); close()"
+                >
+                  Export record
+                </button>
+                <button
+                  v-if="ability.can('update', 'Patient') && !chart.archived_at"
+                  type="button"
+                  class="h-action-item is-danger"
+                  @click="archivePatient(); close()"
+                >
+                  Archive
+                </button>
+              </template>
+            </HActionMenu>
+          </template>
           <div class="h-metric">
             <span>Sex</span>
             <strong>{{ labelize(chart.sex) || '—' }}</strong>
@@ -294,6 +284,17 @@ const today = new Date().toISOString().slice(0, 10)
         </HCard>
 
         <HCard title="Current care">
+          <template
+            v-if="ability.can('create', 'Opd') || ability.can('create', 'Reception') || ability.can('create', 'Emergency')"
+            #actions
+          >
+            <HButton
+              size="sm"
+              @click="openVisit"
+            >
+              Open visit
+            </HButton>
+          </template>
           <div
             v-if="chart.active_bed"
             class="h-metric"
@@ -618,11 +619,13 @@ const today = new Date().toISOString().slice(0, 10)
         <HInput
           v-model="form.first_name"
           label="First name"
+          placeholder="Enter first name"
           required
         />
         <HInput
           v-model="form.last_name"
           label="Last name"
+          placeholder="Enter last name"
           required
         />
         <HRadioGroup
@@ -640,27 +643,31 @@ const today = new Date().toISOString().slice(0, 10)
           label="Phone"
           type="tel"
           icon="phone"
+          placeholder="e.g. 024 555 0100"
         />
         <HInput
           v-model="form.mrn"
           label="MRN"
+          placeholder="e.g. RGH-0042"
         />
         <HInput
           v-model="form.national_id"
           label="National ID"
+          placeholder="e.g. GHA-123-456-789"
         />
         <HCombobox
           v-model="form.blood_group"
           :items="bloodGroups"
           label="Blood group"
-          placeholder="Select or type"
+          placeholder="Type or select blood group"
+        />
+        <HInput
+          span
+          v-model="form.address"
+          label="Address"
+          placeholder="Street, city or area"
         />
       </fieldset>
-      <HInput
-        v-model="form.address"
-        label="Address"
-        :disabled="saving"
-      />
       <fieldset
         class="h-form-grid is-3"
         :disabled="saving"
@@ -668,17 +675,20 @@ const today = new Date().toISOString().slice(0, 10)
         <HInput
           v-model="form.next_of_kin_name"
           label="Next of kin"
+          placeholder="Full name"
         />
         <HInput
           v-model="form.next_of_kin_phone"
           label="Next of kin phone"
           type="tel"
           icon="phone"
+          placeholder="e.g. 024 555 0100"
         />
         <HCombobox
           v-model="form.next_of_kin_relation"
           :items="kinshipOptions"
           label="Relation"
+          placeholder="e.g. Spouse"
         />
       </fieldset>
       <h4>Allergies</h4>
@@ -691,14 +701,17 @@ const today = new Date().toISOString().slice(0, 10)
         <HInput
           v-model="row.allergen"
           label="Allergen"
+          placeholder="e.g. Penicillin"
         />
         <HInput
           v-model="row.reaction"
           label="Reaction"
+          placeholder="e.g. Rash"
         />
         <HInput
           v-model="row.severity"
           label="Severity"
+          placeholder="e.g. Moderate"
         />
       </fieldset>
       <HButton
@@ -718,10 +731,12 @@ const today = new Date().toISOString().slice(0, 10)
         <HInput
           v-model="row.name"
           label="Condition"
+          placeholder="e.g. Hypertension"
         />
         <HInput
           v-model="row.status"
           label="Status"
+          placeholder="e.g. Active"
         />
       </fieldset>
       <HButton
@@ -757,6 +772,7 @@ const today = new Date().toISOString().slice(0, 10)
       <HFile
         v-model="uploadFile"
         label="File"
+        placeholder="Drop a document or browse"
         required
       />
       <template #actions>
@@ -818,6 +834,7 @@ const today = new Date().toISOString().slice(0, 10)
       <HInput
         v-model="visitForm.chief_complaint"
         label="Chief complaint"
+        placeholder="Why is the patient here?"
       />
       <template #actions>
         <HButton

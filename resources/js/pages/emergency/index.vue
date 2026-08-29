@@ -59,11 +59,11 @@ const openChart = id => {
   chartOpen.value = true
 }
 
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
 
 let timer
 onMounted(() => {
-  timer = setInterval(() => { withPageLoad(load, { silent: true }) }, 15000)
+  timer = setInterval(() => { run({ silent: true }) }, 15000)
 })
 onBeforeUnmount(() => {
   if (timer)
@@ -96,6 +96,7 @@ onBeforeUnmount(() => {
         </HButton>
       </template>
       <HTable
+        :loading="pending"
         :headers="[
           { title: 'Patient', key: 'patient.first_name' },
           { title: 'Complaint', key: 'chief_complaint' },
@@ -141,7 +142,7 @@ onBeforeUnmount(() => {
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HSelect
@@ -152,16 +153,18 @@ onBeforeUnmount(() => {
           label="Patient"
           required
         />
-        <HInput
-          v-model="form.chief_complaint"
-          label="Chief complaint"
-        />
         <HSelect
           v-model="form.clinician_id"
           :items="staff"
           item-title="name"
           item-value="id"
           label="Clinician"
+        />
+        <HInput
+          span
+          v-model="form.chief_complaint"
+          label="Chief complaint"
+          placeholder="Why is the patient here?"
         />
       </fieldset>
       <template #actions>

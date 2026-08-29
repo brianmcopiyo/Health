@@ -1,7 +1,7 @@
 <script setup>
 import { applySession, clearSession, resolveHomeRoute } from '@/utils/session'
 import { buildNavigation, pageMeta } from '@/navigation/modules'
-import { asList, pageLoadError, pageLoading } from '@/composables/usePageLoad'
+import { asList, pageLoadError } from '@/composables/usePageLoad'
 import { useCookie } from '@/composables/useCookie'
 import { useProfilePhoto } from '@/composables/useProfilePhoto'
 
@@ -13,13 +13,32 @@ const accessToken = useCookie('accessToken')
 const collapsed = useCookie('hmsSidebarCollapsed', { default: () => false })
 const { photoUrl } = useProfilePhoto()
 const navOpen = ref(false)
-const menuOpen = ref(false)
-const noticeOpen = ref(false)
-const contextOpen = ref(false)
 const overlayNav = ref(false)
 const workspace = ref(null)
-const toolsRef = ref(null)
-const contextRef = ref(null)
+const {
+  open: contextOpen,
+  triggerRef: contextTrigger,
+  coords: contextCoords,
+  bindPanel: bindContext,
+  toggle: toggleContext,
+  close: closeContext,
+} = usePopover({ align: 'start', minWidth: 260 })
+const {
+  open: noticeOpen,
+  triggerRef: noticeTrigger,
+  coords: noticeCoords,
+  bindPanel: bindNotice,
+  toggle: toggleNotice,
+  close: closeNotice,
+} = usePopover({ align: 'end', minWidth: 320 })
+const {
+  open: menuOpen,
+  triggerRef: menuTrigger,
+  coords: menuCoords,
+  bindPanel: bindMenu,
+  toggle: toggleMenu,
+  close: closeMenu,
+} = usePopover({ align: 'end', minWidth: 304 })
 
 const navGroups = computed(() => buildNavigation(ability, userData.value))
 const meta = computed(() => pageMeta(route.name))
@@ -67,16 +86,9 @@ const syncOverlay = () => {
 }
 
 const closePopovers = () => {
-  menuOpen.value = false
-  noticeOpen.value = false
-  contextOpen.value = false
-}
-
-const onDocumentClick = event => {
-  const insideTools = toolsRef.value?.contains(event.target)
-  const insideContext = contextRef.value?.contains(event.target)
-  if (!insideTools && !insideContext)
-    closePopovers()
+  closeMenu()
+  closeNotice()
+  closeContext()
 }
 
 watch(() => route.fullPath, () => {
@@ -127,7 +139,7 @@ const loadWorkspace = async () => {
 }
 
 const goNotice = item => {
-  noticeOpen.value = false
+  closeNotice()
   if (item.to)
     router.push({ name: item.to })
 }
@@ -137,7 +149,6 @@ const onMedia = event => { overlayNav.value = event.matches }
 
 onMounted(() => {
   syncOverlay()
-  document.addEventListener('click', onDocumentClick)
   if (media?.addEventListener)
     media.addEventListener('change', onMedia)
   else
@@ -149,7 +160,6 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
-  document.removeEventListener('click', onDocumentClick)
   if (media?.removeEventListener)
     media.removeEventListener('change', onMedia)
   else
@@ -268,15 +278,15 @@ onBeforeUnmount(() => {
             >
               <HIcon name="menu" />
             </HButton>
-            <div
-              ref="contextRef"
-              class="hms-context-wrap"
-            >
+            <div class="hms-context-wrap">
               <button
                 v-if="canSwitchHospital"
+                ref="contextTrigger"
                 class="hms-context is-switch"
                 type="button"
-                @click.stop="contextOpen = !contextOpen; menuOpen = false; noticeOpen = false"
+                :aria-expanded="contextOpen"
+                aria-haspopup="menu"
+                @click.stop="toggleContext"
               >
                 <span>{{ userData?.hospitalName || 'Network operations' }}</span>
                 <HIcon
@@ -290,9 +300,12 @@ onBeforeUnmount(() => {
               >
                 {{ userData?.hospitalName || 'Network operations' }}
               </p>
-              <div
-                v-if="contextOpen"
-                class="hms-menu is-context"
+              <HPopover
+                :show="contextOpen"
+                :coords="contextCoords"
+                :bind-panel="bindContext"
+                role="menu"
+                panel-class="hms-menu is-context"
               >
                 <p class="hms-menu-label">
                   Hospital
@@ -309,7 +322,7 @@ onBeforeUnmount(() => {
                     <small>{{ membership.roleName }}</small>
                   </span>
                 </button>
-              </div>
+              </HPopover>
             </div>
             <nav
               class="hms-crumb"
@@ -328,17 +341,16 @@ onBeforeUnmount(() => {
             </nav>
           </div>
 
-          <div
-            ref="toolsRef"
-            class="hms-header-tools"
-            @click.stop
-          >
+          <div class="hms-header-tools">
             <div class="hms-notice">
               <button
+                ref="noticeTrigger"
                 class="hms-icon-btn"
                 type="button"
                 aria-label="Notifications"
-                @click="noticeOpen = !noticeOpen; menuOpen = false; contextOpen = false"
+                :aria-expanded="noticeOpen"
+                aria-haspopup="menu"
+                @click.stop="toggleNotice"
               >
                 <HIcon
                   name="bell"
@@ -349,9 +361,12 @@ onBeforeUnmount(() => {
                   class="hms-notice-count"
                 >{{ notices.length }}</em>
               </button>
-              <div
-                v-if="noticeOpen"
-                class="hms-menu is-notices"
+              <HPopover
+                :show="noticeOpen"
+                :coords="noticeCoords"
+                :bind-panel="bindNotice"
+                role="menu"
+                panel-class="hms-menu is-notices"
               >
                 <p class="hms-menu-label">
                   Attention
@@ -386,14 +401,17 @@ onBeforeUnmount(() => {
                   />
                   <span>Notification preferences</span>
                 </RouterLink>
-              </div>
+              </HPopover>
             </div>
 
             <div class="hms-user">
               <button
+                ref="menuTrigger"
                 class="hms-user-trigger"
                 type="button"
-                @click="menuOpen = !menuOpen; noticeOpen = false; contextOpen = false"
+                :aria-expanded="menuOpen"
+                aria-haspopup="menu"
+                @click.stop="toggleMenu"
               >
                 <span class="hms-user-copy">
                   <strong>{{ userData?.fullName }}</strong>
@@ -406,9 +424,12 @@ onBeforeUnmount(() => {
                   :status="userData?.availability"
                 />
               </button>
-              <div
-                v-if="menuOpen"
-                class="hms-menu is-account"
+              <HPopover
+                :show="menuOpen"
+                :coords="menuCoords"
+                :bind-panel="bindMenu"
+                role="menu"
+                panel-class="hms-menu is-account"
               >
                 <div class="hms-menu-identity">
                   <HAvatar
@@ -492,7 +513,7 @@ onBeforeUnmount(() => {
                   />
                   <span>Sign out</span>
                 </button>
-              </div>
+              </HPopover>
             </div>
           </div>
         </div>
@@ -503,16 +524,14 @@ onBeforeUnmount(() => {
         @click="closePopovers"
       >
         <div class="hms-page">
-          <div
-            v-if="pageLoading"
-            class="h-progress"
-          />
-          <div
-            v-if="pageLoadError"
-            class="h-alert"
-          >
-            {{ pageLoadError }}
-          </div>
+          <HTransition name="h-fade">
+            <div
+              v-if="pageLoadError"
+              class="h-alert"
+            >
+              {{ pageLoadError }}
+            </div>
+          </HTransition>
           <slot />
         </div>
       </main>

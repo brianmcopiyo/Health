@@ -14,6 +14,7 @@ const props = defineProps({
   optional: Boolean,
   disabled: Boolean,
   inline: { type: Boolean, default: true },
+  span: Boolean,
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -30,6 +31,7 @@ const options = computed(() => normalizeOptions(props.items, props.itemTitle, pr
     :required="required"
     :optional="optional"
     :disabled="disabled"
+    :span="span"
   >
     <div
       class="h-radio-group"

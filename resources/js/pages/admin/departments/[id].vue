@@ -43,8 +43,8 @@ const addStaff = async () => {
   })
 }
 
-watch(() => route.params.id, () => withPageLoad(load))
-await withPageLoad(load)
+const { pending, run } = usePageQuery(load)
+watch(() => route.params.id, () => run())
 </script>
 
 <template>
@@ -56,7 +56,8 @@ await withPageLoad(load)
     back-label="Departments"
     :tabs="tabs"
     :tab="tab"
-    :missing="!record"
+    :loading="pending"
+    :missing="!pending && !record"
     @update:tab="tab = $event"
   >
     <div
@@ -115,7 +116,7 @@ await withPageLoad(load)
       </HTable>
       <fieldset
         v-if="ability.can('manage', 'User')"
-        class="h-stack"
+        class="h-form"
         style="padding: 1rem"
       >
         <HSelect
@@ -124,6 +125,7 @@ await withPageLoad(load)
           item-title="name"
           item-value="id"
           label="Assign staff"
+          placeholder="Select a staff member"
         />
         <HButton
           size="sm"

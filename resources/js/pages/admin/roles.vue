@@ -85,7 +85,8 @@ const removeRole = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
+const showSkel = useDelayedVisible(() => pending.value && !roles.value.length)
 </script>
 
 <template>
@@ -103,7 +104,26 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <HGrid cols="3">
+    <HGrid
+      v-if="pending && !roles.length"
+      cols="3"
+      :class="{ 'is-hold': !showSkel }"
+    >
+      <HCard
+        v-for="n in 6"
+        :key="n"
+      >
+        <HSkeleton :lines="2" />
+      </HCard>
+    </HGrid>
+    <HEmpty
+      v-else-if="!roles.length"
+      message="No roles have been defined yet"
+    />
+    <HGrid
+      v-else
+      cols="3"
+    >
       <HCard
         v-for="role in roles"
         :key="role.id"
@@ -162,18 +182,14 @@ await withPageLoad(load)
       :persistent="saving"
     >
       <fieldset
-        class="h-stack"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
           v-model="form.name"
           label="Name"
+          placeholder="e.g. Charge nurse"
           required
-        />
-        <HTextarea
-          v-model="form.description"
-          label="Description"
-          hint="Shown to administrators when assigning this role"
         />
         <HSelect
           v-model="form.workspace"
@@ -183,9 +199,17 @@ await withPageLoad(load)
           label="Workspace"
           required
         />
+        <HTextarea
+          span
+          v-model="form.description"
+          label="Description"
+          placeholder="What this role can do"
+          hint="Shown to administrators when assigning this role"
+        />
         <HMultiSelect
           v-for="(group, name) in groupedPermissions"
           :key="name"
+          span
           v-model="form.permission_ids"
           :items="group"
           item-title="name"

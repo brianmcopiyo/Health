@@ -117,7 +117,7 @@ const savePayment = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -144,6 +144,7 @@ await withPageLoad(load)
 
     <HCard flush>
       <HTable
+        :loading="pending"
         :headers="[
           { title: 'Number', key: 'number' },
           { title: 'Patient', key: 'patient.first_name' },
@@ -232,24 +233,26 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <HSelect
-        v-model="form.patient_id"
-        :items="patients"
-        item-title="full_name"
-        item-value="id"
-        label="Patient"
-        required
-        :disabled="saving"
-        @update:model-value="loadEncounters"
-      />
-      <HSelect
-        v-if="encounterOptions.length"
-        v-model="form.encounter_id"
-        :items="encounterOptions"
-        label="Encounter"
-        hint="Leave lines empty to open the encounter charge sheet"
-        :disabled="saving"
-      />
+      <HFormGrid>
+        <HSelect
+          v-model="form.patient_id"
+          :items="patients"
+          item-title="full_name"
+          item-value="id"
+          label="Patient"
+          required
+          :disabled="saving"
+          @update:model-value="loadEncounters"
+        />
+        <HSelect
+          v-if="encounterOptions.length"
+          v-model="form.encounter_id"
+          :items="encounterOptions"
+          label="Encounter"
+          hint="Leave lines empty to open the encounter charge sheet"
+          :disabled="saving"
+        />
+      </HFormGrid>
       <fieldset
         v-for="(item, index) in form.items"
         :key="index"
@@ -259,15 +262,18 @@ await withPageLoad(load)
         <HInput
           v-model="item.description"
           label="Description"
+          placeholder="e.g. Consultation"
         />
         <HNumber
           v-model="item.quantity"
           label="Qty"
+          placeholder="e.g. 1"
           :min="1"
         />
         <HNumber
           v-model="item.unit_amount"
           label="Unit amount"
+          placeholder="e.g. 150.00"
           :min="0"
         />
       </fieldset>
@@ -307,6 +313,7 @@ await withPageLoad(load)
         <HNumber
           v-model="payForm.amount"
           label="Amount"
+          placeholder="e.g. 150.00"
           :min="1"
           required
         />

@@ -91,7 +91,7 @@ const save = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 
 const today = new Date().toISOString().slice(0, 10)
 </script>
@@ -130,6 +130,7 @@ const today = new Date().toISOString().slice(0, 10)
         </HButton>
       </HToolbar>
       <HTable
+        :loading="pending"
         :headers="[
           { title: 'MRN', key: 'mrn' },
           { title: 'Name', key: 'full_name' },
@@ -186,11 +187,13 @@ const today = new Date().toISOString().slice(0, 10)
         <HInput
           v-model="form.first_name"
           label="First name"
+          placeholder="Enter first name"
           required
         />
         <HInput
           v-model="form.last_name"
           label="Last name"
+          placeholder="Enter last name"
           required
         />
         <HRadioGroup
@@ -208,29 +211,33 @@ const today = new Date().toISOString().slice(0, 10)
           label="Phone"
           type="tel"
           icon="phone"
+          placeholder="e.g. 024 555 0100"
         />
         <HInput
           v-model="form.mrn"
           label="MRN"
           optional
           hint="Leave blank to generate automatically"
+          placeholder="e.g. RGH-0042"
         />
         <HInput
           v-model="form.national_id"
           label="National ID"
+          placeholder="e.g. GHA-123-456-789"
         />
         <HCombobox
           v-model="form.blood_group"
           :items="bloodGroups"
           label="Blood group"
-          placeholder="Select or type"
+          placeholder="Type or select blood group"
+        />
+        <HInput
+          span
+          v-model="form.address"
+          label="Address"
+          placeholder="Street, city or area"
         />
       </fieldset>
-      <HInput
-        v-model="form.address"
-        label="Address"
-        :disabled="saving"
-      />
       <fieldset
         class="h-form-grid is-3"
         :disabled="saving"
@@ -238,17 +245,20 @@ const today = new Date().toISOString().slice(0, 10)
         <HInput
           v-model="form.next_of_kin_name"
           label="Next of kin"
+          placeholder="Full name"
         />
         <HInput
           v-model="form.next_of_kin_phone"
           label="Next of kin phone"
           type="tel"
           icon="phone"
+          placeholder="e.g. 024 555 0100"
         />
         <HCombobox
           v-model="form.next_of_kin_relation"
           :items="kinshipOptions"
           label="Relation"
+          placeholder="e.g. Spouse"
         />
       </fieldset>
       <template #actions>

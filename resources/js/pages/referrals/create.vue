@@ -15,6 +15,7 @@ const patients = ref([])
 const encounters = ref([])
 const matches = ref([])
 const searching = ref(false)
+const showSearch = useDelayedVisible(searching)
 const saving = ref(false)
 const formError = ref('')
 const form = ref({
@@ -89,7 +90,7 @@ const submit = async () => {
   })
 }
 
-await withPageLoad(async () => {
+const { pending } = usePageQuery(async () => {
   types.value = asList(await $api('/facility-types'))
   services.value = asList(await $api('/clinical-services'))
   patients.value = asList(await $api('/patients', { query: compactListQuery() }))
@@ -115,14 +116,23 @@ await withPageLoad(async () => {
 
     <div class="h-form-card is-wide">
     <HCard>
-      <div class="h-form is-wide">
+      <HForm
+        v-if="pending"
+        wide
+        :loading="true"
+        :fields="8"
+      />
+      <div
+        v-else
+        class="h-form is-wide"
+      >
         <div
           v-if="formError"
           class="h-alert"
         >
           {{ formError }}
         </div>
-        <div class="h-form-grid">
+        <HFormGrid>
           <HSelect
             v-model="form.patient_id"
             :items="patients"
@@ -138,19 +148,19 @@ await withPageLoad(async () => {
             label="Source encounter"
             @update:model-value="onEncounter"
           />
-        </div>
-        <p
-          v-if="selectedPatient"
-          class="h-muted"
-        >
-          {{ selectedPatient.mrn }} · {{ selectedPatient.phone || 'No phone' }}
-        </p>
-        <HTextarea
-          v-model="form.reason"
-          label="Clinical reason"
-          required
-        />
-        <div class="h-form-grid">
+          <p
+            v-if="selectedPatient"
+            class="h-muted is-span"
+          >
+            {{ selectedPatient.mrn }} · {{ selectedPatient.phone || 'No phone' }}
+          </p>
+          <HTextarea
+            span
+            v-model="form.reason"
+            label="Clinical reason"
+            placeholder="Why the patient needs transfer"
+            required
+          />
           <HSelect
             v-model="form.required_facility_type_id"
             :items="types"
@@ -166,17 +176,17 @@ await withPageLoad(async () => {
             item-value="id"
             label="Required service"
           />
-        </div>
-        <HNumber
-          v-model="form.required_capacity"
-          class="is-compact"
-          label="Required capacity"
-          :min="1"
-          @update:model-value="searchHospitals"
-        />
+          <HNumber
+            v-model="form.required_capacity"
+            label="Required capacity"
+            placeholder="e.g. 1"
+            :min="1"
+            @update:model-value="searchHospitals"
+          />
+        </HFormGrid>
 
         <HSection title="Eligible destination hospitals">
-          <HLoading v-if="searching" />
+          <HLoading v-if="showSearch" />
           <div
             v-else-if="!matches.length"
             class="h-alert"

@@ -1,9 +1,9 @@
-import { ref } from 'vue'
+import { ref, unref, watch, onBeforeUnmount } from 'vue'
 import { router } from '@/plugins/router'
 import { httpStatus, pageErrorRoute } from '@/utils/errors'
 
 export const pageLoadError = ref(null)
-export const pageLoading = ref(false)
+export const LOAD_HINT_DELAY = 180
 
 export const asList = value => {
   if (Array.isArray(value))
@@ -60,11 +60,30 @@ export const wrapSave = async (saving, formError, action) => {
   }
 }
 
-export const withPageLoad = async (loader, options = {}) => {
-  if (!options.silent) {
-    pageLoadError.value = null
-    pageLoading.value = true
+export const useDelayedVisible = (source, delay = LOAD_HINT_DELAY) => {
+  const visible = ref(false)
+  let timer
+
+  const sync = value => {
+    clearTimeout(timer)
+    if (value) {
+      timer = window.setTimeout(() => {
+        visible.value = true
+      }, delay)
+      return
+    }
+    visible.value = false
   }
+
+  watch(() => unref(source), sync, { immediate: true })
+  onBeforeUnmount(() => clearTimeout(timer))
+
+  return visible
+}
+
+export const withPageLoad = async (loader, options = {}) => {
+  if (!options.silent)
+    pageLoadError.value = null
 
   try {
     await loader()
@@ -85,8 +104,27 @@ export const withPageLoad = async (loader, options = {}) => {
       pageLoadError.value = error?.data?.message || error?.message || 'Unable to load this page'
     console.error(error)
   }
-  finally {
-    if (!options.silent)
-      pageLoading.value = false
+}
+
+export const usePageQuery = (loader, options = {}) => {
+  const pending = ref(options.immediate !== false)
+
+  const run = async (opts = {}) => {
+    const silent = opts.silent ?? options.silent ?? false
+    if (!silent)
+      pending.value = true
+
+    try {
+      await withPageLoad(loader, { silent })
+    }
+    finally {
+      if (!silent)
+        pending.value = false
+    }
   }
+
+  if (options.immediate !== false)
+    run()
+
+  return { pending, run }
 }

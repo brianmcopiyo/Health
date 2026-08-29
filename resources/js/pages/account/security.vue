@@ -130,7 +130,7 @@ const logout = async () => {
   await router.push({ name: 'login' })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 
 onMounted(() => {
   if (route.query.action === 'password')
@@ -213,6 +213,7 @@ onMounted(() => {
         </HButton>
       </template>
       <HTable
+        :loading="pending"
         :headers="sessionHeaders"
         :items="sessions"
         empty="No active sessions"
@@ -247,6 +248,7 @@ onMounted(() => {
         Recent actions you performed in hospitals you can access
       </p>
       <HTable
+        :loading="pending"
         :headers="activityHeaders"
         :items="activity"
         empty="No account activity yet"
@@ -285,6 +287,7 @@ onMounted(() => {
           v-model="passwordForm.password_confirmation"
           type="password"
           label="Confirm new password"
+          placeholder="Re-enter new password"
           required
         />
       </form>
@@ -317,6 +320,7 @@ onMounted(() => {
           v-model="emailForm.email"
           type="email"
           label="New email"
+          placeholder="you@hospital.org"
           required
         />
         <HInput

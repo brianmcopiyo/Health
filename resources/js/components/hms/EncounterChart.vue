@@ -51,12 +51,32 @@ const canCancelOrder = order => {
   return subject && ability.can('update', subject) && !['completed', 'cancelled'].includes(order.status)
 }
 
-const loadChart = async () => {
+const pending = ref(false)
+const showSkel = useDelayedVisible(pending)
+const fieldRows = [1, 2, 3, 4]
+
+const loadChart = async (opts = {}) => {
   if (!props.encounterId)
     return
-  chart.value = await $api(`/encounters/${props.encounterId}`)
-  services.value = asList(await $api('/clinical-services').catch(() => []))
-  medications.value = asList(await $api('/medications').catch(() => []))
+  const silent = opts.silent === true
+  if (!silent && String(chart.value?.id ?? '') !== String(props.encounterId))
+    pending.value = true
+  try {
+    chart.value = await $api(`/encounters/${props.encounterId}`)
+    services.value = asList(await $api('/clinical-services').catch(() => []))
+    medications.value = asList(await $api('/medications').catch(() => []))
+  }
+  catch (error) {
+    if (!silent) {
+      chart.value = null
+      formError.value = error?.data?.message || error?.message || 'Unable to load this encounter'
+    }
+    console.error(error)
+  }
+  finally {
+    if (!silent)
+      pending.value = false
+  }
 }
 
 watch(() => [props.modelValue, props.encounterId], async ([open]) => {
@@ -74,7 +94,7 @@ watch(() => [props.modelValue, props.encounterId], async ([open]) => {
 const post = async (path, body) => {
   await wrapSave(saving, formError, async () => {
     await $api(path, { method: 'POST', body })
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -98,7 +118,7 @@ const saveOrder = async () => {
       },
     })
     orderForm.value = { module_key: 'laboratory', service_id: null, item_name: '' }
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -113,7 +133,7 @@ const saveRx = async () => {
       },
     })
     rxForm.value = { medication_id: null, dose: '', frequency: 'twice daily', duration: '', quantity: 1 }
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -121,7 +141,7 @@ const saveRx = async () => {
 const cancelOrder = async order => {
   await wrapSave(saving, formError, async () => {
     await $api(`/service-orders/${order.id}`, { method: 'PATCH', body: { status: 'cancelled' } })
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -129,7 +149,7 @@ const cancelOrder = async order => {
 const cancelRx = async item => {
   await wrapSave(saving, formError, async () => {
     await $api(`/prescriptions/${item.id}/status`, { method: 'PATCH', body: { status: 'cancelled' } })
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -137,7 +157,7 @@ const cancelRx = async item => {
 const startConsult = async () => {
   await wrapSave(saving, formError, async () => {
     await $api(`/encounters/${props.encounterId}`, { method: 'PATCH', body: { status: 'in_progress' } })
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -165,7 +185,7 @@ const admit = async () => {
       },
     })
     admitOpen.value = false
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -183,7 +203,7 @@ const discharge = async () => {
       body: { notes: dischargeNotes.value || undefined },
     })
     dischargeOpen.value = false
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -191,7 +211,7 @@ const discharge = async () => {
 const cancelEncounter = async () => {
   await wrapSave(saving, formError, async () => {
     await $api(`/encounters/${props.encounterId}`, { method: 'PATCH', body: { status: 'cancelled' } })
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -216,7 +236,7 @@ const saveEdit = async () => {
       },
     })
     editOpen.value = false
-    await loadChart()
+    await loadChart({ silent: true })
     emit('saved')
   })
 }
@@ -242,7 +262,43 @@ const openInvoice = async () => {
       {{ chart ? `${labelize(chart.type)} · ${labelize(chart.status)}` : '' }}
     </template>
     <div
-      v-if="chart"
+      v-if="pending || showSkel"
+      class="h-record-loading"
+      :class="{ 'is-hold': !showSkel }"
+    >
+      <div
+        v-for="row in fieldRows"
+        :key="row"
+        class="h-metric"
+      >
+        <span class="h-skeleton is-label" />
+        <strong class="h-skeleton is-value" />
+      </div>
+      <div class="h-table-wrap">
+        <table class="h-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Status</th>
+              <th>When</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="n in 4"
+              :key="n"
+              class="h-skel-row"
+            >
+              <td><span class="h-skeleton is-cell" /></td>
+              <td><span class="h-skeleton is-cell" /></td>
+              <td><span class="h-skeleton is-cell" /></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div
+      v-else-if="chart"
       class="h-stack"
     >
       <p class="h-muted">
@@ -333,6 +389,7 @@ const openInvoice = async () => {
         <HNumber
           v-model="vitalForm.temperature"
           label="Temp"
+          placeholder="e.g. 37.2"
           :step="0.1"
           :min="30"
           :max="45"
@@ -340,11 +397,13 @@ const openInvoice = async () => {
         <HNumber
           v-model="vitalForm.pulse"
           label="Pulse"
+          placeholder="e.g. 72"
           :min="0"
         />
         <HNumber
           v-model="vitalForm.spo2"
           label="SpO2"
+          placeholder="e.g. 98"
           :min="0"
           :max="100"
         />
@@ -372,6 +431,7 @@ const openInvoice = async () => {
         <HInput
           v-model="diagnosisForm.name"
           label="Diagnosis"
+          placeholder="e.g. Acute asthma"
         />
         <HRadioGroup
           v-model="diagnosisForm.kind"
@@ -400,6 +460,7 @@ const openInvoice = async () => {
         v-if="canTreat && openStatuses"
         v-model="noteForm.body"
         label="Clinical note"
+        placeholder="Record findings or progress"
       />
       <HButton
         v-if="canTreat && openStatuses"
@@ -427,15 +488,19 @@ const openInvoice = async () => {
       </p>
       <div
         v-if="canTreat && openStatuses"
-        class="h-stack"
+        class="h-form-grid"
       >
         <HInput
+          span
           v-model="planForm.title"
           label="Plan title"
+          placeholder="e.g. Oxygen and nebules"
         />
         <HTextarea
+          span
           v-model="planForm.body"
           label="Plan details"
+          placeholder="What to do and when"
         />
         <HButton
           size="sm"
@@ -541,6 +606,7 @@ const openInvoice = async () => {
         <HNumber
           v-model="rxForm.quantity"
           label="Qty"
+          placeholder="e.g. 14"
           :min="1"
         />
       </div>
@@ -553,6 +619,12 @@ const openInvoice = async () => {
         Prescribe
       </HButton>
     </div>
+    <div
+      v-else
+      class="h-alert"
+    >
+      This encounter could not be loaded.
+    </div>
   </HOffcanvas>
 
   <HModal
@@ -562,7 +634,7 @@ const openInvoice = async () => {
     :persistent="saving"
   >
     <fieldset
-      class="h-stack"
+      class="h-form-grid"
       :disabled="saving"
     >
       <HSelect
@@ -574,8 +646,10 @@ const openInvoice = async () => {
         label="Bed or unit"
       />
       <HTextarea
+        span
         v-model="admitForm.notes"
         label="Admission notes"
+        placeholder="Reason for admission"
       />
     </fieldset>
     <template #actions>
@@ -604,6 +678,7 @@ const openInvoice = async () => {
     <HTextarea
       v-model="dischargeNotes"
       label="Discharge notes"
+      placeholder="Instructions or follow-up"
     />
     <template #actions>
       <HButton
@@ -629,12 +704,13 @@ const openInvoice = async () => {
     :persistent="saving"
   >
     <fieldset
-      class="h-stack"
+      class="h-form-grid"
       :disabled="saving"
     >
       <HInput
         v-model="editForm.chief_complaint"
         label="Chief complaint"
+        placeholder="Why is the patient here?"
       />
       <HSelect
         v-model="editForm.clinician_id"

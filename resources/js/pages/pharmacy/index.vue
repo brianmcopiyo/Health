@@ -46,7 +46,20 @@ const updateRx = async (item, status) => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
+const rxHeaders = [
+  { title: 'Patient', key: 'patient.first_name' },
+  { title: 'Medicines', key: 'items' },
+  { title: 'Status', key: 'status' },
+  { title: 'Actions', key: 'actions' },
+]
+const stockHeaders = [
+  { title: 'Medicine', key: 'name' },
+  { title: 'Strength', key: 'strength' },
+  { title: 'Stock', key: 'stock_qty' },
+  { title: 'Reorder at', key: 'reorder_level' },
+  { title: 'Actions', key: 'actions' },
+]
 </script>
 
 <template>
@@ -69,12 +82,8 @@ await withPageLoad(load)
       flush
     >
       <HTable
-        :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Medicines', key: 'items' },
-          { title: 'Status', key: 'status' },
-          { title: 'Actions', key: 'actions' },
-        ]"
+        :loading="pending"
+        :headers="rxHeaders"
         :items="prescriptions"
         empty="No prescriptions in the pharmacy queue"
       >
@@ -134,13 +143,8 @@ await withPageLoad(load)
       flush
     >
       <HTable
-        :headers="[
-          { title: 'Medicine', key: 'name' },
-          { title: 'Strength', key: 'strength' },
-          { title: 'Stock', key: 'stock_qty' },
-          { title: 'Reorder at', key: 'reorder_level' },
-          { title: 'Actions', key: 'actions' },
-        ]"
+        :loading="pending"
+        :headers="stockHeaders"
         :items="medications"
         empty="No formulary items"
       >
@@ -163,16 +167,20 @@ await withPageLoad(load)
       :error="formError"
       :persistent="saving"
     >
-      <HNumber
-        v-model="stockForm.stock_qty"
-        label="Stock quantity"
-        :min="0"
-      />
-      <HNumber
-        v-model="stockForm.reorder_level"
-        label="Reorder level"
-        :min="0"
-      />
+      <HFormGrid>
+        <HNumber
+          v-model="stockForm.stock_qty"
+          label="Stock quantity"
+          placeholder="e.g. 120"
+          :min="0"
+        />
+        <HNumber
+          v-model="stockForm.reorder_level"
+          label="Reorder level"
+          placeholder="e.g. 20"
+          :min="0"
+        />
+      </HFormGrid>
       <template #actions>
         <HButton
           variant="ghost"

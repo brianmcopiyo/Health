@@ -112,7 +112,7 @@ const removePhoto = async () => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -186,9 +186,11 @@ await withPageLoad(load)
     </HCard>
 
     <HCard title="Personal information">
-      <form
-        class="h-form is-wide"
-        @submit.prevent="save"
+      <HForm
+        wide
+        :loading="pending"
+        :fields="3"
+        @submit="save"
       >
         <div
           v-if="formError"
@@ -196,24 +198,27 @@ await withPageLoad(load)
         >
           {{ formError }}
         </div>
-        <div class="h-form-grid">
+        <HFormGrid>
           <HInput
             v-model="form.name"
             label="Full name"
+            placeholder="e.g. Grace Adeyemi"
             required
           />
           <HInput
             v-model="form.phone"
             label="Phone"
+            placeholder="e.g. 024 555 0100"
             optional
           />
-        </div>
-        <HInput
-          :model-value="userData?.email"
-          label="Email"
-          disabled
-          hint="Change your sign-in email from Account security"
-        />
+          <HInput
+            span
+            :model-value="userData?.email"
+            label="Email"
+            disabled
+            hint="Change your sign-in email from Account security"
+          />
+        </HFormGrid>
         <div class="h-actions">
           <HButton
             type="submit"
@@ -222,18 +227,20 @@ await withPageLoad(load)
             Save profile
           </HButton>
         </div>
-      </form>
+      </HForm>
     </HCard>
 
     <HCard title="Professional details">
-      <form
-        class="h-form is-wide"
-        @submit.prevent="save"
+      <HForm
+        wide
+        :loading="pending"
+        @submit="save"
       >
-        <div class="h-form-grid">
+        <HFormGrid>
           <HInput
             v-model="form.job_title"
             label="Job title"
+            placeholder="e.g. Charge nurse"
             optional
           />
           <HInput
@@ -245,11 +252,13 @@ await withPageLoad(load)
           <HInput
             v-model="form.specialty"
             label="Specialty"
+            placeholder="e.g. Paediatrics"
             optional
           />
           <HInput
             v-model="form.license_number"
             label="License number"
+            placeholder="e.g. MDC-12345"
             optional
           />
           <HSelect
@@ -273,7 +282,7 @@ await withPageLoad(load)
             disabled
             hint="Use the hospital switcher when you hold more than one membership"
           />
-        </div>
+        </HFormGrid>
         <div class="h-actions">
           <HButton
             type="submit"
@@ -282,13 +291,13 @@ await withPageLoad(load)
             Save details
           </HButton>
         </div>
-      </form>
+      </HForm>
     </HCard>
 
     <HCard title="Availability and notifications">
-      <form
-        class="h-form is-wide"
-        @submit.prevent="save"
+      <HForm
+        wide
+        @submit="save"
       >
         <HRadioGroup
           v-model="form.availability"
@@ -316,7 +325,7 @@ await withPageLoad(load)
             Save preferences
           </HButton>
         </div>
-      </form>
+      </HForm>
     </HCard>
   </div>
 </template>

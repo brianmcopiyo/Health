@@ -80,7 +80,7 @@ const setDirection = value => {
   load()
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -118,6 +118,7 @@ await withPageLoad(load)
         />
       </HToolbar>
       <HTable
+        :loading="pending"
         :headers="headers"
         :items="referrals"
         empty="No referrals in this view"
@@ -196,6 +197,7 @@ await withPageLoad(load)
         <HTextarea
           v-model="responseNotes"
           label="Notes"
+          placeholder="Response or extra information"
         />
       </div>
       <template #actions>

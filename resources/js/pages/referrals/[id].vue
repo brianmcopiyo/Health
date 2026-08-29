@@ -1,6 +1,6 @@
 <script setup>
 import { facilityRecordTo } from '@/utils/helpers'
-import { labelize, statusColor } from '@/utils/status'
+import { labelize } from '@/utils/status'
 
 definePage({
   meta: {
@@ -60,7 +60,7 @@ const updateStatus = async nextStatus => {
   })
 }
 
-await withPageLoad(load)
+const { pending } = usePageQuery(load)
 </script>
 
 <template>
@@ -72,32 +72,24 @@ await withPageLoad(load)
     back-label="Referrals"
     :tabs="tabs"
     :tab="tab"
-    :missing="!referral"
+    :loading="pending"
+    :missing="!pending && !referral"
     @update:tab="tab = $event"
   >
-    <template
-      v-if="referral"
-      #actions
-    >
-      <HButton @click="openManage">
-        Manage
-      </HButton>
-    </template>
-
     <template v-if="referral">
       <div
         v-if="tab === 'overview'"
         class="h-detail"
       >
         <HCard title="Transfer">
-          <div class="h-metric">
-            <span>Status</span>
-            <strong>
-              <HBadge :tone="statusColor(referral.status)">
-                {{ labelize(referral.status) }}
-              </HBadge>
-            </strong>
-          </div>
+          <template #actions>
+            <HButton
+              size="sm"
+              @click="openManage"
+            >
+              Manage
+            </HButton>
+          </template>
           <div class="h-metric">
             <span>Need</span>
             <strong>{{ referral.required_facility_type?.name || '—' }} · {{ referral.required_capacity }}</strong>
@@ -201,6 +193,7 @@ await withPageLoad(load)
         <HTextarea
           v-model="responseNotes"
           label="Notes"
+          placeholder="Response or extra information"
         />
       </div>
       <template #actions>
