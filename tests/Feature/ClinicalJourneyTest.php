@@ -273,7 +273,7 @@ class ClinicalJourneyTest extends TestCase
         $this->assertNotEmpty($nurse['ward_patients']);
     }
 
-    private function actingAsDoctorChart(int $patientId): array
+    private function actingAsDoctorChart(string $patientId): array
     {
         Sanctum::actingAs($this->user('doctor@riverside.test'));
 

@@ -47,7 +47,7 @@ class DocumentController extends Controller
 
         if (! empty($data['encounter_id'])) {
             $encounter = Encounter::query()->findOrFail($data['encounter_id']);
-            abort_unless((int) $encounter->patient_id === (int) $patient->id, 422, 'Encounter does not belong to this patient.');
+            abort_unless((string) $encounter->patient_id === (string) $patient->id, 422, 'Encounter does not belong to this patient.');
             abort_unless(Access::canViewEncounter($request->user(), $encounter), 403, 'This action is unauthorized.');
         }
 
@@ -56,7 +56,6 @@ class DocumentController extends Controller
         Storage::disk('clinical')->put($path, FieldCrypt::encrypt($contents));
 
         $document = ClinicalDocument::query()->create([
-            'uuid' => $uuid,
             'hospital_id' => $patient->hospital_id,
             'patient_id' => $patient->id,
             'encounter_id' => $data['encounter_id'] ?? null,
@@ -98,7 +97,7 @@ class DocumentController extends Controller
     private function serialize(ClinicalDocument $document): array
     {
         return [
-            'id' => $document->uuid,
+            'id' => $document->id,
             'original_name' => $document->original_name,
             'mime' => $document->mime,
             'size' => $document->size,

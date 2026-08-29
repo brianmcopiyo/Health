@@ -4,11 +4,10 @@ namespace App\Models;
 
 use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Encounter extends Model
+class Encounter extends BaseModel
 {
     use BelongsToHospital;
 
@@ -132,7 +131,7 @@ class Encounter extends Model
         return $this->hasMany(BedAssignment::class);
     }
 
-    public function addClinician(?int $userId, string $role = 'attending'): void
+    public function addClinician(?string $userId, string $role = 'attending'): void
     {
         if (! $userId)
             return;

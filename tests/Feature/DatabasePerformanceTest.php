@@ -47,17 +47,18 @@ class DatabasePerformanceTest extends TestCase
     public function test_hot_queries_use_indexes(): void
     {
         $hospitalId = Hospital::query()->where('code', 'RGH')->value('id');
+        $quoted = "'".$hospitalId."'";
 
-        $patientPlan = $this->explain("SELECT id FROM patients WHERE hospital_id = {$hospitalId} AND last_name LIKE 'Patton%' ORDER BY last_name LIMIT 25");
+        $patientPlan = $this->explain("SELECT id FROM patients WHERE hospital_id = {$quoted} AND last_name LIKE 'Patton%' ORDER BY last_name LIMIT 25");
         $this->assertStringContainsString('INDEX', $patientPlan);
 
-        $encounterPlan = $this->explain("SELECT id FROM encounters WHERE hospital_id = {$hospitalId} AND type = 'opd' AND status = 'waiting' ORDER BY created_at DESC LIMIT 25");
+        $encounterPlan = $this->explain("SELECT id FROM encounters WHERE hospital_id = {$quoted} AND type = 'opd' AND status = 'waiting' ORDER BY created_at DESC LIMIT 25");
         $this->assertStringContainsString('INDEX', $encounterPlan);
 
-        $orderPlan = $this->explain("SELECT id FROM service_orders WHERE hospital_id = {$hospitalId} AND module_key = 'laboratory' AND status = 'requested' ORDER BY created_at DESC LIMIT 25");
+        $orderPlan = $this->explain("SELECT id FROM service_orders WHERE hospital_id = {$quoted} AND module_key = 'laboratory' AND status = 'requested' ORDER BY created_at DESC LIMIT 25");
         $this->assertStringContainsString('INDEX', $orderPlan);
 
-        $invoicePlan = $this->explain("SELECT id FROM invoices WHERE hospital_id = {$hospitalId} AND status = 'draft' ORDER BY created_at DESC LIMIT 25");
+        $invoicePlan = $this->explain("SELECT id FROM invoices WHERE hospital_id = {$quoted} AND status = 'draft' ORDER BY created_at DESC LIMIT 25");
         $this->assertStringContainsString('INDEX', $invoicePlan);
     }
 

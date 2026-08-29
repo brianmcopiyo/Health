@@ -13,17 +13,17 @@ return new class extends Migration
         });
 
         Schema::create('hospital_user', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('hospital_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('role_id')->constrained()->restrictOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('user_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('role_id')->constrained()->restrictOnDelete();
             $table->timestamps();
             $table->unique(['user_id', 'hospital_id']);
         });
 
         Schema::create('departments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('hospital_id')->constrained()->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->string('slug');
             $table->string('module_key');
@@ -33,12 +33,12 @@ return new class extends Migration
         });
 
         Schema::table('facilities', function (Blueprint $table) {
-            $table->foreignId('department_id')->nullable()->after('parent_id')->constrained()->nullOnDelete();
+            $table->foreignUuid('department_id')->nullable()->after('parent_id')->constrained()->nullOnDelete();
         });
 
         Schema::create('patients', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('hospital_id')->constrained()->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
             $table->string('mrn');
             $table->string('first_name');
             $table->string('last_name');
@@ -52,12 +52,12 @@ return new class extends Migration
         });
 
         Schema::create('encounters', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('hospital_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('department_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('clinician_id')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('facility_id')->nullable()->constrained()->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('patient_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('department_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('clinician_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('facility_id')->nullable()->constrained()->nullOnDelete();
             $table->string('type');
             $table->string('status')->default('waiting');
             $table->string('chief_complaint')->nullable();
@@ -68,12 +68,12 @@ return new class extends Migration
         });
 
         Schema::create('bed_assignments', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('hospital_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('encounter_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('facility_id')->constrained()->restrictOnDelete();
-            $table->foreignId('assigned_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('patient_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('encounter_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('facility_id')->constrained()->restrictOnDelete();
+            $table->foreignUuid('assigned_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('status')->default('active');
             $table->timestamp('assigned_at')->nullable();
             $table->timestamp('discharged_at')->nullable();
@@ -81,13 +81,13 @@ return new class extends Migration
         });
 
         Schema::create('service_orders', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('hospital_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('encounter_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('facility_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('ordered_by')->nullable()->constrained('users')->nullOnDelete();
-            $table->foreignId('completed_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('patient_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('encounter_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('facility_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('ordered_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignUuid('completed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('module_key');
             $table->string('item_name');
             $table->string('status')->default('pending');
@@ -97,10 +97,10 @@ return new class extends Migration
         });
 
         Schema::create('invoices', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('hospital_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('patient_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('encounter_id')->nullable()->constrained()->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('patient_id')->constrained()->cascadeOnDelete();
+            $table->foreignUuid('encounter_id')->nullable()->constrained()->nullOnDelete();
             $table->string('number');
             $table->string('status')->default('draft');
             $table->unsignedInteger('total')->default(0);
@@ -111,8 +111,8 @@ return new class extends Migration
         });
 
         Schema::create('invoice_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('invoice_id')->constrained()->cascadeOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('invoice_id')->constrained()->cascadeOnDelete();
             $table->string('description');
             $table->unsignedInteger('quantity')->default(1);
             $table->unsignedInteger('unit_amount')->default(0);
@@ -121,7 +121,7 @@ return new class extends Migration
         });
 
         Schema::table('referrals', function (Blueprint $table) {
-            $table->foreignId('patient_id')->nullable()->after('to_hospital_id')->constrained()->nullOnDelete();
+            $table->foreignUuid('patient_id')->nullable()->after('to_hospital_id')->constrained()->nullOnDelete();
         });
     }
 

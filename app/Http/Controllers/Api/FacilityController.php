@@ -24,16 +24,16 @@ class FacilityController extends Controller
     {
         $query = Facility::query()->with(['type:id,name,slug,icon', 'parent:id,name,code', 'hospital:id,name,code', 'department:id,name'])->orderBy('name');
 
-        if ($typeId = $request->integer('facility_type_id')) {
+        if ($typeId = $request->input('facility_type_id')) {
             $query->where('facility_type_id', $typeId);
         }
 
         if ($type = $request->string('type')->toString()) {
             $typeId = Cache::remember('facility_type:'.$type, 86400, fn () => FacilityType::query()->where('slug', $type)->value('id'));
-            $query->where('facility_type_id', $typeId ?: 0);
+            $query->where('facility_type_id', $typeId ?: '00000000-0000-0000-0000-000000000000');
         }
 
-        if ($departmentId = $request->integer('department_id')) {
+        if ($departmentId = $request->input('department_id')) {
             $query->where('department_id', $departmentId);
         }
 
@@ -103,7 +103,7 @@ class FacilityController extends Controller
     private function validated(Request $request, ?Facility $facility = null): array
     {
         $hospitalId = $request->user()->isPlatformAdmin()
-            ? ($request->integer('hospital_id') ?: $facility?->hospital_id)
+            ? ($request->input('hospital_id') ?: $facility?->hospital_id)
             : $request->user()->hospital_id;
 
         $data = $request->validate([

@@ -3,10 +3,9 @@
 namespace App\Models;
 
 use App\Models\Concerns\VisibleOnHospitalNetwork;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class AssistanceRequest extends Model
+class AssistanceRequest extends BaseModel
 {
     use VisibleOnHospitalNetwork;
 

@@ -213,7 +213,7 @@ class AmbulanceController extends Controller
     private function validatedVehicle(Request $request, ?Ambulance $ambulance = null): array
     {
         $hospitalId = $request->user()->isPlatformAdmin()
-            ? ($request->integer('hospital_id') ?: $ambulance?->hospital_id)
+            ? ($request->input('hospital_id') ?: $ambulance?->hospital_id)
             : $request->user()->hospital_id;
 
         $data = $request->validate([

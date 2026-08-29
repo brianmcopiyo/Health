@@ -205,7 +205,7 @@ class PatientController extends Controller
         ]);
     }
 
-    private function syncHistory(Patient $patient, array $allergies, array $conditions, int $userId): void
+    private function syncHistory(Patient $patient, array $allergies, array $conditions, string $userId): void
     {
         if ($allergies) {
             $incoming = collect($allergies)->map(fn ($row) => mb_strtolower(trim($row['allergen'])));

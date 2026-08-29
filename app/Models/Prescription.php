@@ -4,11 +4,10 @@ namespace App\Models;
 
 use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Prescription extends Model
+class Prescription extends BaseModel
 {
     use BelongsToHospital;
 

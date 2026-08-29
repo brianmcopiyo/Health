@@ -29,12 +29,11 @@ return new class extends Migration
         });
 
         Schema::create('clinical_documents', function (Blueprint $table) {
-            $table->id();
-            $table->uuid('uuid')->unique();
-            $table->foreignId('hospital_id')->constrained()->restrictOnDelete();
-            $table->foreignId('patient_id')->constrained()->restrictOnDelete();
-            $table->foreignId('encounter_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('hospital_id')->constrained()->restrictOnDelete();
+            $table->foreignUuid('patient_id')->constrained()->restrictOnDelete();
+            $table->foreignUuid('encounter_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('uploaded_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('disk')->default('clinical');
             $table->string('path');
             $table->text('original_name');

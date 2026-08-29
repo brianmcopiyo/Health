@@ -80,7 +80,7 @@ class UserController extends Controller
 
         if ($role->slug !== 'platform-admin') {
             abort_unless($hospitalId, 422, 'Hospital is required for this role.');
-            abort_unless($role->hospital_id === null || $role->hospital_id === (int) $hospitalId, 422, 'Invalid role.');
+            abort_unless($role->hospital_id === null || (string) $role->hospital_id === (string) $hospitalId, 422, 'Invalid role.');
         }
 
         $user = User::query()->create([
@@ -178,7 +178,7 @@ class UserController extends Controller
         return response()->json(['message' => 'User removed']);
     }
 
-    private function syncMembership(User $user, int $hospitalId, int $roleId): void
+    private function syncMembership(User $user, string $hospitalId, string $roleId): void
     {
         HospitalMembership::query()->updateOrCreate(
             ['user_id' => $user->id, 'hospital_id' => $hospitalId],

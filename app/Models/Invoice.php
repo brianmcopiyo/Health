@@ -3,11 +3,10 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToHospital;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Invoice extends Model
+class Invoice extends BaseModel
 {
     use BelongsToHospital;
 

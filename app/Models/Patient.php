@@ -7,11 +7,10 @@ use App\Models\Concerns\BelongsToHospital;
 use App\Support\FieldCrypt;
 use App\Support\PatientTimeline;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Patient extends Model
+class Patient extends BaseModel
 {
     use BelongsToHospital;
 

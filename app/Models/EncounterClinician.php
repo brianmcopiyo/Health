@@ -2,10 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class EncounterClinician extends Model
+class EncounterClinician extends BaseModel
 {
     protected $fillable = ['encounter_id', 'user_id', 'care_role'];
 

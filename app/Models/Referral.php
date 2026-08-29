@@ -4,10 +4,9 @@ namespace App\Models;
 
 use App\Casts\Encrypted;
 use App\Models\Concerns\VisibleOnHospitalNetwork;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Referral extends Model
+class Referral extends BaseModel
 {
     use VisibleOnHospitalNetwork;
 

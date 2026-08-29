@@ -36,7 +36,7 @@ class ServiceOrderController extends Controller
             $query->where('status', $status);
         }
 
-        if ($encounterId = $request->integer('encounter_id')) {
+        if ($encounterId = $request->input('encounter_id')) {
             $query->where('encounter_id', $encounterId);
         }
 

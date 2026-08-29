@@ -8,6 +8,7 @@ use App\Support\FieldCrypt;
 use App\Support\HospitalSequence;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class VolumeSeeder extends Seeder
 {
@@ -26,6 +27,7 @@ class VolumeSeeder extends Seeder
             $n = $start + $i;
             $phone = '555-'.str_pad((string) (2000 + $i), 4, '0', STR_PAD_LEFT);
             $patientRows[] = [
+                'id' => (string) Str::uuid(),
                 'hospital_id' => $hospital->id,
                 'mrn' => sprintf('%s-%04d', $hospital->code, $n),
                 'first_name' => $i % 40 === 0 ? 'Patience' : 'Kofi',
@@ -61,6 +63,7 @@ class VolumeSeeder extends Seeder
             $type = $index % 3 === 0 ? 'emergency' : 'opd';
             $status = $index % 5 === 0 ? 'waiting' : ($index % 5 === 1 ? 'in_progress' : 'completed');
             $encounterRows[] = [
+                'id' => (string) Str::uuid(),
                 'hospital_id' => $hospital->id,
                 'patient_id' => $patientId,
                 'clinician_id' => $doctor->id,
@@ -73,6 +76,7 @@ class VolumeSeeder extends Seeder
 
             if ($index % 2 === 0) {
                 $orderRows[] = [
+                    'id' => (string) Str::uuid(),
                     'hospital_id' => $hospital->id,
                     'patient_id' => $patientId,
                     'ordered_by' => $doctor->id,
@@ -88,6 +92,7 @@ class VolumeSeeder extends Seeder
 
             if ($index % 2 === 1) {
                 $invoiceRows[] = [
+                    'id' => (string) Str::uuid(),
                     'hospital_id' => $hospital->id,
                     'patient_id' => $patientId,
                     'number' => sprintf('%s-INV-%04d', $hospital->code, $invoiceCursor),

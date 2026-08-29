@@ -19,17 +19,17 @@ return new class extends Migration
         });
 
         Schema::table('payments', function (Blueprint $table) {
-            $table->foreignId('patient_id')->nullable()->after('invoice_id')->constrained()->nullOnDelete();
+            $table->foreignUuid('patient_id')->nullable()->after('invoice_id')->constrained()->nullOnDelete();
         });
 
         DB::statement('UPDATE payments SET patient_id = (SELECT patient_id FROM invoices WHERE invoices.id = payments.invoice_id)');
 
         Schema::create('audit_events', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('hospital_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('actor_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->uuid('id')->primary();
+            $table->foreignUuid('hospital_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignUuid('actor_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('auditable_type');
-            $table->unsignedBigInteger('auditable_id');
+            $table->uuid('auditable_id');
             $table->string('action');
             $table->json('payload')->nullable();
             $table->timestamp('created_at')->useCurrent();

@@ -49,7 +49,7 @@ class ReferralHandover
         });
     }
 
-    private static function mirrorPatient(Patient $origin, int $hospitalId): Patient
+    private static function mirrorPatient(Patient $origin, string $hospitalId): Patient
     {
         $existing = Patient::withoutGlobalScope('hospital')
             ->where('hospital_id', $hospitalId)
@@ -87,7 +87,7 @@ class ReferralHandover
         ]);
     }
 
-    private static function createNamedPatient(Referral $referral, int $hospitalId): Patient
+    private static function createNamedPatient(Referral $referral, string $hospitalId): Patient
     {
         $parts = preg_split('/\s+/', trim($referral->patient_name)) ?: ['Unknown'];
         $hospital = Hospital::query()->find($hospitalId);

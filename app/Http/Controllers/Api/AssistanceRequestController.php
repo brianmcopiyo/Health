@@ -53,7 +53,7 @@ class AssistanceRequestController extends Controller
             'quantity' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        abort_if((int) $data['to_hospital_id'] === (int) $user->hospital_id, 422, 'Select a different hospital.');
+        abort_if((string) $data['to_hospital_id'] === (string) $user->hospital_id, 422, 'Select a different hospital.');
 
         $destination = Hospital::query()->findOrFail($data['to_hospital_id']);
         abort_unless($destination->is_active, 422, 'Destination hospital is inactive.');

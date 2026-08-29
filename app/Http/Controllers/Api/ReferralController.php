@@ -127,7 +127,7 @@ class ReferralController extends Controller
 
         abort_unless(($data['patient_name'] ?? null) || ($data['patient_id'] ?? null), 422, 'Patient is required.');
 
-        abort_if((int) $data['to_hospital_id'] === (int) $user->hospital_id, 422, 'Select a different hospital.');
+        abort_if((string) $data['to_hospital_id'] === (string) $user->hospital_id, 422, 'Select a different hospital.');
 
         $required = $data['required_capacity'] ?? 1;
         $destination = Hospital::query()->findOrFail($data['to_hospital_id']);
@@ -237,7 +237,7 @@ class ReferralController extends Controller
         return $referral->load(['fromHospital', 'toHospital', 'requiredFacilityType', 'destinationFacility', 'creator', 'reviewer']);
     }
 
-    private function claimFacility(Referral $referral, ?int $facilityId): Facility
+    private function claimFacility(Referral $referral, ?string $facilityId): Facility
     {
         $query = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $referral->to_hospital_id)

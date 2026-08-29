@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class ChargeLedger
 {
-    public static function post(Encounter $encounter, string $sourceType, int $sourceId, string $description, int $unitAmount, int $quantity = 1, ?int $serviceId = null): InvoiceItem
+    public static function post(Encounter $encounter, string $sourceType, string $sourceId, string $description, int $unitAmount, int $quantity = 1, ?string $serviceId = null): InvoiceItem
     {
         return DB::transaction(function () use ($encounter, $sourceType, $sourceId, $description, $unitAmount, $quantity, $serviceId) {
             $invoice = self::openInvoice($encounter);
@@ -42,7 +42,7 @@ class ChargeLedger
         });
     }
 
-    public static function forService(Encounter $encounter, string $code, string $sourceType, int $sourceId, ?string $fallbackName = null, int $fallbackPrice = 0): ?InvoiceItem
+    public static function forService(Encounter $encounter, string $code, string $sourceType, string $sourceId, ?string $fallbackName = null, int $fallbackPrice = 0): ?InvoiceItem
     {
         $service = ClinicalService::query()
             ->where('hospital_id', $encounter->hospital_id)

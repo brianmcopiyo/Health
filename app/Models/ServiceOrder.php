@@ -4,10 +4,9 @@ namespace App\Models;
 
 use App\Casts\Encrypted;
 use App\Models\Concerns\BelongsToHospital;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ServiceOrder extends Model
+class ServiceOrder extends BaseModel
 {
     use BelongsToHospital;
 

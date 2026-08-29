@@ -28,7 +28,7 @@ class InvoiceController extends Controller
             $query->where('status', $status);
         }
 
-        if ($patientId = $request->integer('patient_id')) {
+        if ($patientId = $request->input('patient_id')) {
             $query->where('patient_id', $patientId);
         }
 

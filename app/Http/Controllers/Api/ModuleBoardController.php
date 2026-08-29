@@ -164,7 +164,7 @@ class ModuleBoardController extends Controller
         ];
     }
 
-    private function facilityTypeId(?string $slug): ?int
+    private function facilityTypeId(?string $slug): ?string
     {
         if (! $slug) {
             return null;

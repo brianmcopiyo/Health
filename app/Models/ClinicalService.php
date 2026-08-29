@@ -3,10 +3,9 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToHospital;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class ClinicalService extends Model
+class ClinicalService extends BaseModel
 {
     use BelongsToHospital;
 

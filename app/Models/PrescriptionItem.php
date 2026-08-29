@@ -2,11 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class PrescriptionItem extends Model
+class PrescriptionItem extends BaseModel
 {
     protected $fillable = [
         'prescription_id', 'medication_id', 'dose', 'frequency', 'duration', 'quantity', 'instructions',

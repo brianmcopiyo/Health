@@ -53,7 +53,7 @@ class WorkspaceController extends Controller
         ];
     }
 
-    private function wardPatients(int $userId)
+    private function wardPatients(string $userId)
     {
         $wardIds = StaffAssignment::query()
             ->where('user_id', $userId)

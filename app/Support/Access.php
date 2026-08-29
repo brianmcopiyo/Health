@@ -25,7 +25,7 @@ class Access
             return false;
         }
 
-        if ((int) $patient->hospital_id !== (int) $user->hospital_id) {
+        if ((string) $patient->hospital_id !== (string) $user->hospital_id) {
             return false;
         }
 
@@ -47,7 +47,7 @@ class Access
             return false;
         }
 
-        if ((int) $encounter->hospital_id !== (int) $user->hospital_id) {
+        if ((string) $encounter->hospital_id !== (string) $user->hospital_id) {
             return false;
         }
 
@@ -56,7 +56,7 @@ class Access
             return true;
         }
 
-        if ((int) $encounter->clinician_id === (int) $user->id) {
+        if ((string) $encounter->clinician_id === (string) $user->id) {
             return true;
         }
 
@@ -95,7 +95,7 @@ class Access
             return false;
         }
 
-        if ((int) $encounter->hospital_id !== (int) $user->hospital_id) {
+        if ((string) $encounter->hospital_id !== (string) $user->hospital_id) {
             return false;
         }
 
@@ -326,6 +326,6 @@ class Access
             $ids = $ids->merge(Prescription::query()->pluck('patient_id'));
         }
 
-        return $query->whereIn('id', $ids->unique()->filter()->all() ?: [0]);
+        return $query->whereIn('id', $ids->unique()->filter()->all() ?: ['00000000-0000-0000-0000-000000000000']);
     }
 }

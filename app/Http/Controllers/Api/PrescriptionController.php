@@ -156,7 +156,7 @@ class PrescriptionController extends Controller
         return ClinicalService::query()->where('is_active', true)->orderBy('name')->get(['id', 'hospital_id', 'name', 'code', 'category', 'unit_price', 'is_active']);
     }
 
-    private function dispense(Prescription $prescription, int $userId): void
+    private function dispense(Prescription $prescription, string $userId): void
     {
         $prescription->load(['items.medication', 'encounter']);
 

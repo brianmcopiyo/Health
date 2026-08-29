@@ -70,7 +70,7 @@ class EncounterController extends Controller
             });
         }
 
-        if ($patientId = $request->integer('patient_id')) {
+        if ($patientId = $request->input('patient_id')) {
             $query->where('patient_id', $patientId);
         }
 
