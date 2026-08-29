@@ -1464,7 +1464,12 @@ fieldset.h-form-grid {
 .h-table tbody tr {
   transition: background-color var(--motion-fast) var(--motion-ease);
 }
-.h-table tbody tr:hover { background: rgba(215, 239, 237, 0.35); }
+.h-table tbody tr:nth-child(even):not(.h-skel-row):not(.h-empty-row) {
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+}
+.h-table tbody tr:hover:not(.h-skel-row):not(.h-empty-row) {
+  background: rgba(215, 239, 237, 0.42);
+}
 .h-table tr:last-child td { border-bottom: 0; }
 .h-table th.is-fit,
 .h-table td.is-fit { width: 1%; }

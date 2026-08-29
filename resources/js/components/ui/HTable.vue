@@ -124,7 +124,10 @@ const colClass = header => {
             </td>
           </tr>
         </template>
-        <tr v-else-if="!items.length">
+        <tr
+          v-else-if="!items.length"
+          class="h-empty-row"
+        >
           <td
             :colspan="headers.length"
             class="h-empty"
