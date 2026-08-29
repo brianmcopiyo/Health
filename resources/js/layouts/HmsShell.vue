@@ -131,7 +131,7 @@ const logout = async () => {
 
 const loadWorkspace = async () => {
   try {
-    workspace.value = await $api('/workspace')
+    workspace.value = markRaw(await $api('/workspace'))
   }
   catch {
     workspace.value = null
@@ -529,7 +529,22 @@ onBeforeUnmount(() => {
               v-if="pageLoadError"
               class="h-alert"
             >
-              {{ pageLoadError }}
+              <span>{{ pageLoadError }}</span>
+              <div class="h-actions">
+                <HButton
+                  size="sm"
+                  :to="resolveHomeRoute(userData)"
+                >
+                  Open workspace
+                </HButton>
+                <HButton
+                  size="sm"
+                  variant="ghost"
+                  @click="pageLoadError = null"
+                >
+                  Dismiss
+                </HButton>
+              </div>
             </div>
           </HTransition>
           <slot />

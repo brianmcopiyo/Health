@@ -1,4 +1,6 @@
 <script setup>
+import { defaultReportFilters, downloadReport, reportQuery } from '@/composables/useReports'
+
 definePage({
   meta: {
     action: 'read',
@@ -6,192 +8,148 @@ definePage({
   },
 })
 
-const emptyStats = () => ({
-  hospital: { name: '' },
-  facilities: { available: 0, capacity: 0, utilization: 0 },
-  patients: { active: 0 },
-  ambulances: { available: 0 },
-  referrals: { incoming: 0, accepted: 0, in_transit: 0 },
-  assistance: { pending: 0, accepted: 0 },
-  encounters: { opd: 0, emergency: 0 },
-  facilitiesByType: [],
+const route = useRoute()
+const router = useRouter()
+const toast = useToast()
+const meta = ref(null)
+const payload = ref(null)
+const filters = ref(defaultReportFilters())
+const exporting = ref('')
+
+const section = computed(() => String(route.query.section || 'overview'))
+const tabs = computed(() => meta.value?.tabs || payload.value?.tabs || [])
+const schema = computed(() => {
+  const fromMeta = meta.value?.schemas?.[section.value]
+  return fromMeta || payload.value?.schema || { filters: ['from', 'to'] }
+})
+const hospital = computed(() => payload.value?.hospital || meta.value?.hospital || {})
+const subtitle = computed(() => {
+  const name = hospital.value?.name || 'Hospital reporting'
+  const range = payload.value?.range
+  return range ? `${name} · ${range.from} to ${range.to}` : name
 })
 
-const stats = ref(emptyStats())
+const queryParams = (extra = {}) => reportQuery(section.value, filters.value, extra)
 
 const load = async () => {
-  const payload = await $api('/reports')
-  stats.value = {
-    ...emptyStats(),
-    ...payload,
-    facilities: { ...emptyStats().facilities, ...(payload?.facilities || {}) },
-    patients: { ...emptyStats().patients, ...(payload?.patients || {}) },
-    ambulances: { ...emptyStats().ambulances, ...(payload?.ambulances || {}) },
-    referrals: { ...emptyStats().referrals, ...(payload?.referrals || {}) },
-    assistance: { ...emptyStats().assistance, ...(payload?.assistance || {}) },
-    encounters: { ...emptyStats().encounters, ...(payload?.encounters || {}) },
-    facilitiesByType: asList(payload?.facilitiesByType),
+  if (!meta.value)
+    meta.value = await $api('/reports/meta')
+
+  const allowed = (meta.value.tabs || []).map(item => item.key)
+  if (allowed.length && !allowed.includes(section.value)) {
+    await router.replace({ query: { ...route.query, section: allowed[0] } })
+    return
+  }
+
+  payload.value = await $api('/reports', { query: queryParams() })
+}
+
+const { pending, run } = usePageQuery(load)
+const showSkel = useDelayedVisible(pending)
+
+const openSection = key => {
+  if (key === section.value)
+    return
+  router.replace({ query: { ...route.query, section: key } })
+}
+
+const loadTable = async page => {
+  const table = await $api('/reports/table', { query: queryParams({ page }) })
+  if (payload.value)
+    payload.value = { ...payload.value, table }
+}
+
+const exportReport = async format => {
+  exporting.value = format
+  try {
+    await downloadReport(section.value, filters.value, format)
+    toast.success('Exported the complete report')
+  }
+  catch (error) {
+    toast.error(error?.data?.message || error?.message || 'Unable to export this report')
+  }
+  finally {
+    exporting.value = ''
   }
 }
 
-const { pending } = usePageQuery(load)
-const showSkel = useDelayedVisible(pending)
-const typeHeaders = [
-  { title: 'Type', key: 'type.name' },
-  { title: 'Units', key: 'total' },
-  { title: 'Capacity', key: 'capacity' },
-  { title: 'In use', key: 'utilization' },
-  { title: 'Remaining', key: 'remaining' },
-]
-
-const utilization = computed(() => {
-  if (!stats.value.facilities.capacity)
-    return '0%'
-
-  return `${Math.round((stats.value.facilities.utilization / stats.value.facilities.capacity) * 100)}%`
-})
+watch(() => route.query.section, () => run())
+watch(filters, () => {
+  if (payload.value)
+    run({ silent: true })
+}, { deep: true })
 </script>
 
 <template>
-  <div>
+  <div class="h-report">
     <HPage
       title="Reports"
-      :subtitle="stats.hospital?.name || 'Operational utilization'"
+      :subtitle="subtitle"
     >
       <HButton
         variant="ghost"
-        @click="load"
+        :disabled="!!exporting || pending"
+        @click="exportReport('pdf')"
+      >
+        <HIcon name="receipt" />
+        Export PDF
+      </HButton>
+      <HButton
+        variant="ghost"
+        :disabled="!!exporting || pending"
+        @click="exportReport('xlsx')"
+      >
+        <HIcon name="download" />
+        Export Excel
+      </HButton>
+      <HButton
+        variant="ghost"
+        :disabled="pending"
+        @click="run()"
       >
         <HIcon name="refresh" />
         Refresh
       </HButton>
     </HPage>
 
-    <HGrid
-      cols="4"
-      kind="stats"
+    <nav
+      class="h-record-tabs"
+      role="tablist"
+      aria-label="Report modules"
     >
-      <HStat
-        icon="community"
-        title="Available facilities"
-        :value="stats.facilities.available"
-        hint="Units ready to receive patients"
-        :loading="pending"
-      />
-      <HStat
-        icon="users"
-        title="Active patients"
-        :value="stats.patients.active"
-        hint="Currently under care"
-        :loading="pending"
-      />
-      <HStat
-        icon="chart"
-        title="Capacity used"
-        :value="utilization"
-        hint="Of rated facility capacity"
-        :tone="Number.parseInt(utilization, 10) >= 80 ? 'warn' : ''"
-        :loading="pending"
-      />
-      <HStat
-        icon="ambulance"
-        title="Ambulances ready"
-        :value="stats.ambulances.available"
-        hint="Vehicles available to dispatch"
-        :loading="pending"
-      />
-    </HGrid>
+      <button
+        v-for="tab in tabs"
+        :key="tab.key"
+        type="button"
+        role="tab"
+        :aria-selected="section === tab.key"
+        :class="{ 'is-on': section === tab.key }"
+        @click="openSection(tab.key)"
+      >
+        {{ tab.title }}
+      </button>
+      <template v-if="!tabs.length && pending">
+        <span
+          v-for="n in 8"
+          :key="n"
+          class="h-skeleton is-tab"
+          :class="{ 'is-hold': !showSkel }"
+        />
+      </template>
+    </nav>
 
-    <HGrid cols="3">
-      <HCard title="Referrals">
-        <template v-if="pending">
-          <div
-            v-for="n in 3"
-            :key="n"
-            class="h-metric"
-            :class="{ 'is-hold': !showSkel }"
-          >
-            <span class="h-skeleton is-label" />
-            <strong class="h-skeleton is-value" />
-          </div>
-        </template>
-        <template v-else>
-          <div class="h-metric">
-            <span>Pending incoming</span>
-            <HBadge tone="warning">
-              {{ stats.referrals.incoming }}
-            </HBadge>
-          </div>
-          <div class="h-metric">
-            <span>Accepted</span>
-            <strong>{{ stats.referrals.accepted }}</strong>
-          </div>
-          <div class="h-metric">
-            <span>In transit</span>
-            <strong>{{ stats.referrals.in_transit }}</strong>
-          </div>
-        </template>
-      </HCard>
-      <HCard title="Assistance">
-        <template v-if="pending">
-          <div
-            v-for="n in 2"
-            :key="n"
-            class="h-metric"
-            :class="{ 'is-hold': !showSkel }"
-          >
-            <span class="h-skeleton is-label" />
-            <strong class="h-skeleton is-value" />
-          </div>
-        </template>
-        <template v-else>
-          <div class="h-metric">
-            <span>Open requests</span>
-            <HBadge tone="warning">
-              {{ stats.assistance.pending }}
-            </HBadge>
-          </div>
-          <div class="h-metric">
-            <span>Accepted</span>
-            <strong>{{ stats.assistance.accepted }}</strong>
-          </div>
-        </template>
-      </HCard>
-      <HCard title="Clinical activity">
-        <template v-if="pending">
-          <div
-            v-for="n in 2"
-            :key="n"
-            class="h-metric"
-            :class="{ 'is-hold': !showSkel }"
-          >
-            <span class="h-skeleton is-label" />
-            <strong class="h-skeleton is-value" />
-          </div>
-        </template>
-        <template v-else>
-          <div class="h-metric">
-            <span>OPD waiting</span>
-            <strong>{{ stats.encounters.opd }}</strong>
-          </div>
-          <div class="h-metric">
-            <span>Emergency active</span>
-            <strong>{{ stats.encounters.emergency }}</strong>
-          </div>
-        </template>
-      </HCard>
-    </HGrid>
-
-    <HCard
-      title="Facility utilization by type"
-      flush
-    >
-      <HTable
-        :loading="pending"
-        :headers="typeHeaders"
-        :items="stats.facilitiesByType.map(row => ({ ...row, remaining: Math.max(0, row.capacity - row.utilization) }))"
-        empty="No facility utilization yet"
+    <HCard title="Filters">
+      <HReportFilters
+        v-model="filters"
+        :schema="schema"
+        :options="meta?.options || {}"
       />
     </HCard>
+
+    <HReportBoard
+      :payload="payload"
+      :loading="pending"
+      @page="loadTable"
+    />
   </div>
 </template>

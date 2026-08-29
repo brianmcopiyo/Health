@@ -216,7 +216,7 @@ const { pending } = usePageQuery(load)
             :model-value="userData?.email"
             label="Email"
             disabled
-            hint="Change your sign-in email from Account security"
+            hint="Sign-in email cannot be changed"
           />
         </HFormGrid>
         <div class="h-actions">

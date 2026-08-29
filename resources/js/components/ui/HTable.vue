@@ -34,10 +34,16 @@ const fitKeys = new Set([
   'is_active',
   'facilities_count',
   'dispatched_at',
+  'when',
+  'visits',
+  'amount',
+  'destination',
+  'reference',
 ])
 
 const fillKeys = new Set([
   'patient_name',
+  'patient',
   'full_name',
   'first_name',
   'name',
@@ -63,6 +69,8 @@ const numKeys = new Set([
   'utilization',
   'quantity',
   'facilities_count',
+  'visits',
+  'amount',
 ])
 
 const leaf = header => String(header.key || '').split('.').pop()

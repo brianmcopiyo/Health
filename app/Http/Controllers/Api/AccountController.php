@@ -28,6 +28,7 @@ class AccountController extends Controller
 
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
+            'email' => ['prohibited'],
             'phone' => ['nullable', 'string', 'max:50'],
             'job_title' => ['nullable', 'string', 'max:120'],
             'specialty' => ['nullable', 'string', 'max:120'],
@@ -87,28 +88,6 @@ class AccountController extends Controller
         Audit::record('updated', $user, ['password']);
 
         return response()->json(['message' => 'Password updated']);
-    }
-
-    public function email(Request $request)
-    {
-        $user = $request->user();
-        $data = $request->validate([
-            'current_password' => ['required', 'string'],
-            'email' => ['required', 'email', Rule::unique('users', 'email')->ignore($user->id)],
-        ]);
-
-        if (! Hash::check($data['current_password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'current_password' => ['The current password is incorrect.'],
-            ]);
-        }
-
-        $user->email = $data['email'];
-        $user->save();
-
-        Audit::record('updated', $user, ['email']);
-
-        return $this->payload($user->fresh()->load(['role', 'hospital', 'department']));
     }
 
     public function avatar(Request $request)

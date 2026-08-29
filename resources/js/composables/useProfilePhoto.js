@@ -20,7 +20,7 @@ export const useProfilePhoto = () => {
     }
   }
 
-  watch(() => [userData.value?.id, userData.value?.hasAvatar], refreshPhoto)
+  watch(() => `${userData.value?.id || ''}:${userData.value?.hasAvatar ? 1 : 0}`, refreshPhoto)
   onMounted(refreshPhoto)
   onBeforeUnmount(() => {
     if (photoUrl.value)

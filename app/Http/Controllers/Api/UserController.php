@@ -8,7 +8,6 @@ use App\Models\Role;
 use App\Models\User;
 use App\Support\QueryList;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class UserController extends Controller
 {
@@ -140,7 +139,7 @@ class UserController extends Controller
 
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'email', Rule::unique('users', 'email')->ignore($user->id)],
+            'email' => ['prohibited'],
             'password' => ['nullable', 'string', 'min:8'],
             'role_id' => ['sometimes', 'exists:roles,id'],
             'hospital_id' => [$actor->isPlatformAdmin() ? 'nullable' : 'prohibited', 'exists:hospitals,id'],
@@ -174,7 +173,7 @@ class UserController extends Controller
             $user->hospital_id = $data['hospital_id'];
         }
 
-        $user->fill(collect($data)->only(['name', 'email', 'phone', 'job_title'])->all());
+        $user->fill(collect($data)->only(['name', 'phone', 'job_title'])->all());
 
         if (! empty($data['password'])) {
             $user->password = $data['password'];

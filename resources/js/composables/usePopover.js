@@ -26,8 +26,6 @@ export const usePopover = (options = {}) => {
     width: 0,
     maxHeight: 280,
   })
-  let observer
-
   const viewport = () => {
     const view = window.visualViewport
     return {
@@ -86,25 +84,34 @@ export const usePopover = (options = {}) => {
       top = Math.max(view.top + pad, box.top - gap - height)
     }
 
-    coords.value = {
+    const next = {
       top,
       left,
       width: width || undefined,
       maxHeight,
     }
+    const prev = coords.value
+    if (
+      prev.top === next.top
+      && prev.left === next.left
+      && prev.width === next.width
+      && prev.maxHeight === next.maxHeight
+    )
+      return
+
+    coords.value = next
   }
 
   const bindPanel = el => {
-    observer?.disconnect()
-    observer = null
+    if (el === panelRef.value)
+      return
+
     panelRef.value = el
-    if (el && open.value) {
-      nextTick(place)
-      if (typeof ResizeObserver !== 'undefined') {
-        observer = new ResizeObserver(place)
-        observer.observe(el)
-      }
-    }
+    if (el && open.value)
+      nextTick(() => {
+        if (panelRef.value === el)
+          place()
+      })
   }
 
   const close = () => {
@@ -119,13 +126,7 @@ export const usePopover = (options = {}) => {
         activeClose()
       activeClose = close
       open.value = true
-      nextTick(() => {
-        place()
-        requestAnimationFrame(() => {
-          place()
-          requestAnimationFrame(place)
-        })
-      })
+      nextTick(place)
       return
     }
     close()
@@ -156,23 +157,10 @@ export const usePopover = (options = {}) => {
 
   const listen = () => {
     window.addEventListener('resize', place)
-    window.addEventListener('scroll', place, true)
-    window.visualViewport?.addEventListener('resize', place)
-    window.visualViewport?.addEventListener('scroll', place)
-    if (panelRef.value && typeof ResizeObserver !== 'undefined') {
-      observer?.disconnect()
-      observer = new ResizeObserver(place)
-      observer.observe(panelRef.value)
-    }
   }
 
   const unlisten = () => {
     window.removeEventListener('resize', place)
-    window.removeEventListener('scroll', place, true)
-    window.visualViewport?.removeEventListener('resize', place)
-    window.visualViewport?.removeEventListener('scroll', place)
-    observer?.disconnect()
-    observer = null
   }
 
   watch(open, value => {

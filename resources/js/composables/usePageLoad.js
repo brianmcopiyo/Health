@@ -75,7 +75,7 @@ export const useDelayedVisible = (source, delay = LOAD_HINT_DELAY) => {
     visible.value = false
   }
 
-  watch(() => unref(source), sync, { immediate: true })
+  watch(() => (typeof source === 'function' ? source() : unref(source)), sync, { immediate: true })
   onBeforeUnmount(() => clearTimeout(timer))
 
   return visible

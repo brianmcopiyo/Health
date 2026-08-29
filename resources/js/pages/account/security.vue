@@ -1,6 +1,6 @@
 <script setup>
 import AccountNav from '@/components/hms/AccountNav.vue'
-import { applySession, clearSession } from '@/utils/session'
+import { clearSession } from '@/utils/session'
 
 const route = useRoute()
 const router = useRouter()
@@ -9,7 +9,6 @@ const userData = useCookie('userData')
 const sessions = ref([])
 const activity = ref([])
 const passwordOpen = ref(false)
-const emailOpen = ref(false)
 const revokeOpen = ref(false)
 const revokeOthersOpen = ref(false)
 const revoking = ref(null)
@@ -20,11 +19,6 @@ const passwordForm = ref({
   password: '',
   password_confirmation: '',
 })
-const emailForm = ref({
-  email: '',
-  current_password: '',
-})
-
 const sessionHeaders = [
   { title: 'Session', key: 'device' },
   { title: 'Last used', key: 'last_used_at' },
@@ -72,25 +66,11 @@ const openPassword = () => {
   passwordOpen.value = true
 }
 
-const openEmail = () => {
-  formError.value = ''
-  emailForm.value = { email: userData.value?.email || '', current_password: '' }
-  emailOpen.value = true
-}
-
 const changePassword = async () => {
   await wrapSave(saving, formError, async () => {
     await $api('/auth/password', { method: 'POST', body: passwordForm.value })
     passwordOpen.value = false
     await load()
-  })
-}
-
-const changeEmail = async () => {
-  await wrapSave(saving, formError, async () => {
-    const payload = await $api('/auth/email', { method: 'POST', body: emailForm.value })
-    applySession(payload, ability)
-    emailOpen.value = false
   })
 }
 
@@ -156,13 +136,6 @@ onMounted(() => {
               {{ userData?.email }}
             </p>
           </div>
-          <HButton
-            variant="ghost"
-            size="sm"
-            @click="openEmail"
-          >
-            Change email
-          </HButton>
         </div>
         <div class="h-account-row">
           <div>
@@ -303,45 +276,6 @@ onMounted(() => {
           @click="changePassword"
         >
           Update password
-        </HButton>
-      </template>
-    </HModal>
-
-    <HModal
-      v-model="emailOpen"
-      title="Change email"
-      :error="formError"
-    >
-      <form
-        class="h-form"
-        @submit.prevent="changeEmail"
-      >
-        <HInput
-          v-model="emailForm.email"
-          type="email"
-          label="New email"
-          placeholder="you@hospital.org"
-          required
-        />
-        <HInput
-          v-model="emailForm.current_password"
-          type="password"
-          label="Current password"
-          required
-        />
-      </form>
-      <template #actions>
-        <HButton
-          variant="ghost"
-          @click="emailOpen = false"
-        >
-          Cancel
-        </HButton>
-        <HButton
-          :disabled="saving"
-          @click="changeEmail"
-        >
-          Update email
         </HButton>
       </template>
     </HModal>

@@ -238,25 +238,30 @@ class AccountProfileTest extends TestCase
         $this->assertSame(2, $this->user('admin@riverside.test')->tokens()->count());
     }
 
-    public function test_email_change_requires_current_password(): void
+    public function test_email_cannot_be_changed(): void
     {
         Sanctum::actingAs($this->user('lab@riverside.test'));
 
         $this->postJson('/api/auth/email', [
             'email' => 'lab.updated@riverside.test',
-            'current_password' => 'wrong',
-        ])->assertStatus(422);
-
-        $this->postJson('/api/auth/email', [
-            'email' => 'doctor@riverside.test',
             'current_password' => 'password',
-        ])->assertStatus(422);
+        ])->assertStatus(405);
 
-        $this->postJson('/api/auth/email', [
+        $this->putJson('/api/auth/profile', [
             'email' => 'lab.updated@riverside.test',
-            'current_password' => 'password',
-        ])->assertOk()
-            ->assertJsonPath('userData.email', 'lab.updated@riverside.test');
+        ])->assertStatus(422);
+
+        $this->assertSame('lab@riverside.test', $this->user('lab@riverside.test')->email);
+
+        Sanctum::actingAs($this->user('admin@riverside.test'));
+        $lab = $this->user('lab@riverside.test');
+
+        $this->putJson('/api/users/'.$lab->id, [
+            'name' => $lab->name,
+            'email' => 'lab.updated@riverside.test',
+        ])->assertStatus(422);
+
+        $this->assertSame('lab@riverside.test', $lab->fresh()->email);
     }
 
     private function user(string $email): User

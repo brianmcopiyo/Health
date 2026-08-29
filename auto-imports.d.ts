@@ -8,6 +8,7 @@ declare global {
   const $api: typeof import('./resources/js/utils/api.js')['$api']
   const EffectScope: typeof import('vue')['EffectScope']
   const LOAD_HINT_DELAY: typeof import('./resources/js/composables/usePageLoad.js')['LOAD_HINT_DELAY']
+  const addPageWait: typeof import('./resources/js/composables/useRouteLoad.js')['addPageWait']
   const ambulanceStatuses: typeof import('./resources/js/utils/status.js')['ambulanceStatuses']
   const applySession: typeof import('./resources/js/utils/session.js')['applySession']
   const asList: typeof import('./resources/js/composables/usePageLoad.js')['asList']
@@ -20,7 +21,9 @@ declare global {
   const compactListQuery: typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']
   const computed: typeof import('vue')['computed']
   const createApp: typeof import('vue')['createApp']
+  const currentPageNav: typeof import('./resources/js/composables/useRouteLoad.js')['currentPageNav']
   const customRef: typeof import('vue')['customRef']
+  const defaultReportFilters: typeof import('./resources/js/composables/useReports.js')['defaultReportFilters']
   const defineAsyncComponent: typeof import('vue')['defineAsyncComponent']
   const defineComponent: typeof import('vue')['defineComponent']
   const defineLoader: typeof import('vue-router/auto')['defineLoader']
@@ -28,12 +31,15 @@ declare global {
   const diagnosisKindOptions: typeof import('./resources/js/utils/clinicalOptions.js')['diagnosisKindOptions']
   const doseFrequencies: typeof import('./resources/js/utils/clinicalOptions.js')['doseFrequencies']
   const downloadAuthorized: typeof import('./resources/js/utils/api.js')['downloadAuthorized']
+  const downloadReport: typeof import('./resources/js/composables/useReports.js')['downloadReport']
   const effectScope: typeof import('vue')['effectScope']
   const errorCatalog: typeof import('./resources/js/utils/errors.js')['errorCatalog']
   const errorText: typeof import('./resources/js/utils/formOptions.js')['errorText']
   const facilityRecordTo: typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']
   const facilityStatuses: typeof import('./resources/js/utils/status.js')['facilityStatuses']
   const fieldPlaceholder: typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']
+  const finishPageNav: typeof import('./resources/js/composables/useRouteLoad.js')['finishPageNav']
+  const forceFinishPageNav: typeof import('./resources/js/composables/useRouteLoad.js')['forceFinishPageNav']
   const formatWhen: typeof import('./resources/js/utils/helpers.js')['formatWhen']
   const getByPath: typeof import('./resources/js/utils/helpers.js')['getByPath']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
@@ -41,6 +47,7 @@ declare global {
   const h: typeof import('vue')['h']
   const httpStatus: typeof import('./resources/js/utils/errors.js')['httpStatus']
   const inject: typeof import('vue')['inject']
+  const isNewPage: typeof import('./resources/js/composables/useRouteLoad.js')['isNewPage']
   const isProxy: typeof import('vue')['isProxy']
   const isReactive: typeof import('vue')['isReactive']
   const isReadonly: typeof import('vue')['isReadonly']
@@ -48,6 +55,7 @@ declare global {
   const kinshipOptions: typeof import('./resources/js/utils/clinicalOptions.js')['kinshipOptions']
   const labelize: typeof import('./resources/js/utils/status.js')['labelize']
   const markRaw: typeof import('vue')['markRaw']
+  const markRouterDone: typeof import('./resources/js/composables/useRouteLoad.js')['markRouterDone']
   const motionNames: typeof import('./resources/js/composables/useMotion.js')['motionNames']
   const nextTick: typeof import('vue')['nextTick']
   const normalizeOptions: typeof import('./resources/js/utils/formOptions.js')['normalizeOptions']
@@ -68,6 +76,7 @@ declare global {
   const onUpdated: typeof import('vue')['onUpdated']
   const pageErrorRoute: typeof import('./resources/js/utils/errors.js')['pageErrorRoute']
   const pageLoadError: typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']
+  const pageLoading: typeof import('./resources/js/composables/useRouteLoad.js')['pageLoading']
   const paymentMethods: typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']
   const popoverStyle: typeof import('./resources/js/composables/usePopover.js')['popoverStyle']
   const prefersReducedMotion: typeof import('./resources/js/composables/useMotion.js')['prefersReducedMotion']
@@ -76,6 +85,9 @@ declare global {
   const readonly: typeof import('vue')['readonly']
   const ref: typeof import('vue')['ref']
   const referralStatuses: typeof import('./resources/js/utils/status.js')['referralStatuses']
+  const reportCell: typeof import('./resources/js/composables/useReports.js')['reportCell']
+  const reportDate: typeof import('./resources/js/composables/useReports.js')['reportDate']
+  const reportQuery: typeof import('./resources/js/composables/useReports.js')['reportQuery']
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveError: typeof import('./resources/js/utils/errors.js')['resolveError']
   const resolveHomeRoute: typeof import('./resources/js/utils/session.js')['resolveHomeRoute']
@@ -85,6 +97,7 @@ declare global {
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
   const shallowRef: typeof import('vue')['shallowRef']
+  const startPageNav: typeof import('./resources/js/composables/useRouteLoad.js')['startPageNav']
   const statusColor: typeof import('./resources/js/utils/status.js')['statusColor']
   const toRaw: typeof import('vue')['toRaw']
   const toRef: typeof import('vue')['toRef']
@@ -146,7 +159,9 @@ declare module 'vue' {
     readonly compactListQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
+    readonly currentPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['currentPageNav']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
+    readonly defaultReportFilters: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['defaultReportFilters']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly defineLoader: UnwrapRef<typeof import('vue-router/auto')['defineLoader']>
@@ -154,12 +169,15 @@ declare module 'vue' {
     readonly diagnosisKindOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['diagnosisKindOptions']>
     readonly doseFrequencies: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['doseFrequencies']>
     readonly downloadAuthorized: UnwrapRef<typeof import('./resources/js/utils/api.js')['downloadAuthorized']>
+    readonly downloadReport: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['downloadReport']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
     readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
     readonly fieldPlaceholder: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']>
+    readonly finishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['finishPageNav']>
+    readonly forceFinishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['forceFinishPageNav']>
     readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
@@ -167,6 +185,7 @@ declare module 'vue' {
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly httpStatus: UnwrapRef<typeof import('./resources/js/utils/errors.js')['httpStatus']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
+    readonly isNewPage: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['isNewPage']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
@@ -194,6 +213,7 @@ declare module 'vue' {
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly pageErrorRoute: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorRoute']>
     readonly pageLoadError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']>
+    readonly pageLoading: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['pageLoading']>
     readonly paymentMethods: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']>
     readonly popoverStyle: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['popoverStyle']>
     readonly prefersReducedMotion: UnwrapRef<typeof import('./resources/js/composables/useMotion.js')['prefersReducedMotion']>
@@ -202,6 +222,9 @@ declare module 'vue' {
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly referralStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['referralStatuses']>
+    readonly reportCell: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['reportCell']>
+    readonly reportDate: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['reportDate']>
+    readonly reportQuery: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['reportQuery']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveError: UnwrapRef<typeof import('./resources/js/utils/errors.js')['resolveError']>
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
@@ -211,6 +234,7 @@ declare module 'vue' {
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
+    readonly startPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['startPageNav']>
     readonly statusColor: UnwrapRef<typeof import('./resources/js/utils/status.js')['statusColor']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>
@@ -264,7 +288,9 @@ declare module '@vue/runtime-core' {
     readonly compactListQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>
+    readonly currentPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['currentPageNav']>
     readonly customRef: UnwrapRef<typeof import('vue')['customRef']>
+    readonly defaultReportFilters: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['defaultReportFilters']>
     readonly defineAsyncComponent: UnwrapRef<typeof import('vue')['defineAsyncComponent']>
     readonly defineComponent: UnwrapRef<typeof import('vue')['defineComponent']>
     readonly defineLoader: UnwrapRef<typeof import('vue-router/auto')['defineLoader']>
@@ -272,12 +298,15 @@ declare module '@vue/runtime-core' {
     readonly diagnosisKindOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['diagnosisKindOptions']>
     readonly doseFrequencies: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['doseFrequencies']>
     readonly downloadAuthorized: UnwrapRef<typeof import('./resources/js/utils/api.js')['downloadAuthorized']>
+    readonly downloadReport: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['downloadReport']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
     readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
     readonly fieldPlaceholder: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']>
+    readonly finishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['finishPageNav']>
+    readonly forceFinishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['forceFinishPageNav']>
     readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
@@ -285,6 +314,7 @@ declare module '@vue/runtime-core' {
     readonly h: UnwrapRef<typeof import('vue')['h']>
     readonly httpStatus: UnwrapRef<typeof import('./resources/js/utils/errors.js')['httpStatus']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
+    readonly isNewPage: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['isNewPage']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
@@ -312,6 +342,7 @@ declare module '@vue/runtime-core' {
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
     readonly pageErrorRoute: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorRoute']>
     readonly pageLoadError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']>
+    readonly pageLoading: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['pageLoading']>
     readonly paymentMethods: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']>
     readonly popoverStyle: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['popoverStyle']>
     readonly prefersReducedMotion: UnwrapRef<typeof import('./resources/js/composables/useMotion.js')['prefersReducedMotion']>
@@ -320,6 +351,9 @@ declare module '@vue/runtime-core' {
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly referralStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['referralStatuses']>
+    readonly reportCell: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['reportCell']>
+    readonly reportDate: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['reportDate']>
+    readonly reportQuery: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['reportQuery']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveError: UnwrapRef<typeof import('./resources/js/utils/errors.js')['resolveError']>
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
@@ -329,6 +363,7 @@ declare module '@vue/runtime-core' {
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
     readonly shallowRef: UnwrapRef<typeof import('vue')['shallowRef']>
+    readonly startPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['startPageNav']>
     readonly statusColor: UnwrapRef<typeof import('./resources/js/utils/status.js')['statusColor']>
     readonly toRaw: UnwrapRef<typeof import('vue')['toRaw']>
     readonly toRef: UnwrapRef<typeof import('vue')['toRef']>

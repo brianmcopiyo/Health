@@ -82,6 +82,7 @@ const save = async () => {
     if (editing.value) {
       if (!payload.password)
         delete payload.password
+      delete payload.email
       await $api(`/users/${editing.value.id}`, { method: 'PUT', body: payload })
     }
     else {
@@ -189,6 +190,8 @@ const { pending } = usePageQuery(load)
           type="email"
           icon="mail"
           placeholder="e.g. nurse@hospital.org"
+          :disabled="Boolean(editing)"
+          :hint="editing ? 'Sign-in email cannot be changed' : undefined"
           required
         />
         <HInput

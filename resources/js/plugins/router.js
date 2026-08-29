@@ -40,14 +40,68 @@ export const accountRoutes = [
   },
 ]
 
+const joinRoutePath = (base, child) => {
+  if (child == null || child === '')
+    return base || '/'
+  if (String(child).startsWith('/'))
+    return child
+  const left = String(base || '').replace(/\/$/, '')
+  return `${left}/${child}`.replace(/\/{2,}/g, '/')
+}
+
+const flattenRoutes = (routes, prefix = '') => {
+  const out = []
+  for (const route of routes || []) {
+    const path = joinRoutePath(prefix, route.path)
+    const children = route.children || []
+    if (!route.component && !route.redirect && children.length) {
+      out.push(...flattenRoutes(children, path))
+      continue
+    }
+    if (children.length) {
+      out.push({
+        ...route,
+        path,
+        children: flattenRoutes(children, ''),
+      })
+      continue
+    }
+    out.push({ ...route, path })
+  }
+  return out
+}
+
+const namedLocationPath = to => {
+  if (!to || typeof to !== 'object' || !to.name)
+    return null
+  const name = String(to.name)
+  if (name.endsWith('-id') && to.params?.id)
+    return `/${name.slice(0, -3).replaceAll('-', '/')}/${to.params.id}`
+  if (!name.includes('-') && !to.params)
+    return `/${name}`
+  return null
+}
+
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   extendRoutes: pages => {
     const reserved = new Set(['errors-code', 'account-profile', 'account-security'])
-    const rest = pages.filter(page => !reserved.has(page.name))
+    const rest = flattenRoutes(pages).filter(page => !reserved.has(page.name))
     return [...redirects, ...errorRoutes, ...accountRoutes, ...rest]
   },
 })
+
+const resolveLocation = router.resolve.bind(router)
+router.resolve = (to, current) => {
+  try {
+    return resolveLocation(to, current)
+  } catch (error) {
+    const path = namedLocationPath(to)
+    if (path)
+      return resolveLocation({ path, query: to.query, hash: to.hash }, current)
+    throw error
+  }
+}
 
 setupGuards(router)
 

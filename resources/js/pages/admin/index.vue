@@ -47,7 +47,7 @@ const when = value => {
 }
 
 const load = async () => {
-  dash.value = await $api('/dashboard')
+  dash.value = markRaw(await $api('/dashboard'))
 }
 
 const { pending, run } = usePageQuery(load)

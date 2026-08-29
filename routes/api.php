@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AssistanceRequestController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\BedAssignmentController;
 use App\Http\Controllers\Api\DashboardController;
+use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EncounterController;
@@ -32,7 +33,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/auth/profile', [AccountController::class, 'show']);
     Route::put('/auth/profile', [AccountController::class, 'update']);
     Route::post('/auth/password', [AccountController::class, 'password']);
-    Route::post('/auth/email', [AccountController::class, 'email']);
     Route::get('/auth/avatar', [AccountController::class, 'avatar']);
     Route::post('/auth/avatar', [AccountController::class, 'uploadAvatar']);
     Route::delete('/auth/avatar', [AccountController::class, 'destroyAvatar']);
@@ -47,7 +47,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/medications/{medication}', [PrescriptionController::class, 'updateMedication']);
 
     Route::get('/dashboard', [DashboardController::class, 'command']);
-    Route::get('/reports', [DashboardController::class, 'show'])->middleware('permission:read,Report');
+    Route::get('/reports/meta', [ReportController::class, 'meta'])->middleware('permission:read,Report');
+    Route::get('/reports/table', [ReportController::class, 'table'])->middleware('permission:read,Report');
+    Route::get('/reports/export', [ReportController::class, 'export'])->middleware('permission:read,Report');
+    Route::get('/reports', [ReportController::class, 'show'])->middleware('permission:read,Report');
 
     Route::get('/modules/catalog', [ModuleBoardController::class, 'catalog']);
     Route::get('/modules/workspaces', [ModuleBoardController::class, 'workspaces'])->middleware('permission:read,Role');

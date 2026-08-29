@@ -1510,6 +1510,11 @@ fieldset.h-form-grid {
 .h-badge.secondary { background: var(--surface-2); color: var(--muted); }
 
 .h-alert {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   padding: 10px 12px;
   border-radius: 12px;
   margin: 0;
@@ -2424,6 +2429,14 @@ a.h-card.h-stat:hover {
 
 .h-error-card > p { margin: 0; color: var(--ink-soft); }
 
+.h-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @keyframes h-fade {
@@ -2449,6 +2462,26 @@ a.h-card.h-stat:hover {
 @keyframes h-shimmer {
   from { background-position: 100% 0; }
   to { background-position: -100% 0; }
+}
+
+.h-page-stage {
+  position: relative;
+  min-width: 0;
+}
+
+.h-page-stage.is-loading {
+  min-height: 18rem;
+}
+
+.h-page-stage.is-loading > .h-page-view {
+  pointer-events: none;
+}
+
+.h-page-stage > .h-loading.is-page {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: var(--paper);
 }
 
 .h-page-view {
@@ -2929,6 +2962,90 @@ a.h-card.h-stat:hover {
   .h-offcanvas,
   .h-offcanvas.is-md,
   .h-offcanvas.is-lg { width: 100%; }
+}
+
+.h-report {
+  display: grid;
+  gap: var(--grid-gap);
+}
+
+.h-report .h-record-tabs {
+  overflow: auto;
+  flex-wrap: nowrap;
+  padding-bottom: 2px;
+}
+
+.h-report-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+  gap: var(--form-gap-x) var(--form-gap-y);
+}
+
+.h-report-filters .h-field {
+  min-width: 0;
+}
+
+.h-report-board {
+  display: grid;
+  gap: var(--grid-gap);
+}
+
+.h-trend {
+  display: grid;
+  gap: 10px;
+}
+
+.h-trend-plot {
+  width: 100%;
+  height: 164px;
+  display: block;
+}
+
+.h-trend-fill {
+  fill: color-mix(in srgb, var(--teal) 16%, transparent);
+}
+
+.h-trend-line {
+  fill: none;
+  stroke: var(--teal);
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.h-trend-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.h-metric small.is-up { color: var(--ok); }
+.h-metric small.is-down { color: var(--danger); }
+
+.h-skeleton.is-chart {
+  height: 164px;
+  width: 100%;
+  border-radius: 12px;
+}
+
+.h-skeleton.is-tab {
+  width: 4.5rem;
+  height: 1.6rem;
+  margin: 8px 6px 6px;
+}
+
+.h-dash-task small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 720px) {
+  .h-report .h-record-tabs {
+    flex-wrap: wrap;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

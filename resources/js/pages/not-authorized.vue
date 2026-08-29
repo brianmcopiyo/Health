@@ -1,5 +1,5 @@
 <script setup>
-import { clearSession, resolveHomeRoute } from '@/utils/session'
+import { clearSession } from '@/utils/session'
 
 definePage({
   meta: {
@@ -11,7 +11,6 @@ definePage({
 const router = useRouter()
 const ability = useAbility()
 const userData = useCookie('userData')
-const home = computed(() => resolveHomeRoute(userData.value))
 
 const signOut = async () => {
   try {
@@ -25,18 +24,6 @@ const signOut = async () => {
 
 <template>
   <HErrorPage code="403">
-    <HButton
-      v-if="userData && home.name !== 'not-authorized'"
-      :to="home"
-    >
-      Open workspace
-    </HButton>
-    <HButton
-      v-else
-      :to="{ name: 'login' }"
-    >
-      Sign in
-    </HButton>
     <HButton
       v-if="userData"
       variant="ghost"

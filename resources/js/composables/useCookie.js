@@ -32,7 +32,7 @@ export const useCookie = (name, options = {}) => {
 
   watch(state, value => {
     writeStored(name, value)
-  }, { deep: true, flush: 'sync' })
+  }, { deep: true })
 
   store.set(name, state)
 

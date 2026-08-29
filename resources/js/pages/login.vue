@@ -35,7 +35,7 @@ const login = async () => {
     applySession(res, ability)
     await nextTick()
     const next = String(route.query.to || '')
-    const blocked = !next || next === '/' || next.includes('login') || next.includes('not-authorized')
+    const blocked = !next || next === '/' || next.includes('login') || next.includes('not-authorized') || next.includes('/errors')
     await router.replace(blocked ? resolveHomeRoute(res.userData) : next)
   }
   catch (error) {
