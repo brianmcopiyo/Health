@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AccountController;
 use App\Http\Controllers\Api\AmbulanceController;
 use App\Http\Controllers\Api\AssistanceRequestController;
 use App\Http\Controllers\Api\AuthController;
@@ -27,6 +28,17 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
     Route::post('/auth/switch-hospital', [AuthController::class, 'switchHospital']);
+    Route::get('/auth/profile', [AccountController::class, 'show']);
+    Route::put('/auth/profile', [AccountController::class, 'update']);
+    Route::post('/auth/password', [AccountController::class, 'password']);
+    Route::post('/auth/email', [AccountController::class, 'email']);
+    Route::get('/auth/avatar', [AccountController::class, 'avatar']);
+    Route::post('/auth/avatar', [AccountController::class, 'uploadAvatar']);
+    Route::delete('/auth/avatar', [AccountController::class, 'destroyAvatar']);
+    Route::get('/auth/sessions', [AccountController::class, 'sessions']);
+    Route::post('/auth/sessions/revoke-others', [AccountController::class, 'revokeOtherSessions']);
+    Route::delete('/auth/sessions/{session}', [AccountController::class, 'destroySession']);
+    Route::get('/auth/activity', [AccountController::class, 'activity']);
 
     Route::get('/workspace', [WorkspaceController::class, 'show']);
     Route::get('/clinical-services', [PrescriptionController::class, 'services']);

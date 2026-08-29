@@ -7,8 +7,11 @@ export {}
 
 declare module 'vue' {
   export interface GlobalComponents {
+    AccountNav: typeof import('./resources/js/components/hms/AccountNav.vue')['default']
     EncounterChart: typeof import('./resources/js/components/hms/EncounterChart.vue')['default']
     FacilityBoard: typeof import('./resources/js/components/hms/FacilityBoard.vue')['default']
+    HActionMenu: typeof import('./resources/js/components/ui/HActionMenu.vue')['default']
+    HAvatar: typeof import('./resources/js/components/ui/HAvatar.vue')['default']
     HBadge: typeof import('./resources/js/components/ui/HBadge.vue')['default']
     HButton: typeof import('./resources/js/components/ui/HButton.vue')['default']
     HCard: typeof import('./resources/js/components/ui/HCard.vue')['default']
@@ -17,10 +20,15 @@ declare module 'vue' {
     HCombobox: typeof import('./resources/js/components/ui/HCombobox.vue')['default']
     HDatePicker: typeof import('./resources/js/components/ui/HDatePicker.vue')['default']
     HDialog: typeof import('./resources/js/components/ui/HDialog.vue')['default']
+    HEmpty: typeof import('./resources/js/components/ui/HEmpty.vue')['default']
+    HErrorPage: typeof import('./resources/js/components/ui/HErrorPage.vue')['default']
     HField: typeof import('./resources/js/components/ui/HField.vue')['default']
     HFile: typeof import('./resources/js/components/ui/HFile.vue')['default']
+    HGrid: typeof import('./resources/js/components/ui/HGrid.vue')['default']
     HIcon: typeof import('./resources/js/components/ui/HIcon.vue')['default']
     HInput: typeof import('./resources/js/components/ui/HInput.vue')['default']
+    HLinkCard: typeof import('./resources/js/components/ui/HLinkCard.vue')['default']
+    HLoading: typeof import('./resources/js/components/ui/HLoading.vue')['default']
     HModal: typeof import('./resources/js/components/ui/HModal.vue')['default']
     HmsShell: typeof import('./resources/js/layouts/HmsShell.vue')['default']
     HMultiSelect: typeof import('./resources/js/components/ui/HMultiSelect.vue')['default']
@@ -29,6 +37,7 @@ declare module 'vue' {
     HPage: typeof import('./resources/js/components/ui/HPage.vue')['default']
     HPager: typeof import('./resources/js/components/ui/HPager.vue')['default']
     HRadioGroup: typeof import('./resources/js/components/ui/HRadioGroup.vue')['default']
+    HSection: typeof import('./resources/js/components/ui/HSection.vue')['default']
     HSegmented: typeof import('./resources/js/components/ui/HSegmented.vue')['default']
     HSelect: typeof import('./resources/js/components/ui/HSelect.vue')['default']
     HStat: typeof import('./resources/js/components/ui/HStat.vue')['default']
@@ -36,6 +45,7 @@ declare module 'vue' {
     HTable: typeof import('./resources/js/components/ui/HTable.vue')['default']
     HTextarea: typeof import('./resources/js/components/ui/HTextarea.vue')['default']
     HTimePicker: typeof import('./resources/js/components/ui/HTimePicker.vue')['default']
+    HToolbar: typeof import('./resources/js/components/ui/HToolbar.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
   }

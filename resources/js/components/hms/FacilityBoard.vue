@@ -161,14 +161,16 @@ const createOrder = async () => {
 }
 
 const updateOrder = async (order, status, result = null) => {
-  const body = { status }
-  if (result !== null)
-    body.result = result
-  await $api(`/service-orders/${order.id}`, {
-    method: 'PATCH',
-    body,
+  await wrapSave(saving, formError, async () => {
+    const body = { status }
+    if (result !== null)
+      body.result = result
+    await $api(`/service-orders/${order.id}`, {
+      method: 'PATCH',
+      body,
+    })
+    await load()
   })
-  await load()
 }
 
 const openResult = order => {
@@ -200,8 +202,10 @@ const assignBed = async () => {
 }
 
 const discharge = async assignment => {
-  await $api(`/bed-assignments/${assignment.id}/discharge`, { method: 'PATCH' })
-  await load()
+  await wrapSave(saving, formError, async () => {
+    await $api(`/bed-assignments/${assignment.id}/discharge`, { method: 'PATCH' })
+    await load()
+  })
 }
 
 const openChart = item => {
@@ -235,7 +239,7 @@ const headers = [
 </script>
 
 <template>
-  <div>
+  <div class="hms-stack">
     <HPage
       :title="title"
       subtitle="Live capacity, availability, and utilization"
@@ -249,34 +253,62 @@ const headers = [
       </HButton>
     </HPage>
 
-    <div class="h-grid cols-4">
+    <div
+      v-if="formError && !statusOpen && !orderOpen && !assignmentOpen && !resultOpen"
+      class="h-alert"
+    >
+      {{ formError }}
+    </div>
+
+    <HGrid
+      cols="4"
+      kind="stats"
+    >
       <HStat
+        icon="check"
         title="Available"
         :value="board.stats.available"
+        hint="Units ready now"
+        tone="ok"
       />
       <HStat
+        icon="users"
         title="Occupied"
         :value="board.stats.occupied"
+        hint="Currently assigned"
       />
       <HStat
+        icon="hospital"
         title="Remaining capacity"
         :value="board.stats.remaining"
+        hint="Capacity still open"
       />
       <HStat
+        icon="chart"
         title="Utilization"
         :value="utilization"
+        hint="Of rated capacity"
+        :tone="Number.parseInt(utilization, 10) >= 80 ? 'warn' : ''"
       />
-    </div>
+    </HGrid>
 
     <HCard
       title="Operational units"
-      style="margin-top:18px"
+      flush
     >
       <HTable
         :headers="headers"
         :items="board.facilities"
         empty="No operational units in this module"
       >
+        <template #cell-name="{ item }">
+          <RouterLink
+            class="h-inline-link"
+            :to="{ name: 'facilities-id', params: { id: item.id } }"
+          >
+            {{ item.name }}
+          </RouterLink>
+        </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
@@ -298,7 +330,7 @@ const headers = [
     <HCard
       v-if="board.orders"
       title="Orders"
-      style="margin-top:18px"
+      flush
     >
       <template
         v-if="ability.can('create', subject)"
@@ -324,7 +356,14 @@ const headers = [
         empty="No orders yet"
       >
         <template #cell-patient.first_name="{ item }">
-          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.first_name }} {{ item.patient.last_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -364,6 +403,14 @@ const headers = [
             >
               Complete
             </HButton>
+            <HButton
+              v-if="ability.can('update', subject) && !['completed', 'cancelled'].includes(item.status)"
+              variant="ghost"
+              size="sm"
+              @click="updateOrder(item, 'cancelled')"
+            >
+              Cancel
+            </HButton>
           </div>
         </template>
       </HTable>
@@ -372,7 +419,7 @@ const headers = [
     <HCard
       v-if="board.assignments"
       title="Bed assignments"
-      style="margin-top:18px"
+      flush
     >
       <template
         v-if="ability.can('create', 'Bed')"
@@ -397,7 +444,14 @@ const headers = [
         empty="No bed assignments"
       >
         <template #cell-patient.first_name="{ item }">
-          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.first_name }} {{ item.patient.last_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -415,7 +469,7 @@ const headers = [
               Chart
             </HButton>
             <HButton
-              v-if="ability.can('update', 'Bed')"
+              v-if="ability.can('update', 'Bed') && item.status === 'active'"
               variant="ghost"
               size="sm"
               @click="discharge(item)"

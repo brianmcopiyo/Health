@@ -13,6 +13,8 @@ const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
 const editing = ref(null)
+const removing = ref(null)
+const restoring = ref(false)
 const form = ref({
   name: '',
   module_key: 'reception',
@@ -50,6 +52,22 @@ const save = async () => {
   })
 }
 
+const removeDepartment = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/departments/${removing.value.id}`, { method: 'DELETE' })
+    removing.value = null
+    await load()
+  })
+}
+
+const restoreDefaults = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api('/departments/restore-defaults', { method: 'POST' })
+    restoring.value = false
+    await load()
+  })
+}
+
 await withPageLoad(load)
 </script>
 
@@ -61,6 +79,13 @@ await withPageLoad(load)
     >
       <HButton
         v-if="ability.can('manage', 'Department')"
+        variant="ghost"
+        @click="formError = ''; restoring = true"
+      >
+        Restore defaults
+      </HButton>
+      <HButton
+        v-if="ability.can('manage', 'Department')"
         @click="openCreate"
       >
         <HIcon name="plus" />
@@ -68,7 +93,7 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <HCard>
+    <HCard flush>
       <HTable
         :headers="[
           { title: 'Name', key: 'name' },
@@ -84,14 +109,24 @@ await withPageLoad(load)
           {{ item.is_active ? 'Yes' : 'No' }}
         </template>
         <template #cell-actions="{ item }">
-          <HButton
-            v-if="ability.can('manage', 'Department')"
-            variant="ghost"
-            size="icon"
-            @click="openEdit(item)"
-          >
-            <HIcon name="edit" />
-          </HButton>
+          <div class="h-actions">
+            <HButton
+              v-if="ability.can('manage', 'Department')"
+              variant="ghost"
+              size="icon"
+              @click="openEdit(item)"
+            >
+              <HIcon name="edit" />
+            </HButton>
+            <HButton
+              v-if="ability.can('manage', 'Department')"
+              variant="ghost"
+              size="sm"
+              @click="formError = ''; removing = item"
+            >
+              Remove
+            </HButton>
+          </div>
         </template>
       </HTable>
     </HCard>
@@ -137,6 +172,56 @@ await withPageLoad(load)
           @click="save"
         >
           Save
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      :model-value="Boolean(removing)"
+      title="Remove department"
+      :error="formError"
+      :persistent="saving"
+      @update:model-value="val => { if (!val) removing = null }"
+    >
+      <p>Remove {{ removing?.name }}?</p>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="removing = null"
+        >
+          Keep
+        </HButton>
+        <HButton
+          variant="danger"
+          :disabled="saving"
+          @click="removeDepartment"
+        >
+          Remove
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      v-model="restoring"
+      title="Restore default departments"
+      :error="formError"
+      :persistent="saving"
+    >
+      <p>Add any missing default departments for this hospital.</p>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="restoring = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving"
+          @click="restoreDefaults"
+        >
+          Restore
         </HButton>
       </template>
     </HModal>

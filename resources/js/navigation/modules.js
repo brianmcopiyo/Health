@@ -27,16 +27,16 @@ export const buildNavigation = (ability, userData) => {
     ? catalog.filter(module => ['hospitals', 'users', 'roles', 'reports'].includes(module.key))
     : catalog.filter(module => ability.can('read', module.subject))
 
-  const items = []
-  let heading = null
+  const groups = []
 
   visible.forEach(module => {
-    if (heading !== module.heading) {
-      heading = module.heading
-      items.push({ heading })
+    let group = groups.find(item => item.heading === module.heading)
+    if (!group) {
+      group = { heading: module.heading, items: [] }
+      groups.push(group)
     }
 
-    items.push({
+    group.items.push({
       title: module.title,
       icon: module.icon,
       to: module.to,
@@ -45,21 +45,30 @@ export const buildNavigation = (ability, userData) => {
     })
   })
 
-  return items
+  return groups
 }
 
 export const pageMeta = name => {
-  const exact = catalog.find(module => module.to === name)
+  const key = String(name || '')
+  const exact = catalog.find(module => module.to === key)
   if (exact)
     return exact
 
-  const prefixes = [
-    ['facilities', 'Facilities'],
-    ['ambulances', 'Ambulances'],
-    ['referrals', 'Referrals'],
-    ['admin', 'Administration'],
-  ]
-  const match = prefixes.find(([key]) => String(name || '').startsWith(key))
+  const nested = catalog
+    .filter(module => module.to !== 'admin' && key.startsWith(`${module.to}-`))
+    .sort((a, b) => b.to.length - a.to.length)[0]
 
-  return match ? { title: match[1], heading: 'Workspace' } : { title: 'Caregrid', heading: 'Workspace' }
+  if (nested)
+    return nested
+
+  if (key === 'account-profile')
+    return { title: 'Profile', heading: 'Account' }
+
+  if (key === 'account-security')
+    return { title: 'Security', heading: 'Account' }
+
+  if (key === 'errors-code' || key === 'not-authorized' || key.startsWith('errors-'))
+    return { title: 'Caregrid', heading: 'Help' }
+
+  return { title: 'Caregrid', heading: 'Workspace' }
 }

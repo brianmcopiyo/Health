@@ -18,9 +18,35 @@ export const redirects = [
   },
 ]
 
+export const errorRoutes = [
+  {
+    path: '/errors/:code',
+    name: 'errors-code',
+    component: () => import('@/pages/errors/[code].vue'),
+    meta: { layout: 'blank', public: true },
+  },
+]
+
+export const accountRoutes = [
+  {
+    path: '/account/profile',
+    name: 'account-profile',
+    component: () => import('@/pages/account/profile.vue'),
+  },
+  {
+    path: '/account/security',
+    name: 'account-security',
+    component: () => import('@/pages/account/security.vue'),
+  },
+]
+
 export const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  extendRoutes: pages => [...redirects, ...pages],
+  extendRoutes: pages => {
+    const reserved = new Set(['errors-code', 'account-profile', 'account-security'])
+    const rest = pages.filter(page => !reserved.has(page.name))
+    return [...redirects, ...errorRoutes, ...accountRoutes, ...rest]
+  },
 })
 
 setupGuards(router)

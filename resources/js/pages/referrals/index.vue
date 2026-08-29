@@ -20,6 +20,7 @@ const saving = ref(false)
 const formError = ref('')
 const responseNotes = ref('')
 const destinationFacilityId = ref(null)
+const facilities = ref([])
 
 const headers = [
   { title: 'Patient', key: 'patient_name' },
@@ -45,6 +46,19 @@ const load = async () => {
 
 const isDestination = item => userData.value?.hospitalId === item.to_hospital_id
 const isOrigin = item => userData.value?.hospitalId === item.from_hospital_id
+
+const openManage = async item => {
+  formError.value = ''
+  selected.value = item
+  responseNotes.value = item.response_notes || ''
+  destinationFacilityId.value = item.destination_facility_id || null
+  facilities.value = []
+  if (isDestination(item) && ['pending', 'more_info'].includes(item.status)) {
+    const typeId = item.required_facility_type_id || item.required_facility_type?.id
+    const payload = await $api('/facilities', { query: { facility_type_id: typeId, per_page: 50 } }).catch(() => [])
+    facilities.value = asList(payload)
+  }
+}
 
 const updateStatus = async nextStatus => {
   await wrapSave(saving, formError, async () => {
@@ -84,11 +98,8 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <HCard>
-      <div
-        class="h-grid cols-2"
-        style="margin-bottom:16px"
-      >
+    <HCard flush>
+      <HToolbar>
         <HSegmented
           :model-value="direction"
           :options="[
@@ -105,14 +116,21 @@ await withPageLoad(load)
           placeholder="All statuses"
           @update:model-value="load"
         />
-      </div>
+      </HToolbar>
       <HTable
         :headers="headers"
         :items="referrals"
         empty="No referrals in this view"
       >
         <template #cell-patient_name="{ item }">
-          {{ item.patient?.full_name || item.patient_name }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.full_name || item.patient_name }}
+          </RouterLink>
+          <span v-else>{{ item.patient_name || '—' }}</span>
         </template>
         <template #cell-encounter.type="{ item }">
           {{ item.encounter ? labelize(item.encounter.type) : '—' }}
@@ -123,13 +141,22 @@ await withPageLoad(load)
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <HButton
-            variant="ghost"
-            size="sm"
-            @click="formError = ''; selected = item"
-          >
-            Manage
-          </HButton>
+          <div class="h-actions">
+            <HButton
+              variant="ghost"
+              size="icon"
+              :to="{ name: 'referrals-id', params: { id: item.id } }"
+            >
+              <HIcon name="eye" />
+            </HButton>
+            <HButton
+              variant="ghost"
+              size="sm"
+              @click="openManage(item)"
+            >
+              Manage
+            </HButton>
+          </div>
         </template>
       </HTable>
       <HPager
@@ -145,8 +172,8 @@ await withPageLoad(load)
       :persistent="saving"
       @update:model-value="val => { if (!val) selected = null }"
     >
-      <div v-if="selected">
-        <p style="color:var(--muted);margin-top:0">
+      <div v-if="selected" class="h-stack">
+        <p class="h-muted">
           {{ selected.from_hospital?.name }} → {{ selected.to_hospital?.name }}
         </p>
         <p>{{ selected.patient?.full_name || selected.patient_name }} · {{ selected.patient_reference }}</p>
@@ -158,6 +185,14 @@ await withPageLoad(load)
         <p v-if="selected.response_notes">
           Response: {{ selected.response_notes }}
         </p>
+        <HSelect
+          v-if="isDestination(selected) && ['pending', 'more_info'].includes(selected.status) && facilities.length"
+          v-model="destinationFacilityId"
+          :items="facilities"
+          item-title="name"
+          item-value="id"
+          label="Receiving unit"
+        />
         <HTextarea
           v-model="responseNotes"
           label="Notes"

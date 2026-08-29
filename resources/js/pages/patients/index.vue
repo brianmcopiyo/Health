@@ -102,13 +102,6 @@ const today = new Date().toISOString().slice(0, 10)
       title="Patients"
       subtitle="Hospital patient register"
     >
-      <HInput
-        v-model="search"
-        placeholder="Search MRN, name or phone"
-        icon="search"
-        style="min-width:240px"
-        @keyup.enter="page = 1; load()"
-      />
       <HButton
         v-if="ability.can('create', 'Patient')"
         @click="openCreate"
@@ -118,7 +111,24 @@ const today = new Date().toISOString().slice(0, 10)
       </HButton>
     </HPage>
 
-    <HCard>
+    <HCard flush>
+      <HToolbar>
+        <HInput
+          v-model="search"
+          class="is-search"
+          label="Search"
+          placeholder="Search MRN, name or phone"
+          icon="search"
+          clearable
+          @keyup.enter="page = 1; load()"
+        />
+        <HButton
+          variant="ghost"
+          @click="page = 1; load()"
+        >
+          Search
+        </HButton>
+      </HToolbar>
       <HTable
         :headers="[
           { title: 'MRN', key: 'mrn' },
@@ -170,7 +180,7 @@ const today = new Date().toISOString().slice(0, 10)
       :persistent="saving"
     >
       <fieldset
-        class="h-grid cols-2"
+        class="h-form-grid"
         :disabled="saving"
       >
         <HInput
@@ -219,12 +229,10 @@ const today = new Date().toISOString().slice(0, 10)
       <HInput
         v-model="form.address"
         label="Address"
-        style="margin-top:12px"
         :disabled="saving"
       />
       <fieldset
-        class="h-grid cols-3"
-        style="margin-top:12px"
+        class="h-form-grid is-3"
         :disabled="saving"
       >
         <HInput

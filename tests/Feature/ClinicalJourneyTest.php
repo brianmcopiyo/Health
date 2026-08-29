@@ -273,6 +273,80 @@ class ClinicalJourneyTest extends TestCase
         $this->assertNotEmpty($nurse['ward_patients']);
     }
 
+    public function test_detail_payloads_expose_related_records_and_supported_actions(): void
+    {
+        Sanctum::actingAs($this->user('admin@riverside.test'));
+        $patient = Patient::query()->where('mrn', 'RGH-0001')->first();
+
+        $chart = $this->getJson('/api/patients/'.$patient->id)->assertOk()->json();
+        $this->assertArrayHasKey('encounters', $chart);
+        $this->assertArrayHasKey('invoices', $chart);
+        $this->assertArrayHasKey('prescriptions', $chart);
+        $this->assertArrayHasKey('orders', $chart);
+        $this->assertArrayHasKey('bed_assignments', $chart);
+
+        $this->putJson('/api/patients/'.$patient->id, [
+            'first_name' => $patient->first_name,
+            'last_name' => $patient->last_name,
+            'allergies' => [['allergen' => 'Penicillin', 'severity' => 'severe']],
+            'conditions' => [['name' => 'Hypertension', 'status' => 'active']],
+        ])->assertOk();
+
+        $this->getJson('/api/patients/'.$patient->id.'/export')->assertOk();
+
+        $encounter = Encounter::query()->where('patient_id', $patient->id)->whereIn('status', ['waiting', 'in_progress'])->first()
+            ?? Encounter::query()->where('patient_id', $patient->id)->first();
+        $this->getJson('/api/encounters/'.$encounter->id.'/invoice')->assertSuccessful();
+
+        Sanctum::actingAs($this->user('doctor@riverside.test'));
+        $this->postJson('/api/encounters/'.$encounter->id.'/care-plans', [
+            'title' => 'Observe overnight',
+            'body' => 'Repeat vitals every four hours.',
+        ])->assertCreated();
+
+        $order = $this->postJson('/api/service-orders', [
+            'module_key' => 'laboratory',
+            'encounter_id' => $encounter->id,
+            'item_name' => 'Malaria smear',
+        ])->assertCreated()->json();
+
+        Sanctum::actingAs($this->user('lab@riverside.test'));
+        $this->patchJson('/api/service-orders/'.$order['id'], ['status' => 'cancelled'])->assertOk();
+
+        Sanctum::actingAs($this->user('pharmacy@riverside.test'));
+        $rx = \App\Models\Prescription::query()->where('status', 'pending')->first();
+        if ($rx) {
+            $this->patchJson('/api/prescriptions/'.$rx->id.'/status', ['status' => 'cancelled'])->assertOk();
+        }
+
+        Sanctum::actingAs($this->user('billing@riverside.test'));
+        $invoice = \App\Models\Invoice::query()->first();
+        $this->getJson('/api/invoices/'.$invoice->id)->assertOk()->assertJsonStructure(['id', 'items', 'payments']);
+
+        Sanctum::actingAs($this->user('admin@riverside.test'));
+        $facility = Facility::query()->where('code', 'WARD-A')->first();
+        $shown = $this->getJson('/api/facilities/'.$facility->id)->assertOk()->json();
+        $this->assertArrayHasKey('children', $shown);
+        $this->assertArrayHasKey('department', $shown);
+
+        $referral = \App\Models\Referral::query()->first();
+        if ($referral) {
+            $this->getJson('/api/referrals/'.$referral->id)->assertOk()->assertJsonStructure(['id', 'patient', 'from_hospital', 'to_hospital']);
+        }
+
+        $assistance = \App\Models\AssistanceRequest::query()->first();
+        if ($assistance) {
+            $this->getJson('/api/assistance-requests/'.$assistance->id)->assertOk()->assertJsonStructure(['id', 'from_hospital', 'to_hospital']);
+        }
+
+        $ambulance = \App\Models\Ambulance::query()->where('status', 'available')->first();
+        $this->getJson('/api/ambulances/'.$ambulance->id)->assertOk()->assertJsonStructure(['id', 'staff', 'trips']);
+        $this->putJson('/api/ambulances/'.$ambulance->id, [
+            'notes' => 'Crew checked',
+            'staff' => [],
+        ])->assertOk();
+    }
+
     private function actingAsDoctorChart(string $patientId): array
     {
         Sanctum::actingAs($this->user('doctor@riverside.test'));

@@ -59,29 +59,38 @@ const utilization = computed(() => {
       </HButton>
     </HPage>
 
-    <div class="h-grid cols-4">
+    <HGrid
+      cols="4"
+      kind="stats"
+    >
       <HStat
+        icon="community"
         title="Available facilities"
         :value="stats.facilities.available"
+        hint="Units ready to receive patients"
       />
       <HStat
+        icon="users"
         title="Active patients"
         :value="stats.patients.active"
+        hint="Currently under care"
       />
       <HStat
+        icon="chart"
         title="Capacity used"
         :value="utilization"
+        hint="Of rated facility capacity"
+        :tone="Number.parseInt(utilization, 10) >= 80 ? 'warn' : ''"
       />
       <HStat
+        icon="ambulance"
         title="Ambulances ready"
         :value="stats.ambulances.available"
+        hint="Vehicles available to dispatch"
       />
-    </div>
+    </HGrid>
 
-    <div
-      class="h-grid cols-3"
-      style="margin-top:18px"
-    >
+    <HGrid cols="3">
       <HCard title="Referrals">
         <div class="h-metric">
           <span>Pending incoming</span>
@@ -120,11 +129,11 @@ const utilization = computed(() => {
           <strong>{{ stats.encounters.emergency }}</strong>
         </div>
       </HCard>
-    </div>
+    </HGrid>
 
     <HCard
       title="Facility utilization by type"
-      style="margin-top:18px"
+      flush
     >
       <HTable
         :headers="[

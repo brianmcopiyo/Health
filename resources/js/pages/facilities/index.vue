@@ -20,6 +20,8 @@ const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
 const editing = ref(null)
+const removing = ref(null)
+const departments = ref([])
 const form = ref({
   name: '',
   code: '',
@@ -30,6 +32,7 @@ const form = ref({
   current_utilization: 0,
   resource_notes: '',
   notes: '',
+  department_id: null,
 })
 
 const headers = [
@@ -59,6 +62,8 @@ const load = async () => {
   facilities.value = asList(items)
   meta.value = asPageMeta(items)
   types.value = asList(facilityTypes)
+  if (ability.can('update', 'Facility') || ability.can('create', 'Facility'))
+    departments.value = asList(await $api('/departments').catch(() => []))
 }
 
 const openCreate = () => {
@@ -74,6 +79,7 @@ const openCreate = () => {
     current_utilization: 0,
     resource_notes: '',
     notes: '',
+    department_id: null,
   }
   formOpen.value = true
 }
@@ -91,6 +97,7 @@ const openEdit = item => {
     current_utilization: item.current_utilization,
     resource_notes: item.resource_notes,
     notes: item.notes,
+    department_id: item.department_id,
   }
   formOpen.value = true
 }
@@ -104,6 +111,14 @@ const save = async () => {
       await $api('/facilities', { method: 'POST', body: payload })
 
     formOpen.value = false
+    await load()
+  })
+}
+
+const removeFacility = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/facilities/${removing.value.id}`, { method: 'DELETE' })
+    removing.value = null
     await load()
   })
 }
@@ -126,13 +141,11 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <HCard>
-      <div
-        class="h-grid cols-3"
-        style="margin-bottom:16px"
-      >
+    <HCard flush>
+      <HToolbar>
         <HInput
           v-model="search"
+          class="is-search"
           label="Search"
           icon="search"
           clearable
@@ -155,7 +168,7 @@ await withPageLoad(load)
           placeholder="All statuses"
           @update:model-value="load"
         />
-      </div>
+      </HToolbar>
       <HTable
         :headers="headers"
         :items="facilities"
@@ -183,6 +196,14 @@ await withPageLoad(load)
             >
               <HIcon name="edit" />
             </HButton>
+            <HButton
+              v-if="ability.can('manage', 'Facility')"
+              variant="ghost"
+              size="sm"
+              @click="formError = ''; removing = item"
+            >
+              Remove
+            </HButton>
           </div>
         </template>
       </HTable>
@@ -208,7 +229,7 @@ await withPageLoad(load)
           label="Name"
           required
         />
-        <div class="h-grid cols-2">
+        <div class="h-form-grid">
           <HInput
             v-model="form.code"
             label="Code"
@@ -223,7 +244,21 @@ await withPageLoad(load)
             required
           />
         </div>
-        <div class="h-grid cols-3">
+        <HSelect
+          v-model="form.parent_id"
+          :items="facilities.filter(item => item.id !== editing?.id)"
+          item-title="name"
+          item-value="id"
+          label="Parent unit"
+        />
+        <HSelect
+          v-model="form.department_id"
+          :items="departments"
+          item-title="name"
+          item-value="id"
+          label="Department"
+        />
+        <div class="h-form-grid is-3">
           <HSelect
             v-model="form.status"
             :items="facilityStatuses"
@@ -262,5 +297,31 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HOffcanvas>
+
+    <HModal
+      :model-value="Boolean(removing)"
+      title="Remove facility"
+      :error="formError"
+      :persistent="saving"
+      @update:model-value="val => { if (!val) removing = null }"
+    >
+      <p>Remove {{ removing?.name }}?</p>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="removing = null"
+        >
+          Keep
+        </HButton>
+        <HButton
+          variant="danger"
+          :disabled="saving"
+          @click="removeFacility"
+        >
+          Remove
+        </HButton>
+      </template>
+    </HModal>
   </div>
 </template>

@@ -68,16 +68,22 @@ const login = async () => {
         <p class="hms-kicker">
           Sign in
         </p>
-        <h1 style="font-family:var(--display);font-size:2.1rem;margin:6px 0 18px">
+        <h1>
           Welcome back
         </h1>
+        <div
+          v-if="route.query.reason === 'expired' && !formError"
+          class="h-alert"
+        >
+          Your session ended. Sign in to return to your workspace.
+        </div>
         <div
           v-if="formError"
           class="h-alert"
         >
           {{ formError }}
         </div>
-        <div class="h-grid cols-1" style="gap:14px">
+        <div class="h-stack">
           <HInput
             v-model="credentials.email"
             label="Email"
@@ -103,12 +109,13 @@ const login = async () => {
           />
           <HButton
             type="submit"
+            class="is-block"
             :disabled="submitting"
           >
             {{ submitting ? 'Signing in…' : 'Enter workspace' }}
           </HButton>
         </div>
-        <p style="margin-top:18px;color:var(--muted);font-size:0.88rem">
+        <p class="h-muted">
           Riverside admin: admin@riverside.test / password
         </p>
       </form>

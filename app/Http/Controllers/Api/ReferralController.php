@@ -178,7 +178,17 @@ class ReferralController extends Controller
 
     public function show(Referral $referral)
     {
-        return $referral->load(['fromHospital', 'toHospital', 'requiredFacilityType', 'destinationFacility', 'creator', 'reviewer', 'ambulanceTrip']);
+        return $referral->load([
+            'fromHospital',
+            'toHospital',
+            'requiredFacilityType',
+            'destinationFacility',
+            'creator',
+            'reviewer',
+            'ambulanceTrip',
+            'patient:id,mrn,first_name,last_name,status',
+            'encounter:id,type,status,chief_complaint',
+        ]);
     }
 
     public function updateStatus(Request $request, Referral $referral)

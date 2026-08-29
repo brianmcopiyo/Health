@@ -7,13 +7,16 @@ defineProps({
 
 <template>
   <div class="hms-page-title">
-    <div>
+    <div class="hms-page-copy">
       <h1>{{ title }}</h1>
       <p v-if="subtitle">
         {{ subtitle }}
       </p>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <div
+      v-if="$slots.default"
+      class="hms-page-actions"
+    >
       <slot />
     </div>
   </div>

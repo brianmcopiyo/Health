@@ -26,13 +26,16 @@ declare global {
   const definePage: typeof import('unplugin-vue-router/runtime')['_definePage']
   const diagnosisKindOptions: typeof import('./resources/js/utils/clinicalOptions.js')['diagnosisKindOptions']
   const doseFrequencies: typeof import('./resources/js/utils/clinicalOptions.js')['doseFrequencies']
+  const downloadAuthorized: typeof import('./resources/js/utils/api.js')['downloadAuthorized']
   const effectScope: typeof import('vue')['effectScope']
+  const errorCatalog: typeof import('./resources/js/utils/errors.js')['errorCatalog']
   const errorText: typeof import('./resources/js/utils/formOptions.js')['errorText']
   const facilityStatuses: typeof import('./resources/js/utils/status.js')['facilityStatuses']
   const getByPath: typeof import('./resources/js/utils/helpers.js')['getByPath']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
   const getCurrentScope: typeof import('vue')['getCurrentScope']
   const h: typeof import('vue')['h']
+  const httpStatus: typeof import('./resources/js/utils/errors.js')['httpStatus']
   const inject: typeof import('vue')['inject']
   const isProxy: typeof import('vue')['isProxy']
   const isReactive: typeof import('vue')['isReactive']
@@ -58,6 +61,7 @@ declare global {
   const onServerPrefetch: typeof import('vue')['onServerPrefetch']
   const onUnmounted: typeof import('vue')['onUnmounted']
   const onUpdated: typeof import('vue')['onUpdated']
+  const pageErrorRoute: typeof import('./resources/js/utils/errors.js')['pageErrorRoute']
   const pageLoadError: typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']
   const pageLoading: typeof import('./resources/js/composables/usePageLoad.js')['pageLoading']
   const paymentMethods: typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']
@@ -67,6 +71,7 @@ declare global {
   const ref: typeof import('vue')['ref']
   const referralStatuses: typeof import('./resources/js/utils/status.js')['referralStatuses']
   const resolveComponent: typeof import('vue')['resolveComponent']
+  const resolveError: typeof import('./resources/js/utils/errors.js')['resolveError']
   const resolveHomeRoute: typeof import('./resources/js/utils/session.js')['resolveHomeRoute']
   const sameValue: typeof import('./resources/js/utils/formOptions.js')['sameValue']
   const saveError: typeof import('./resources/js/composables/usePageLoad.js')['saveError']
@@ -136,13 +141,16 @@ declare module 'vue' {
     readonly definePage: UnwrapRef<typeof import('unplugin-vue-router/runtime')['_definePage']>
     readonly diagnosisKindOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['diagnosisKindOptions']>
     readonly doseFrequencies: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['doseFrequencies']>
+    readonly downloadAuthorized: UnwrapRef<typeof import('./resources/js/utils/api.js')['downloadAuthorized']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly httpStatus: UnwrapRef<typeof import('./resources/js/utils/errors.js')['httpStatus']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
@@ -168,6 +176,7 @@ declare module 'vue' {
     readonly onServerPrefetch: UnwrapRef<typeof import('vue')['onServerPrefetch']>
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
+    readonly pageErrorRoute: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorRoute']>
     readonly pageLoadError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']>
     readonly pageLoading: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoading']>
     readonly paymentMethods: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']>
@@ -177,6 +186,7 @@ declare module 'vue' {
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly referralStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['referralStatuses']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
+    readonly resolveError: UnwrapRef<typeof import('./resources/js/utils/errors.js')['resolveError']>
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
     readonly sameValue: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['sameValue']>
     readonly saveError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['saveError']>
@@ -239,13 +249,16 @@ declare module '@vue/runtime-core' {
     readonly definePage: UnwrapRef<typeof import('unplugin-vue-router/runtime')['_definePage']>
     readonly diagnosisKindOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['diagnosisKindOptions']>
     readonly doseFrequencies: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['doseFrequencies']>
+    readonly downloadAuthorized: UnwrapRef<typeof import('./resources/js/utils/api.js')['downloadAuthorized']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
+    readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
     readonly getCurrentScope: UnwrapRef<typeof import('vue')['getCurrentScope']>
     readonly h: UnwrapRef<typeof import('vue')['h']>
+    readonly httpStatus: UnwrapRef<typeof import('./resources/js/utils/errors.js')['httpStatus']>
     readonly inject: UnwrapRef<typeof import('vue')['inject']>
     readonly isProxy: UnwrapRef<typeof import('vue')['isProxy']>
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
@@ -271,6 +284,7 @@ declare module '@vue/runtime-core' {
     readonly onServerPrefetch: UnwrapRef<typeof import('vue')['onServerPrefetch']>
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
+    readonly pageErrorRoute: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorRoute']>
     readonly pageLoadError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']>
     readonly pageLoading: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoading']>
     readonly paymentMethods: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']>
@@ -280,6 +294,7 @@ declare module '@vue/runtime-core' {
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
     readonly referralStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['referralStatuses']>
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
+    readonly resolveError: UnwrapRef<typeof import('./resources/js/utils/errors.js')['resolveError']>
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
     readonly sameValue: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['sameValue']>
     readonly saveError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['saveError']>

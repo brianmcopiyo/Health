@@ -13,6 +13,7 @@ const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
 const editing = ref(null)
+const removing = ref(null)
 const form = ref({
   name: '',
   description: '',
@@ -76,6 +77,14 @@ const save = async () => {
   })
 }
 
+const removeRole = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/roles/${removing.value.id}`, { method: 'DELETE' })
+    removing.value = null
+    await load()
+  })
+}
+
 await withPageLoad(load)
 </script>
 
@@ -94,13 +103,33 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <div class="h-grid cols-3">
+    <HGrid cols="3">
       <HCard
         v-for="role in roles"
         :key="role.id"
         :title="role.name"
       >
-        <p style="color:var(--muted);margin-top:0">
+        <template
+          v-if="ability.can('manage', 'Role')"
+          #actions
+        >
+          <HButton
+            variant="ghost"
+            size="sm"
+            @click="openEdit(role)"
+          >
+            Edit
+          </HButton>
+          <HButton
+            v-if="!role.is_system"
+            variant="ghost"
+            size="sm"
+            @click="formError = ''; removing = role"
+          >
+            Remove
+          </HButton>
+        </template>
+        <p class="h-muted is-clamp">
           {{ role.workspace }} · {{ role.description }}
         </p>
         <div class="h-actions">
@@ -113,21 +142,12 @@ await withPageLoad(load)
         </div>
         <p
           v-if="(role.permissions || []).length > 6"
-          style="color:var(--muted);font-size:0.85rem"
+          class="h-muted"
         >
           +{{ role.permissions.length - 6 }} more
         </p>
-        <HButton
-          v-if="ability.can('manage', 'Role')"
-          variant="ghost"
-          size="sm"
-          style="margin-top:10px"
-          @click="openEdit(role)"
-        >
-          Edit
-        </HButton>
       </HCard>
-    </div>
+    </HGrid>
 
     <HOffcanvas
       v-model="formOpen"
@@ -185,5 +205,31 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HOffcanvas>
+
+    <HModal
+      :model-value="Boolean(removing)"
+      title="Remove role"
+      :error="formError"
+      :persistent="saving"
+      @update:model-value="val => { if (!val) removing = null }"
+    >
+      <p>Remove {{ removing?.name }}?</p>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="removing = null"
+        >
+          Keep
+        </HButton>
+        <HButton
+          variant="danger"
+          :disabled="saving"
+          @click="removeRole"
+        >
+          Remove
+        </HButton>
+      </template>
+    </HModal>
   </div>
 </template>

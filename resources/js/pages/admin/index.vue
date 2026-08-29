@@ -46,67 +46,76 @@ await withPageLoad(async () => {
       :subtitle="userData?.hospitalName || 'Network'"
     />
 
-    <div
+    <HGrid
       v-if="stats"
-      class="h-grid cols-4"
-      style="margin-bottom:18px"
+      cols="4"
+      kind="stats"
     >
       <HStat
+        icon="hospital"
         title="Remaining capacity"
         :value="Math.max(0, (stats.facilities?.capacity || 0) - (stats.facilities?.utilization || 0))"
+        hint="Beds and units still open"
       />
       <HStat
+        icon="chart"
         title="Utilization"
         :value="utilization"
+        hint="Of rated facility capacity"
+        :tone="Number.parseInt(utilization, 10) >= 80 ? 'warn' : ''"
       />
       <HStat
+        icon="stethoscope"
         title="Open encounters"
         :value="(stats.encounters?.waiting || 0) + (stats.encounters?.in_progress || 0)"
+        hint="Waiting and in progress"
       />
       <HStat
+        icon="transfer"
         title="Pending referrals"
         :value="stats.referrals?.incoming || 0"
+        hint="Incoming transfers"
+        :tone="stats.referrals?.incoming ? 'warn' : ''"
       />
-    </div>
+    </HGrid>
 
-    <HCard
+    <HGrid
       v-if="workspace"
-      title="Operational activity"
-      style="margin-bottom:18px"
+      cols="4"
+      kind="stats"
     >
-      <div class="h-grid cols-3">
-        <div class="h-metric">
-          <span>My open encounters</span>
-          <strong>{{ workspace.my_encounters?.length || 0 }}</strong>
-        </div>
-        <div class="h-metric">
-          <span>Lab queue</span>
-          <strong>{{ workspace.lab_orders?.length || 0 }}</strong>
-        </div>
-        <div class="h-metric">
-          <span>Pharmacy queue</span>
-          <strong>{{ workspace.prescriptions?.length || 0 }}</strong>
-        </div>
-      </div>
-    </HCard>
+      <HStat
+        icon="stethoscope"
+        title="My open encounters"
+        :value="workspace.my_encounters?.length || 0"
+        hint="Assigned to you"
+      />
+      <HStat
+        icon="flask"
+        title="Lab queue"
+        :value="workspace.lab_orders?.length || 0"
+        hint="Orders awaiting results"
+      />
+      <HStat
+        icon="pill"
+        title="Pharmacy queue"
+        :value="workspace.prescriptions?.length || 0"
+        hint="Prescriptions to dispense"
+      />
+    </HGrid>
 
-    <div class="h-grid cols-3">
-      <RouterLink
+    <HGrid
+      cols="3"
+      kind="links"
+    >
+      <HLinkCard
         v-for="card in cards"
         :key="card.to"
-        :to="{ name: card.to }"
-        class="h-card h-link-card"
-      >
-        <div class="h-icon-bubble">
-          <HIcon :name="card.icon" />
-        </div>
-        <div>
-          <strong>{{ card.title }}</strong>
-          <div style="color:var(--muted)">
-            {{ card.text }}
-          </div>
-        </div>
-      </RouterLink>
-    </div>
+        :title="card.title"
+        :text="card.text"
+        :icon="card.icon"
+        :to="card.to"
+      />
+    </HGrid>
   </div>
 </template>

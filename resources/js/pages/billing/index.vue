@@ -29,6 +29,7 @@ const payForm = ref({
   amount: 0,
   method: 'cash',
 })
+const viewing = ref(null)
 
 const encounterOptions = computed(() => encounters.value.map(item => ({
   title: `${labelize(item.type)} · ${item.chief_complaint || labelize(item.status)}`,
@@ -80,8 +81,25 @@ const save = async () => {
 }
 
 const updateStatus = async (invoice, status) => {
-  await $api(`/invoices/${invoice.id}/status`, { method: 'PATCH', body: { status } })
-  await load()
+  await wrapSave(saving, formError, async () => {
+    await $api(`/invoices/${invoice.id}/status`, { method: 'PATCH', body: { status } })
+    if (viewing.value?.id === invoice.id)
+      viewing.value = await $api(`/invoices/${invoice.id}`)
+    await load()
+  })
+}
+
+const openInvoice = async invoice => {
+  viewing.value = await $api(`/invoices/${invoice.id}`)
+}
+
+const cancelInvoice = async invoice => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/invoices/${invoice.id}/status`, { method: 'PATCH', body: { status: 'cancelled' } })
+    if (viewing.value?.id === invoice.id)
+      viewing.value = await $api(`/invoices/${invoice.id}`)
+    await load()
+  })
 }
 
 const openPay = invoice => {
@@ -126,7 +144,14 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <HCard>
+    <div
+      v-if="formError && !formOpen && !payOpen"
+      class="h-alert"
+    >
+      {{ formError }}
+    </div>
+
+    <HCard flush>
       <HTable
         :headers="[
           { title: 'Number', key: 'number' },
@@ -140,7 +165,14 @@ await withPageLoad(load)
         empty="No invoices yet"
       >
         <template #cell-patient.first_name="{ item }">
-          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.first_name }} {{ item.patient.last_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-encounter.type="{ item }">
           {{ item.encounter ? labelize(item.encounter.type) : '—' }}
@@ -153,6 +185,13 @@ await withPageLoad(load)
         <template #cell-actions="{ item }">
           <div class="h-actions">
             <HButton
+              variant="ghost"
+              size="sm"
+              @click="openInvoice(item)"
+            >
+              View
+            </HButton>
+            <HButton
               v-if="ability.can('update', 'Invoice') && item.status === 'draft'"
               size="sm"
               @click="updateStatus(item, 'issued')"
@@ -160,13 +199,24 @@ await withPageLoad(load)
               Issue
             </HButton>
             <HButton
-              v-if="ability.can('update', 'Invoice') && item.status !== 'paid'"
+              v-if="ability.can('update', 'Invoice') && item.status !== 'paid' && item.status !== 'cancelled'"
               variant="ghost"
               size="sm"
               @click="openPay(item)"
             >
               Record payment
             </HButton>
+            <HActionMenu v-if="ability.can('update', 'Invoice') && ['draft', 'issued'].includes(item.status)">
+              <template #default="{ close }">
+                <button
+                  type="button"
+                  class="h-action-item is-danger"
+                  @click="cancelInvoice(item); close()"
+                >
+                  Cancel invoice
+                </button>
+              </template>
+            </HActionMenu>
           </div>
         </template>
       </HTable>
@@ -204,8 +254,7 @@ await withPageLoad(load)
       <fieldset
         v-for="(item, index) in form.items"
         :key="index"
-        class="h-grid cols-3"
-        style="margin-top:12px"
+        class="h-form-grid is-3"
         :disabled="saving"
       >
         <HInput
@@ -225,7 +274,6 @@ await withPageLoad(load)
       </fieldset>
       <HButton
         variant="ghost"
-        style="margin-top:12px"
         @click="addItem"
       >
         Add line
@@ -285,5 +333,73 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HModal>
+
+    <HOffcanvas
+      :model-value="Boolean(viewing)"
+      :title="viewing?.number || 'Invoice'"
+      size="lg"
+      @update:model-value="val => { if (!val) viewing = null }"
+    >
+      <div
+        v-if="viewing"
+        class="h-stack"
+      >
+        <HBadge :tone="statusColor(viewing.status)">
+          {{ labelize(viewing.status) }}
+        </HBadge>
+        <p class="h-muted">
+          Total {{ viewing.total }}
+        </p>
+        <p v-if="viewing.patient">
+          <RouterLink
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: viewing.patient.id } }"
+          >
+            {{ viewing.patient.first_name }} {{ viewing.patient.last_name }}
+          </RouterLink>
+        </p>
+        <p
+          v-if="viewing.encounter"
+          class="h-muted"
+        >
+          {{ labelize(viewing.encounter.type) }} · {{ viewing.encounter.chief_complaint || labelize(viewing.encounter.status) }}
+        </p>
+        <HTable
+          :headers="[
+            { title: 'Description', key: 'description' },
+            { title: 'Qty', key: 'quantity' },
+            { title: 'Amount', key: 'unit_amount' },
+          ]"
+          :items="viewing.items"
+          empty="No line items"
+        />
+        <h4>Payments</h4>
+        <HTable
+          :headers="[
+            { title: 'Amount', key: 'amount' },
+            { title: 'Method', key: 'method' },
+          ]"
+          :items="viewing.payments"
+          empty="No payments recorded"
+        />
+        <div class="h-actions">
+          <HButton
+            v-if="ability.can('update', 'Invoice') && viewing.status === 'draft'"
+            size="sm"
+            @click="updateStatus(viewing, 'issued')"
+          >
+            Issue
+          </HButton>
+          <HButton
+            v-if="ability.can('update', 'Invoice') && viewing.status !== 'paid' && viewing.status !== 'cancelled'"
+            size="sm"
+            variant="ghost"
+            @click="openPay(viewing)"
+          >
+            Record payment
+          </HButton>
+        </div>
+      </div>
+    </HOffcanvas>
   </div>
 </template>

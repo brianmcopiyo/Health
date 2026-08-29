@@ -5,19 +5,23 @@ definePage({
     public: true,
   },
 })
+
+const userData = useCookie('userData')
 </script>
 
 <template>
-  <div class="blank-state">
-    <p class="hms-kicker">
-      404
-    </p>
-    <h1>This page is not in the hospital map.</h1>
+  <HErrorPage code="404">
     <HButton
+      v-if="userData"
       to="/"
-      style="margin-top:18px"
     >
-      Return to Caregrid
+      Open workspace
     </HButton>
-  </div>
+    <HButton
+      v-else
+      :to="{ name: 'login' }"
+    >
+      Sign in
+    </HButton>
+  </HErrorPage>
 </template>

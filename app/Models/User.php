@@ -24,11 +24,15 @@ class User extends Authenticatable
         'department_id',
         'specialty',
         'license_number',
+        'avatar_path',
+        'availability',
+        'preferences',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'avatar_path',
     ];
 
     protected function casts(): array
@@ -36,6 +40,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'preferences' => 'array',
         ];
     }
 
@@ -109,9 +114,20 @@ class User extends Authenticatable
         return $this->memberships()->where('hospital_id', $hospitalId)->exists();
     }
 
+    public function preferenceMap(): array
+    {
+        return array_merge([
+            'referrals' => true,
+            'encounters' => true,
+            'laboratory' => true,
+            'pharmacy' => true,
+            'invoices' => true,
+        ], $this->preferences ?? []);
+    }
+
     public function toAuthPayload(): array
     {
-        $this->loadMissing(['role', 'hospital']);
+        $this->loadMissing(['role', 'hospital', 'department']);
 
         return [
             'id' => $this->id,
@@ -124,6 +140,12 @@ class User extends Authenticatable
             'hospitalName' => $this->hospital?->name,
             'phone' => $this->phone,
             'jobTitle' => $this->job_title,
+            'specialty' => $this->specialty,
+            'departmentId' => $this->department_id,
+            'departmentName' => $this->department?->name,
+            'availability' => $this->availability ?: 'available',
+            'hasAvatar' => (bool) $this->avatar_path,
+            'preferences' => $this->preferenceMap(),
             'avatar' => null,
             'workspace' => $this->role?->workspace,
             'homeRoute' => ModuleCatalog::homeRoute($this),

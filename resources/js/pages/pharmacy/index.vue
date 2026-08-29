@@ -41,14 +41,13 @@ await withPageLoad(load)
     <div
       v-if="formError"
       class="h-alert"
-      style="margin-top:18px"
     >
       {{ formError }}
     </div>
 
     <HCard
       title="Prescriptions awaiting dispensing"
-      style="margin-top:18px"
+      flush
     >
       <HTable
         :headers="[
@@ -61,7 +60,14 @@ await withPageLoad(load)
         empty="No prescriptions in the pharmacy queue"
       >
         <template #cell-patient.first_name="{ item }">
-          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.first_name }} {{ item.patient.last_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-items="{ item }">
           {{ (item.items || []).map(row => row.medication?.name).join(', ') }}
@@ -83,12 +89,21 @@ await withPageLoad(load)
               Verify
             </HButton>
             <HButton
-              v-if="ability.can('update', 'Pharmacy') && item.status !== 'dispensed'"
+              v-if="ability.can('update', 'Pharmacy') && item.status !== 'dispensed' && item.status !== 'cancelled'"
               size="sm"
               :disabled="saving"
               @click="updateRx(item, 'dispensed')"
             >
               Dispense
+            </HButton>
+            <HButton
+              v-if="ability.can('update', 'Pharmacy') && !['dispensed', 'cancelled'].includes(item.status)"
+              variant="ghost"
+              size="sm"
+              :disabled="saving"
+              @click="updateRx(item, 'cancelled')"
+            >
+              Cancel
             </HButton>
           </div>
         </template>
@@ -97,7 +112,7 @@ await withPageLoad(load)
 
     <HCard
       title="Medication stock"
-      style="margin-top:18px"
+      flush
     >
       <HTable
         :headers="[

@@ -125,8 +125,8 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <HCard>
-      <div style="margin-bottom:16px">
+    <HCard flush>
+      <HToolbar>
         <HSegmented
           :model-value="direction"
           :options="[
@@ -136,14 +136,21 @@ await withPageLoad(load)
           ]"
           @update:model-value="setDirection"
         />
-      </div>
+      </HToolbar>
       <HTable
         :headers="headers"
         :items="items"
         empty="No assistance requests yet"
       >
         <template #cell-patient.full_name="{ item }">
-          {{ item.patient?.full_name || '—' }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.full_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-type="{ item }">
           {{ labelize(item.type) }}
@@ -154,13 +161,22 @@ await withPageLoad(load)
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <HButton
-            variant="ghost"
-            size="sm"
-            @click="formError = ''; selected = item"
-          >
-            Manage
-          </HButton>
+          <div class="h-actions">
+            <HButton
+              variant="ghost"
+              size="icon"
+              :to="{ name: 'assistance-id', params: { id: item.id } }"
+            >
+              <HIcon name="eye" />
+            </HButton>
+            <HButton
+              variant="ghost"
+              size="sm"
+              @click="formError = ''; selected = item"
+            >
+              Manage
+            </HButton>
+          </div>
         </template>
       </HTable>
     </HCard>
@@ -250,8 +266,8 @@ await withPageLoad(load)
       :persistent="saving"
       @update:model-value="val => { if (!val) selected = null }"
     >
-      <div v-if="selected">
-        <p style="color:var(--muted);margin-top:0">
+      <div v-if="selected" class="h-stack">
+        <p class="h-muted">
           {{ selected.from_hospital?.name }} → {{ selected.to_hospital?.name }}
         </p>
         <p>{{ selected.description }}</p>

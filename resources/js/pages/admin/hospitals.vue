@@ -6,11 +6,13 @@ definePage({
   },
 })
 
+const userData = useCookie('userData')
 const hospitals = ref([])
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
 const editing = ref(null)
+const removing = ref(null)
 const form = ref({
   name: '',
   code: '',
@@ -70,6 +72,14 @@ const save = async () => {
   })
 }
 
+const removeHospital = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/hospitals/${removing.value.id}`, { method: 'DELETE' })
+    removing.value = null
+    await load()
+  })
+}
+
 await withPageLoad(load)
 </script>
 
@@ -85,7 +95,7 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <HCard>
+    <HCard flush>
       <HTable
         :headers="headers"
         :items="hospitals"
@@ -97,13 +107,23 @@ await withPageLoad(load)
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <HButton
-            variant="ghost"
-            size="icon"
-            @click="openEdit(item)"
-          >
-            <HIcon name="edit" />
-          </HButton>
+          <div class="h-actions">
+            <HButton
+              variant="ghost"
+              size="icon"
+              @click="openEdit(item)"
+            >
+              <HIcon name="edit" />
+            </HButton>
+            <HButton
+              v-if="userData?.role === 'platform-admin'"
+              variant="ghost"
+              size="sm"
+              @click="formError = ''; removing = item"
+            >
+              Remove
+            </HButton>
+          </div>
         </template>
       </HTable>
     </HCard>
@@ -174,5 +194,31 @@ await withPageLoad(load)
         </HButton>
       </template>
     </HOffcanvas>
+
+    <HModal
+      :model-value="Boolean(removing)"
+      title="Remove hospital"
+      :error="formError"
+      :persistent="saving"
+      @update:model-value="val => { if (!val) removing = null }"
+    >
+      <p>Remove {{ removing?.name }} from the network?</p>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="removing = null"
+        >
+          Keep
+        </HButton>
+        <HButton
+          variant="danger"
+          :disabled="saving"
+          @click="removeHospital"
+        >
+          Remove
+        </HButton>
+      </template>
+    </HModal>
   </div>
 </template>

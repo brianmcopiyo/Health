@@ -49,7 +49,7 @@ onBeforeUnmount(() => {
 
     <HCard
       title="My open encounters"
-      style="margin-top:18px"
+      flush
     >
       <HTable
         :headers="[
@@ -63,7 +63,14 @@ onBeforeUnmount(() => {
         empty="No patients currently assigned to you"
       >
         <template #cell-patient.first_name="{ item }">
-          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.first_name }} {{ item.patient.last_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -83,7 +90,7 @@ onBeforeUnmount(() => {
 
     <HCard
       title="Consultation queue"
-      style="margin-top:18px"
+      flush
     >
       <HTable
         :headers="[
@@ -97,7 +104,14 @@ onBeforeUnmount(() => {
         empty="No patients waiting in OPD"
       >
         <template #cell-patient.first_name="{ item }">
-          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.first_name }} {{ item.patient.last_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">

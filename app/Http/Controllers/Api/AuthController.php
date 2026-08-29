@@ -31,11 +31,18 @@ class AuthController extends Controller
             ]);
         }
 
-        $user->tokens()->delete();
-        $token = $user->createToken('auth-token', ['*'], now()->addMinutes((int) config('hms.token_minutes', 480)))->plainTextToken;
+        $created = $user->createToken(
+            'Caregrid workspace',
+            ['*'],
+            now()->addMinutes((int) config('hms.token_minutes', 480))
+        );
+        $created->accessToken->forceFill([
+            'ip_address' => $request->ip(),
+            'user_agent' => mb_substr((string) $request->userAgent(), 0, 255),
+        ])->save();
 
         return response()->json(array_merge($user->toSessionPayload(), [
-            'accessToken' => $token,
+            'accessToken' => $created->plainTextToken,
         ]));
     }
 

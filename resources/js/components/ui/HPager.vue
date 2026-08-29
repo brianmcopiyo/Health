@@ -16,6 +16,7 @@ const emit = defineEmits(['update:page'])
   >
     <HButton
       variant="ghost"
+      size="sm"
       :disabled="meta.current_page <= 1"
       @click="emit('update:page', meta.current_page - 1)"
     >
@@ -24,6 +25,7 @@ const emit = defineEmits(['update:page'])
     <span>Page {{ meta.current_page }} of {{ meta.last_page }} · {{ meta.total }} records</span>
     <HButton
       variant="ghost"
+      size="sm"
       :disabled="meta.current_page >= meta.last_page"
       @click="emit('update:page', meta.current_page + 1)"
     >

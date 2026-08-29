@@ -38,7 +38,7 @@ await withPageLoad(load)
 
     <HCard
       title="Patients under my care"
-      style="margin-top:18px"
+      flush
     >
       <HTable
         :headers="[
@@ -51,7 +51,14 @@ await withPageLoad(load)
         empty="No inpatients assigned to your ward or shift"
       >
         <template #cell-patient.first_name="{ item }">
-          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.first_name }} {{ item.patient.last_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">

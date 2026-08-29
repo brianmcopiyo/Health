@@ -7,6 +7,7 @@ definePage({
 })
 
 const ability = useAbility()
+const userData = useCookie('userData')
 const users = ref([])
 const meta = ref(asPageMeta())
 const page = ref(1)
@@ -16,6 +17,7 @@ const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
 const editing = ref(null)
+const removing = ref(null)
 const form = ref({
   name: '',
   email: '',
@@ -90,6 +92,14 @@ const save = async () => {
   })
 }
 
+const removeUser = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/users/${removing.value.id}`, { method: 'DELETE' })
+    removing.value = null
+    await load()
+  })
+}
+
 await withPageLoad(load)
 </script>
 
@@ -108,21 +118,31 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <HCard>
+    <HCard flush>
       <HTable
         :headers="headers"
         :items="users"
         empty="No users in this hospital"
       >
         <template #cell-actions="{ item }">
-          <HButton
-            v-if="ability.can('manage', 'User')"
-            variant="ghost"
-            size="icon"
-            @click="openEdit(item)"
-          >
-            <HIcon name="edit" />
-          </HButton>
+          <div class="h-actions">
+            <HButton
+              v-if="ability.can('manage', 'User')"
+              variant="ghost"
+              size="icon"
+              @click="openEdit(item)"
+            >
+              <HIcon name="edit" />
+            </HButton>
+            <HButton
+              v-if="ability.can('manage', 'User') && item.id !== userData?.id"
+              variant="ghost"
+              size="sm"
+              @click="formError = ''; removing = item"
+            >
+              Remove
+            </HButton>
+          </div>
         </template>
       </HTable>
       <HPager
@@ -202,6 +222,32 @@ await withPageLoad(load)
           @click="save"
         >
           Save
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      :model-value="Boolean(removing)"
+      title="Remove user"
+      :error="formError"
+      :persistent="saving"
+      @update:model-value="val => { if (!val) removing = null }"
+    >
+      <p>Remove access for {{ removing?.name }}?</p>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="removing = null"
+        >
+          Keep
+        </HButton>
+        <HButton
+          variant="danger"
+          :disabled="saving"
+          @click="removeUser"
+        >
+          Remove
         </HButton>
       </template>
     </HModal>

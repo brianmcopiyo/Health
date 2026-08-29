@@ -23,12 +23,16 @@ const handoverNotes = ref('')
 const handoverTime = ref('')
 const saving = ref(false)
 const formError = ref('')
+const staff = ref([])
+const editing = ref(null)
+const removing = ref(null)
 const form = ref({
   vehicle_code: '',
   vehicle_type: 'van',
   status: 'available',
   capacity: 2,
   notes: '',
+  staff: [],
 })
 const dispatchForm = ref({
   origin: '',
@@ -38,6 +42,7 @@ const dispatchForm = ref({
   patient_id: null,
   encounter_id: null,
   referral_id: null,
+  driver_user_id: null,
   notes: '',
 })
 
@@ -77,22 +82,65 @@ const load = async () => {
   trips.value = asList(history)
 }
 
-const openCreate = () => {
+const emptyVehicle = () => ({
+  vehicle_code: '',
+  vehicle_type: 'van',
+  status: 'available',
+  capacity: 2,
+  notes: '',
+  staff: [],
+})
+
+const openCreate = async () => {
   formError.value = ''
+  editing.value = null
+  staff.value = asList(await $api('/users/directory').catch(() => []))
+  form.value = emptyVehicle()
+  isVehicleDialogVisible.value = true
+}
+
+const openEdit = async item => {
+  formError.value = ''
+  editing.value = item
+  staff.value = asList(await $api('/users/directory').catch(() => []))
   form.value = {
-    vehicle_code: '',
-    vehicle_type: 'van',
-    status: 'available',
-    capacity: 2,
-    notes: '',
+    vehicle_code: item.vehicle_code,
+    vehicle_type: item.vehicle_type,
+    status: item.status,
+    capacity: item.capacity,
+    notes: item.notes || '',
+    staff: (item.staff || []).map(row => ({
+      user_id: row.user_id || row.user?.id,
+      assignment_role: row.assignment_role,
+    })),
   }
   isVehicleDialogVisible.value = true
 }
 
+const addCrew = () => {
+  form.value.staff.push({ user_id: null, assignment_role: 'driver' })
+}
+
 const saveVehicle = async () => {
   await wrapSave(saving, formError, async () => {
-    await $api('/ambulances', { method: 'POST', body: form.value })
+    const body = {
+      ...form.value,
+      staff: form.value.staff.filter(row => row.user_id && row.assignment_role),
+    }
+    if (editing.value)
+      await $api(`/ambulances/${editing.value.id}`, { method: 'PUT', body })
+    else
+      await $api('/ambulances', { method: 'POST', body })
+
     isVehicleDialogVisible.value = false
+    await load()
+  })
+}
+
+const removeVehicle = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/ambulances/${removing.value.id}`, { method: 'DELETE' })
+    removing.value = null
     await load()
   })
 }
@@ -113,8 +161,10 @@ const openDispatch = async item => {
     patient_id: null,
     encounter_id: null,
     referral_id: null,
+    driver_user_id: item.staff?.[0]?.user_id || item.staff?.[0]?.user?.id || null,
     notes: '',
   }
+  staff.value = asList(await $api('/users/directory').catch(() => []))
 }
 
 const onDispatchPatient = async id => {
@@ -157,11 +207,13 @@ const updateTrip = async (trip, status) => {
     handoverTime.value = new Date().toTimeString().slice(0, 5)
     return
   }
-  await $api(`/ambulance-trips/${trip.id}/status`, {
-    method: 'PATCH',
-    body: { status },
+  await wrapSave(saving, formError, async () => {
+    await $api(`/ambulance-trips/${trip.id}/status`, {
+      method: 'PATCH',
+      body: { status },
+    })
+    await load()
   })
-  await load()
 }
 
 const completeTrip = async () => {
@@ -196,7 +248,10 @@ await withPageLoad(load)
       </HButton>
     </HPage>
 
-    <HCard title="Vehicles">
+    <HCard
+      title="Vehicles"
+      flush
+    >
       <HTable
         :headers="headers"
         :items="ambulances"
@@ -223,6 +278,26 @@ await withPageLoad(load)
             >
               Dispatch
             </HButton>
+            <HActionMenu v-if="ability.can('update', 'Ambulance') || ability.can('manage', 'Ambulance')">
+              <template #default="{ close }">
+                <button
+                  v-if="ability.can('update', 'Ambulance')"
+                  type="button"
+                  class="h-action-item"
+                  @click="openEdit(item); close()"
+                >
+                  Edit
+                </button>
+                <button
+                  v-if="ability.can('manage', 'Ambulance')"
+                  type="button"
+                  class="h-action-item is-danger"
+                  @click="formError = ''; removing = item; close()"
+                >
+                  Remove
+                </button>
+              </template>
+            </HActionMenu>
           </div>
         </template>
       </HTable>
@@ -230,7 +305,7 @@ await withPageLoad(load)
 
     <HCard
       title="Trips"
-      style="margin-top:18px"
+      flush
     >
       <HTable
         :headers="tripHeaders"
@@ -238,7 +313,14 @@ await withPageLoad(load)
         empty="No trips recorded"
       >
         <template #cell-patient.first_name="{ item }">
-          {{ item.patient?.first_name }} {{ item.patient?.last_name }}
+          <RouterLink
+            v-if="item.patient?.id"
+            class="h-inline-link"
+            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          >
+            {{ item.patient.first_name }} {{ item.patient.last_name }}
+          </RouterLink>
+          <span v-else>—</span>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -270,6 +352,14 @@ await withPageLoad(load)
             >
               Complete
             </HButton>
+            <HButton
+              v-if="['dispatched', 'en_route', 'arrived'].includes(item.status) && ability.can('dispatch', 'Ambulance')"
+              variant="ghost"
+              size="sm"
+              @click="updateTrip(item, 'cancelled')"
+            >
+              Cancel
+            </HButton>
           </div>
         </template>
       </HTable>
@@ -277,7 +367,7 @@ await withPageLoad(load)
 
     <HModal
       v-model="isVehicleDialogVisible"
-      title="Add ambulance"
+      :title="editing ? 'Update ambulance' : 'Add ambulance'"
       :error="formError"
       :persistent="saving"
     >
@@ -305,6 +395,36 @@ await withPageLoad(load)
           label="Capacity"
           :min="1"
         />
+        <HTextarea
+          v-model="form.notes"
+          label="Notes"
+        />
+        <h4>Crew</h4>
+        <fieldset
+          v-for="(member, index) in form.staff"
+          :key="index"
+          class="h-form-grid"
+          :disabled="saving"
+        >
+          <HSelect
+            v-model="member.user_id"
+            :items="staff"
+            item-title="name"
+            item-value="id"
+            label="Staff"
+          />
+          <HInput
+            v-model="member.assignment_role"
+            label="Role"
+          />
+        </fieldset>
+        <HButton
+          variant="ghost"
+          size="sm"
+          @click="addCrew"
+        >
+          Add crew member
+        </HButton>
       </fieldset>
       <template #actions>
         <HButton
@@ -376,6 +496,13 @@ await withPageLoad(load)
           item-value="id"
           label="Destination hospital"
         />
+        <HSelect
+          v-model="dispatchForm.driver_user_id"
+          :items="staff"
+          item-title="name"
+          item-value="id"
+          label="Driver"
+        />
         <HTextarea
           v-model="dispatchForm.notes"
           label="Notes"
@@ -431,6 +558,32 @@ await withPageLoad(load)
           @click="completeTrip"
         >
           Complete trip
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      :model-value="Boolean(removing)"
+      title="Remove ambulance"
+      :error="formError"
+      :persistent="saving"
+      @update:model-value="val => { if (!val) removing = null }"
+    >
+      <p>Remove {{ removing?.vehicle_code }} from the fleet?</p>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="removing = null"
+        >
+          Keep
+        </HButton>
+        <HButton
+          variant="danger"
+          :disabled="saving"
+          @click="removeVehicle"
+        >
+          Remove
         </HButton>
       </template>
     </HModal>

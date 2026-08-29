@@ -113,124 +113,117 @@ await withPageLoad(async () => {
       </HButton>
     </HPage>
 
+    <div class="h-form-card is-wide">
     <HCard>
-      <div
-        v-if="formError"
-        class="h-alert"
-        style="margin-bottom:14px"
-      >
-        {{ formError }}
-      </div>
-      <div class="h-grid cols-2">
-        <HSelect
-          v-model="form.patient_id"
-          :items="patients"
-          item-title="full_name"
-          item-value="id"
-          label="Patient"
+      <div class="h-form is-wide">
+        <div
+          v-if="formError"
+          class="h-alert"
+        >
+          {{ formError }}
+        </div>
+        <div class="h-form-grid">
+          <HSelect
+            v-model="form.patient_id"
+            :items="patients"
+            item-title="full_name"
+            item-value="id"
+            label="Patient"
+            required
+            @update:model-value="onPatient"
+          />
+          <HSelect
+            v-model="form.encounter_id"
+            :items="encounterOptions"
+            label="Source encounter"
+            @update:model-value="onEncounter"
+          />
+        </div>
+        <p
+          v-if="selectedPatient"
+          class="h-muted"
+        >
+          {{ selectedPatient.mrn }} · {{ selectedPatient.phone || 'No phone' }}
+        </p>
+        <HTextarea
+          v-model="form.reason"
+          label="Clinical reason"
           required
-          @update:model-value="onPatient"
         />
-        <HSelect
-          v-model="form.encounter_id"
-          :items="encounterOptions"
-          label="Source encounter"
-          @update:model-value="onEncounter"
-        />
-      </div>
-      <p
-        v-if="selectedPatient"
-        style="color:var(--muted);font-size:13px"
-      >
-        {{ selectedPatient.mrn }} · {{ selectedPatient.phone || 'No phone' }}
-      </p>
-      <HTextarea
-        v-model="form.reason"
-        label="Clinical reason"
-        required
-        style="margin-top:12px"
-      />
-      <div
-        class="h-grid cols-2"
-        style="margin-top:12px"
-      >
-        <HSelect
-          v-model="form.required_facility_type_id"
-          :items="types"
-          item-title="name"
-          item-value="id"
-          label="Required facility"
-          @update:model-value="searchHospitals"
-        />
-        <HSelect
-          v-model="form.required_service_id"
-          :items="services"
-          item-title="name"
-          item-value="id"
-          label="Required service"
-        />
+        <div class="h-form-grid">
+          <HSelect
+            v-model="form.required_facility_type_id"
+            :items="types"
+            item-title="name"
+            item-value="id"
+            label="Required facility"
+            @update:model-value="searchHospitals"
+          />
+          <HSelect
+            v-model="form.required_service_id"
+            :items="services"
+            item-title="name"
+            item-value="id"
+            label="Required service"
+          />
+        </div>
         <HNumber
           v-model="form.required_capacity"
+          class="is-compact"
           label="Required capacity"
           :min="1"
           @update:model-value="searchHospitals"
         />
-      </div>
 
-      <h3 style="margin:24px 0 12px;font-family:var(--display)">
-        Eligible destination hospitals
-      </h3>
-      <div
-        v-if="searching"
-        class="h-spinner"
-      />
-      <div
-        v-else-if="!matches.length"
-        class="h-alert"
-      >
-        No hospitals currently have the required available capacity.
-      </div>
-      <div
-        v-else
-        class="h-grid cols-2"
-      >
-        <div
-          v-for="hospital in matches"
-          :key="hospital.id"
-          class="h-pick"
-          :class="{ 'is-on': form.to_hospital_id === hospital.id }"
-          @click="selectHospital(hospital)"
-        >
-          <strong>{{ hospital.name }}</strong>
-          <div style="color:var(--muted);margin:4px 0 10px">
-            {{ hospital.city }} · {{ hospital.code }}
+        <HSection title="Eligible destination hospitals">
+          <HLoading v-if="searching" />
+          <div
+            v-else-if="!matches.length"
+            class="h-alert"
+          >
+            No hospitals currently have the required available capacity.
           </div>
           <div
-            v-for="facility in hospital.available_facilities"
-            :key="facility.id"
+            v-else
+            class="h-grid cols-2"
           >
-            {{ facility.name }} · remaining {{ facility.remaining_capacity }}
+            <div
+              v-for="hospital in matches"
+              :key="hospital.id"
+              class="h-pick"
+              :class="{ 'is-on': form.to_hospital_id === hospital.id }"
+              @click="selectHospital(hospital)"
+            >
+              <strong>{{ hospital.name }}</strong>
+              <p class="h-muted">
+                {{ hospital.city }} · {{ hospital.code }}
+              </p>
+              <div
+                v-for="facility in hospital.available_facilities"
+                :key="facility.id"
+              >
+                {{ facility.name }} · remaining {{ facility.remaining_capacity }}
+              </div>
+            </div>
           </div>
+        </HSection>
+
+        <div class="h-form-actions">
+          <HButton
+            variant="ghost"
+            :to="{ name: 'referrals' }"
+          >
+            Cancel
+          </HButton>
+          <HButton
+            :disabled="saving || !form.to_hospital_id || !form.patient_id || !form.reason"
+            @click="submit"
+          >
+            Create referral
+          </HButton>
         </div>
       </div>
-
-      <div
-        class="h-actions"
-        style="margin-top:20px;justify-content:flex-end"
-      >
-        <HButton
-          variant="ghost"
-          :to="{ name: 'referrals' }"
-        >
-          Cancel
-        </HButton>
-        <HButton
-          :disabled="saving || !form.to_hospital_id || !form.patient_id || !form.reason"
-          @click="submit"
-        >
-          Create referral
-        </HButton>
-      </div>
     </HCard>
+    </div>
   </div>
 </template>

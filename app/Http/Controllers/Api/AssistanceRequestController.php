@@ -78,7 +78,16 @@ class AssistanceRequestController extends Controller
 
     public function show(AssistanceRequest $assistanceRequest)
     {
-        return $assistanceRequest->load(['fromHospital', 'toHospital', 'creator', 'responder']);
+        return $assistanceRequest->load([
+            'fromHospital',
+            'toHospital',
+            'creator',
+            'responder',
+            'patient:id,mrn,first_name,last_name,status',
+            'encounter:id,type,status,chief_complaint',
+            'facility:id,name,code',
+            'facilityType:id,name,slug',
+        ]);
     }
 
     public function updateStatus(Request $request, AssistanceRequest $assistanceRequest)
