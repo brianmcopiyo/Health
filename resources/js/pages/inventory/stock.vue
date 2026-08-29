@@ -34,6 +34,11 @@ const { pending } = usePageQuery(load)
       title="Stock on hand"
       subtitle="Balances by store"
     >
+      <HExportActions
+        dataset="inventory-stock"
+        :query="{ q: q || undefined, store_id: storeId || undefined }"
+        :disabled="pending"
+      />
       <HButton
         variant="ghost"
         to="inventory"

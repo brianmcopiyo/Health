@@ -38,7 +38,13 @@ const sections = computed(() => ([
     <HPage
       title="Sales reports"
       subtitle="Charges, collections, discounts, refunds, and outstanding balances"
-    />
+    >
+      <HExportActions
+        dataset="invoice-reports"
+        :query="filters"
+        :disabled="pending"
+      />
+    </HPage>
 
     <HCard>
       <HListToolbar

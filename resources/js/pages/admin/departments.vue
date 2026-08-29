@@ -77,6 +77,10 @@ const { pending } = usePageQuery(load)
       title="Departments"
       subtitle="Map hospital departments to modules"
     >
+      <HExportActions
+        dataset="departments"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('manage', 'Department')"
         variant="ghost"

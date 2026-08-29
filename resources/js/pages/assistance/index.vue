@@ -118,6 +118,10 @@ const { pending } = usePageQuery(load)
       title="Inter-hospital assistance"
       subtitle="Staff, beds, equipment, and supply requests"
     >
+      <HExportActions
+        dataset="assistance"
+        :query="{ direction: direction !== 'all' ? direction : undefined }"
+      />
       <HButton
         v-if="ability.can('create', 'AssistanceRequest')"
         @click="openCreate"

@@ -24,7 +24,12 @@ const { pending } = usePageQuery(load)
     <HPage
       title="Stock movements"
       subtitle="Auditable inventory ledger"
-    />
+    >
+      <HExportActions
+        dataset="inventory-movements"
+        :disabled="pending"
+      />
+    </HPage>
     <HCard flush>
       <HTable
         :loading="pending"

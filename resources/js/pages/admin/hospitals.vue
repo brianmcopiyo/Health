@@ -89,6 +89,10 @@ const { pending } = usePageQuery(load)
       title="Hospitals"
       subtitle="Network hospital registry"
     >
+      <HExportActions
+        dataset="hospitals"
+        :disabled="pending"
+      />
       <HButton @click="openCreate">
         <HIcon name="plus" />
         Add hospital

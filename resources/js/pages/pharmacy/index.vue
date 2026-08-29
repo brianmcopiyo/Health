@@ -81,6 +81,13 @@ const stockHeaders = [
       title="Prescriptions awaiting dispensing"
       flush
     >
+      <template #actions>
+        <HExportActions
+          dataset="pharmacy"
+          :query="{ queue: true }"
+          :disabled="pending"
+        />
+      </template>
       <HTable
         :loading="pending"
         :headers="rxHeaders"

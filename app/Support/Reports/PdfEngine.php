@@ -282,6 +282,12 @@ class PdfEngine
 
         $widths = $this->columnWidths($headers);
         $this->tableHeader($headers, $widths);
+        if ($rows === []) {
+            $this->empty(['message' => $block['empty'] ?? 'No data available for the selected period.']);
+            $this->y -= 8;
+
+            return;
+        }
         foreach ($rows as $index => $row) {
             $this->ensure(18);
             if ($this->y < $this->marginBottom + 36) {

@@ -44,6 +44,10 @@ const { pending } = usePageQuery(load)
 <template>
   <div>
     <HPage title="Stock returns" subtitle="Return unused stock to pharmacy or store">
+      <HExportActions
+        dataset="inventory-returns"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Inventory')"
         @click="openCreate"

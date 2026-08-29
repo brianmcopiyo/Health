@@ -239,6 +239,7 @@ const { pending } = usePageQuery(load)
       title="Ambulance fleet"
       subtitle="Vehicles, dispatch, and trip status"
     >
+      <HExportActions dataset="ambulances" />
       <HButton
         v-if="ability.can('create', 'Ambulance')"
         @click="openCreate"

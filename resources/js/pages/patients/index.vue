@@ -102,6 +102,11 @@ const today = new Date().toISOString().slice(0, 10)
       title="Patients"
       subtitle="Hospital patient register"
     >
+      <HExportActions
+        dataset="patients"
+        :query="{ q: search || undefined }"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Patient')"
         @click="openCreate"

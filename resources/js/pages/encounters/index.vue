@@ -42,7 +42,13 @@ const { pending } = usePageQuery(load)
     <HPage
       title="Encounters"
       subtitle="Visits across reception, OPD, emergency, and wards"
-    />
+    >
+      <HExportActions
+        dataset="encounters"
+        :query="{ open: scope === 'open' || undefined }"
+        :disabled="pending"
+      />
+    </HPage>
 
     <HCard flush>
       <HListToolbar

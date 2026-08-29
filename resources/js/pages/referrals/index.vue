@@ -92,6 +92,11 @@ const { pending } = usePageQuery(load)
       title="Patient referrals"
       subtitle="Incoming and outgoing hospital transfers"
     >
+      <HExportActions
+        dataset="referrals"
+        :query="{ status: status || undefined, direction: direction !== 'all' ? direction : undefined }"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Referral')"
         :to="{ name: 'referrals-create' }"

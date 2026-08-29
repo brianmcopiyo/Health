@@ -31,6 +31,7 @@ declare module 'vue' {
     HEmpty: typeof import('./resources/js/components/ui/HEmpty.vue')['default']
     HErrorPage: typeof import('./resources/js/components/ui/HErrorPage.vue')['default']
     HExpand: typeof import('./resources/js/components/ui/HExpand.vue')['default']
+    HExportActions: typeof import('./resources/js/components/ui/HExportActions.vue')['default']
     HField: typeof import('./resources/js/components/ui/HField.vue')['default']
     HFile: typeof import('./resources/js/components/ui/HFile.vue')['default']
     HForm: typeof import('./resources/js/components/ui/HForm.vue')['default']

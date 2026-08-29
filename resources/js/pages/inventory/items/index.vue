@@ -54,6 +54,11 @@ const { pending } = usePageQuery(load)
       title="Inventory items"
       subtitle="Medicines, supplies, consumables, and equipment"
     >
+      <HExportActions
+        dataset="inventory-items"
+        :query="{ q: q || undefined, kind: kind || undefined }"
+        :disabled="pending"
+      />
       <HButton
         variant="ghost"
         to="inventory"

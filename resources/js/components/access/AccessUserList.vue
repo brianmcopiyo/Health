@@ -125,6 +125,18 @@ const { pending } = usePageQuery(load)
       title="Users"
       :subtitle="subtitle"
     >
+      <HExportActions
+        dataset="users"
+        :query="{
+          q: search || undefined,
+          status: filterValues.status || undefined,
+          role_id: filterValues.role_id || undefined,
+          sort: filterValues.sort || undefined,
+          sort_dir: filterValues.sort_dir || undefined,
+          ids: selected.length ? selected.join(',') : undefined,
+        }"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'User')"
         @click="openCreate"

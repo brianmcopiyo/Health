@@ -49,6 +49,10 @@ const { pending } = usePageQuery(load)
       title="Goods receipts"
       subtitle="Receive stock into a store"
     >
+      <HExportActions
+        dataset="inventory-receipts"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Inventory')"
         @click="openCreate"

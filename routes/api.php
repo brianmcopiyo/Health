@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\ReportController;
 use App\Http\Controllers\Api\DepartmentController;
 use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\EncounterController;
+use App\Http\Controllers\Api\ExportController;
 use App\Http\Controllers\Api\FacilityController;
 use App\Http\Controllers\Api\HospitalController;
 use App\Http\Controllers\Api\InventoryController;
@@ -53,6 +54,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/reports/table', [ReportController::class, 'table'])->middleware('permission:read,Report');
     Route::get('/reports/export', [ReportController::class, 'export'])->middleware('permission:read,Report');
     Route::get('/reports', [ReportController::class, 'show'])->middleware('permission:read,Report');
+    Route::get('/exports/{dataset}', [ExportController::class, 'show']);
 
     Route::get('/modules/catalog', [ModuleBoardController::class, 'catalog']);
     Route::get('/modules/workspaces', [ModuleBoardController::class, 'workspaces'])->middleware('permission:read,Role');

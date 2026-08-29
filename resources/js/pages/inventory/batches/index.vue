@@ -24,7 +24,12 @@ const { pending } = usePageQuery(load)
     <HPage
       title="Batches & expiry"
       subtitle="Lot tracking and expiry monitoring"
-    />
+    >
+      <HExportActions
+        dataset="inventory-batches"
+        :disabled="pending"
+      />
+    </HPage>
     <HCard flush>
       <HTable
         :loading="pending"

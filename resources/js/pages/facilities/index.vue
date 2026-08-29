@@ -144,6 +144,11 @@ const { pending } = usePageQuery(load)
       title="Facilities"
       subtitle="Capacity and live unit status"
     >
+      <HExportActions
+        dataset="facilities"
+        :query="{ q: search || undefined, status: status || undefined, facility_type_id: typeId || undefined, department_id: route.query.department_id || undefined }"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Facility')"
         @click="openCreate"

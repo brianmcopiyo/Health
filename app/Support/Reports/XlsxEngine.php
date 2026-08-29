@@ -61,6 +61,37 @@ class XlsxEngine
         $sheets = [$summary];
         $used = ['summary' => true];
 
+        $layout = $meta['layout'] ?? '';
+        $simple = $layout === 'list';
+
+        if ($layout === 'hierarchy') {
+            $block = self::hierarchyBlock($document);
+            $width = max(1, (int) ($block['width'] ?? 1), count($block['headers'] ?? []));
+            $rows = [];
+            $merges = [];
+            if (($block['lines'] ?? []) === []) {
+                $rows[] = self::row([[$block['empty'] ?? 'No records match the current filters.', 'muted']]);
+            } else {
+                self::appendHierarchyLine($rows, $merges, [
+                    'kind' => 'headers',
+                    'headers' => $block['headers'] ?? [],
+                ], $width);
+                foreach ($block['lines'] ?? [] as $line) {
+                    self::appendHierarchyLine($rows, $merges, $line, $width);
+                }
+            }
+            $sheets[] = [
+                'name' => self::sheetName($meta['title'] ?? 'Records', $used),
+                'freeze' => 1,
+                'filter' => null,
+                'merges' => $merges,
+                'width' => $width,
+                'rows' => $rows,
+            ];
+
+            return $sheets;
+        }
+
         foreach ($document['sections'] ?? [] as $section) {
             $rows = [
                 self::row([[$section['title'] ?? 'Section', 'title']], 3),
@@ -69,6 +100,9 @@ class XlsxEngine
             $filterAt = null;
             foreach ($section['blocks'] ?? [] as $block) {
                 $type = $block['type'] ?? '';
+                if ($simple && ! in_array($type, ['table', 'empty'], true)) {
+                    continue;
+                }
                 if ($type === 'narrative') {
                     $rows[] = self::row([[$block['text'] ?? '', 'muted']]);
                     $rows[] = self::row([]);
@@ -147,6 +181,84 @@ class XlsxEngine
         return $sheets;
     }
 
+    private static function hierarchyBlock(array $document): array
+    {
+        foreach ($document['sections'] ?? [] as $section) {
+            foreach ($section['blocks'] ?? [] as $block) {
+                if (($block['type'] ?? '') === 'hierarchy') {
+                    return $block;
+                }
+            }
+        }
+
+        return ['headers' => [], 'width' => 1, 'lines' => [], 'empty' => 'No records match the current filters.'];
+    }
+
+    private static function appendHierarchyLine(array &$rows, array &$merges, array $line, int $width): void
+    {
+        $kind = $line['kind'] ?? '';
+        $excelRow = count($rows) + 1;
+
+        if ($kind === 'group') {
+            $rows[] = self::row([[(string) ($line['title'] ?? ''), 'group']]);
+            if ($width > 1) {
+                $merges[] = 'A'.$excelRow.':'.self::column($width - 1).$excelRow;
+            }
+
+            return;
+        }
+
+        if ($kind === 'gap') {
+            $cells = [];
+            for ($i = 0; $i < $width; $i++) {
+                $cells[] = ['', 'gap'];
+            }
+            $rows[] = self::row($cells);
+
+            return;
+        }
+
+        if ($kind === 'headers') {
+            $cells = array_map(fn ($header) => [$header['title'] ?? '', 'header'], $line['headers'] ?? []);
+            if ($cells === []) {
+                $cells[] = ['', 'header'];
+            }
+            $rows[] = self::row($cells);
+            if ($width > count($cells)) {
+                $merges[] = self::column(count($cells) - 1).$excelRow.':'.self::column($width - 1).$excelRow;
+            }
+
+            return;
+        }
+
+        if ($kind === 'parent' || $kind === 'row') {
+            $style = $kind === 'parent' ? 'parent' : 'cell';
+            $cells = [];
+            foreach ($line['cells'] ?? [] as $cell) {
+                $format = $kind === 'parent' ? 'parent' : self::borderedFormat($cell['format'] ?? 'text');
+                $cells[] = [$cell['raw'] ?? $cell['text'] ?? '', $format];
+            }
+            if ($cells === []) {
+                $cells[] = ['', $style];
+            }
+            $rows[] = self::row($cells);
+            if ($width > count($cells)) {
+                $merges[] = self::column(count($cells) - 1).$excelRow.':'.self::column($width - 1).$excelRow;
+            }
+        }
+    }
+
+    private static function borderedFormat(string $format): string
+    {
+        return match ($format) {
+            'number' => 'cell-number',
+            'currency' => 'cell-currency',
+            'percent' => 'cell-percent',
+            'date' => 'cell-date',
+            default => 'cell',
+        };
+    }
+
     private static function row(array $cells, int $height = 0): array
     {
         return ['cells' => $cells, 'height' => $height];
@@ -223,17 +335,28 @@ class XlsxEngine
             .'<font><b/><sz val="12"/><color rgb="FF0F6F6C"/><name val="Calibri"/></font>'
             .'<font><sz val="11"/><color rgb="FF6B7C82"/><name val="Calibri"/></font>'
             .'</fonts>'
-            .'<fills count="4">'
+            .'<fills count="6">'
             .'<fill><patternFill patternType="none"/></fill>'
             .'<fill><patternFill patternType="gray125"/></fill>'
             .'<fill><patternFill patternType="solid"><fgColor rgb="FF0F6F6C"/><bgColor indexed="64"/></patternFill></fill>'
             .'<fill><patternFill patternType="solid"><fgColor rgb="FFEFEAE0"/><bgColor indexed="64"/></patternFill></fill>'
+            .'<fill><patternFill patternType="solid"><fgColor rgb="FFD6E8E6"/><bgColor indexed="64"/></patternFill></fill>'
+            .'<fill><patternFill patternType="solid"><fgColor rgb="FFB8D4D1"/><bgColor indexed="64"/></patternFill></fill>'
             .'</fills>'
-            .'<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>'
+            .'<borders count="2">'
+            .'<border><left/><right/><top/><bottom/><diagonal/></border>'
+            .'<border>'
+            .'<left style="thin"><color rgb="FF8B8478"/></left>'
+            .'<right style="thin"><color rgb="FF8B8478"/></right>'
+            .'<top style="thin"><color rgb="FF8B8478"/></top>'
+            .'<bottom style="thin"><color rgb="FF8B8478"/></bottom>'
+            .'<diagonal/>'
+            .'</border>'
+            .'</borders>'
             .'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'
-            .'<cellXfs count="9">'
+            .'<cellXfs count="18">'
             .'<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'
-            .'<xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/>'
+            .'<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'
             .'<xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
             .'<xf numFmtId="0" fontId="3" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
             .'<xf numFmtId="0" fontId="4" fillId="0" borderId="0" xfId="0" applyFont="1"/>'
@@ -241,6 +364,15 @@ class XlsxEngine
             .'<xf numFmtId="165" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
             .'<xf numFmtId="166" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
             .'<xf numFmtId="14" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/>'
+            .'<xf numFmtId="0" fontId="3" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'
+            .'<xf numFmtId="0" fontId="3" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'
+            .'<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>'
+            .'<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>'
+            .'<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>'
+            .'<xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>'
+            .'<xf numFmtId="166" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>'
+            .'<xf numFmtId="14" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1"/>'
+            .'<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>'
             .'</cellXfs>'
             .'</styleSheet>';
     }
@@ -266,6 +398,16 @@ class XlsxEngine
             $cols .= '<col min="'.($index + 1).'" max="'.($index + 1).'" width="'.$width.'" customWidth="1"/>';
         }
 
+        if (isset($sheet['width'])) {
+            for ($i = 0; $i < (int) $sheet['width']; $i++) {
+                $widths[$i] = max($widths[$i] ?? 16, 16);
+            }
+            $cols = '';
+            foreach ($widths as $index => $width) {
+                $cols .= '<col min="'.($index + 1).'" max="'.($index + 1).'" width="'.$width.'" customWidth="1"/>';
+            }
+        }
+
         $freeze = (int) ($sheet['freeze'] ?? 0);
         $filter = $sheet['filter'] ?? null;
         $extra = '';
@@ -277,11 +419,23 @@ class XlsxEngine
             $extra .= '<autoFilter ref="A'.$filter.':'.$last.count($rows).'"/>';
         }
 
+        $merges = $sheet['merges'] ?? [];
+        $mergeXml = '';
+        if ($merges) {
+            $mergeXml = '<mergeCells count="'.count($merges).'">';
+            foreach ($merges as $ref) {
+                $mergeXml .= '<mergeCell ref="'.$ref.'"/>';
+            }
+            $mergeXml .= '</mergeCells>';
+        }
+
         return '<?xml version="1.0" encoding="UTF-8"?>'
             .'<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
             .$extra
             .($cols !== '' ? '<cols>'.$cols.'</cols>' : '')
-            .'<sheetData>'.$xml.'</sheetData></worksheet>';
+            .'<sheetData>'.$xml.'</sheetData>'
+            .$mergeXml
+            .'</worksheet>';
     }
 
     private static function cell(int $col, int $row, array $cell): string
@@ -298,13 +452,21 @@ class XlsxEngine
             'currency' => 6,
             'percent' => 7,
             'date' => 8,
+            'parent' => 9,
+            'group' => 10,
+            'cell' => 11,
+            'gap' => 12,
+            'cell-number' => 13,
+            'cell-currency' => 14,
+            'cell-percent' => 15,
+            'cell-date' => 16,
             default => 0,
         };
 
-        if (in_array($format, ['number', 'currency', 'percent', 'date'], true)) {
-            $numeric = ReportValue::excelNumber($value, $format);
+        if (in_array($format, ['number', 'currency', 'percent', 'date', 'cell-number', 'cell-currency', 'cell-percent', 'cell-date'], true)) {
+            $numeric = ReportValue::excelNumber($value, str_starts_with($format, 'cell-') ? substr($format, 5) : $format);
             if (is_int($numeric) || is_float($numeric)) {
-                if ($format === 'percent' && abs($numeric) > 1) {
+                if (in_array($format, ['percent', 'cell-percent'], true) && abs($numeric) > 1) {
                     $numeric = $numeric / 100;
                 }
 

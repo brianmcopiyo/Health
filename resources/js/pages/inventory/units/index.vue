@@ -43,6 +43,10 @@ const { pending } = usePageQuery(load)
       title="Units"
       subtitle="Issue units and pack conversions"
     >
+      <HExportActions
+        dataset="inventory-units"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Inventory')"
         variant="ghost"

@@ -49,6 +49,11 @@ const { pending } = usePageQuery(load)
       title="Stock locations"
       subtitle="Bins and shelves inside stores"
     >
+      <HExportActions
+        dataset="inventory-locations"
+        :query="{ store_id: storeId || undefined }"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Inventory')"
         @click="openCreate"

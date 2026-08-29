@@ -31,6 +31,10 @@ const { pending } = usePageQuery(load)
       title="Stores"
       subtitle="Pharmacy, warehouse, and ward stock locations"
     >
+      <HExportActions
+        dataset="inventory-stores"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Inventory')"
         @click="formOpen = true"

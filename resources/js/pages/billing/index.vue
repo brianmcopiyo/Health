@@ -269,6 +269,10 @@ const { pending } = usePageQuery(load)
       title="Billing"
       subtitle="Charges from encounters, services, and payments"
     >
+      <HExportActions
+        dataset="invoices"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Invoice')"
         @click="openCreate"

@@ -36,11 +36,13 @@ declare global {
   const diagnosisKindOptions: typeof import('./resources/js/utils/clinicalOptions.js')['diagnosisKindOptions']
   const doseFrequencies: typeof import('./resources/js/utils/clinicalOptions.js')['doseFrequencies']
   const downloadAuthorized: typeof import('./resources/js/utils/api.js')['downloadAuthorized']
+  const downloadExport: typeof import('./resources/js/composables/useExport.js')['downloadExport']
   const downloadReport: typeof import('./resources/js/composables/useReports.js')['downloadReport']
   const effectScope: typeof import('vue')['effectScope']
   const emptyUserForm: typeof import('./resources/js/utils/access.js')['emptyUserForm']
   const errorCatalog: typeof import('./resources/js/utils/errors.js')['errorCatalog']
   const errorText: typeof import('./resources/js/utils/formOptions.js')['errorText']
+  const exportQuery: typeof import('./resources/js/composables/useExport.js')['exportQuery']
   const facilityRecordTo: typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']
   const facilityStatuses: typeof import('./resources/js/utils/status.js')['facilityStatuses']
   const fieldPlaceholder: typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']
@@ -122,6 +124,7 @@ declare global {
   const useCssModule: typeof import('vue')['useCssModule']
   const useCssVars: typeof import('vue')['useCssVars']
   const useDelayedVisible: typeof import('./resources/js/composables/usePageLoad.js')['useDelayedVisible']
+  const useExport: typeof import('./resources/js/composables/useExport.js')['useExport']
   const useFieldId: typeof import('./resources/js/utils/formOptions.js')['useFieldId']
   const useListHighlight: typeof import('./resources/js/composables/usePopover.js')['useListHighlight']
   const useOverlay: typeof import('./resources/js/composables/useOverlay.js')['useOverlay']
@@ -188,11 +191,13 @@ declare module 'vue' {
     readonly diagnosisKindOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['diagnosisKindOptions']>
     readonly doseFrequencies: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['doseFrequencies']>
     readonly downloadAuthorized: UnwrapRef<typeof import('./resources/js/utils/api.js')['downloadAuthorized']>
+    readonly downloadExport: UnwrapRef<typeof import('./resources/js/composables/useExport.js')['downloadExport']>
     readonly downloadReport: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['downloadReport']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly emptyUserForm: UnwrapRef<typeof import('./resources/js/utils/access.js')['emptyUserForm']>
     readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
+    readonly exportQuery: UnwrapRef<typeof import('./resources/js/composables/useExport.js')['exportQuery']>
     readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
     readonly fieldPlaceholder: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']>
@@ -273,6 +278,7 @@ declare module 'vue' {
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useDelayedVisible: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['useDelayedVisible']>
+    readonly useExport: UnwrapRef<typeof import('./resources/js/composables/useExport.js')['useExport']>
     readonly useFieldId: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['useFieldId']>
     readonly useListHighlight: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['useListHighlight']>
     readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
@@ -331,11 +337,13 @@ declare module '@vue/runtime-core' {
     readonly diagnosisKindOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['diagnosisKindOptions']>
     readonly doseFrequencies: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['doseFrequencies']>
     readonly downloadAuthorized: UnwrapRef<typeof import('./resources/js/utils/api.js')['downloadAuthorized']>
+    readonly downloadExport: UnwrapRef<typeof import('./resources/js/composables/useExport.js')['downloadExport']>
     readonly downloadReport: UnwrapRef<typeof import('./resources/js/composables/useReports.js')['downloadReport']>
     readonly effectScope: UnwrapRef<typeof import('vue')['effectScope']>
     readonly emptyUserForm: UnwrapRef<typeof import('./resources/js/utils/access.js')['emptyUserForm']>
     readonly errorCatalog: UnwrapRef<typeof import('./resources/js/utils/errors.js')['errorCatalog']>
     readonly errorText: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['errorText']>
+    readonly exportQuery: UnwrapRef<typeof import('./resources/js/composables/useExport.js')['exportQuery']>
     readonly facilityRecordTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['facilityRecordTo']>
     readonly facilityStatuses: UnwrapRef<typeof import('./resources/js/utils/status.js')['facilityStatuses']>
     readonly fieldPlaceholder: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']>
@@ -416,6 +424,7 @@ declare module '@vue/runtime-core' {
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useDelayedVisible: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['useDelayedVisible']>
+    readonly useExport: UnwrapRef<typeof import('./resources/js/composables/useExport.js')['useExport']>
     readonly useFieldId: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['useFieldId']>
     readonly useListHighlight: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['useListHighlight']>
     readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
