@@ -27,6 +27,7 @@ export const catalog = [
   { key: 'laboratory', title: 'Laboratory', icon: 'flask', to: 'laboratory', subject: 'Laboratory', section: 'diagnostics', rank: 1, heading: 'Diagnostics' },
   { key: 'imaging', title: 'Imaging', icon: 'scan', to: 'imaging', subject: 'Imaging', section: 'diagnostics', rank: 2, heading: 'Diagnostics' },
   { key: 'pharmacy', title: 'Pharmacy', icon: 'pill', to: 'pharmacy', subject: 'Pharmacy', section: 'pharmacy', rank: 1, heading: 'Pharmacy' },
+  { key: 'inventory', title: 'Inventory', icon: 'flask', to: 'inventory', subject: 'Inventory', section: 'pharmacy', rank: 2, heading: 'Pharmacy' },
   { key: 'theatre', title: 'Theatre', icon: 'cut', to: 'theatre', subject: 'Theatre', section: 'theatre', rank: 1, heading: 'Theatre' },
   { key: 'referrals', title: 'Referrals', icon: 'transfer', to: 'referrals', subject: 'Referral', section: 'network', rank: 1, heading: 'Network' },
   { key: 'assistance', title: 'Assistance', icon: 'heartbeat', to: 'assistance', subject: 'AssistanceRequest', section: 'network', rank: 2, heading: 'Network' },

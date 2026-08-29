@@ -126,6 +126,16 @@ class ModuleCatalog
                 'orders' => true,
             ],
             [
+                'key' => 'inventory',
+                'title' => 'Inventory',
+                'icon' => 'tabler-packages',
+                'to' => 'inventory',
+                'subject' => 'Inventory',
+                'section' => 'pharmacy',
+                'rank' => 2,
+                'heading' => $sections['pharmacy']['title'] ?? 'Pharmacy',
+            ],
+            [
                 'key' => 'theatre',
                 'title' => 'Theatre',
                 'icon' => 'tabler-cut',

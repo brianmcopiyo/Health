@@ -142,6 +142,18 @@ const stockHeaders = [
       title="Medication stock"
       flush
     >
+      <template
+        v-if="ability.can('read', 'Inventory')"
+        #actions
+      >
+        <HButton
+          size="sm"
+          variant="ghost"
+          to="inventory"
+        >
+          Open inventory
+        </HButton>
+      </template>
       <HTable
         :loading="pending"
         :headers="stockHeaders"

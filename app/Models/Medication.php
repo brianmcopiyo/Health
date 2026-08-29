@@ -33,6 +33,11 @@ class Medication extends BaseModel
         return $this->hasMany(PrescriptionItem::class);
     }
 
+    public function inventoryItem()
+    {
+        return $this->hasOne(InventoryItem::class);
+    }
+
     public function adjustStock(int $delta): void
     {
         $row = static::withoutGlobalScope('hospital')->whereKey($this->id)->lockForUpdate()->firstOrFail();

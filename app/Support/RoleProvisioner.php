@@ -28,6 +28,7 @@ class RoleProvisioner
             'Bed' => 'Beds',
             'Laboratory' => 'Laboratory',
             'Pharmacy' => 'Pharmacy',
+            'Inventory' => 'Inventory',
             'Imaging' => 'Imaging',
             'Theatre' => 'Theatre',
             'Emergency' => 'Emergency',
@@ -77,6 +78,7 @@ class RoleProvisioner
                 'read.Emergency', 'update.Emergency',
                 'read.Referral',
                 'read.Ambulance',
+                'read.Inventory', 'create.Inventory',
             ]],
             'lab-staff' => ['Lab Staff', 'Laboratory operations', 'laboratory', [
                 'read.Patient',
@@ -85,6 +87,7 @@ class RoleProvisioner
             'pharmacy-staff' => ['Pharmacy Staff', 'Pharmacy and chemist operations', 'pharmacy', [
                 'read.Patient',
                 'read.Pharmacy', 'create.Pharmacy', 'update.Pharmacy', 'manage.Pharmacy',
+                'read.Inventory', 'create.Inventory', 'update.Inventory', 'approve.Inventory', 'manage.Inventory',
                 'read.AssistanceRequest',
             ]],
             'reception' => ['Reception', 'Registration, intake, and referral desk', 'reception', [

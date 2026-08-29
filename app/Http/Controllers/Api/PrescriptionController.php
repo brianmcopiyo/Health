@@ -11,6 +11,7 @@ use App\Models\Prescription;
 use App\Models\PrescriptionItem;
 use App\Support\Audit;
 use App\Support\ChargeLedger;
+use App\Support\InventoryPoster;
 use App\Support\QueryList;
 use App\Support\TenantRules;
 use Illuminate\Http\Request;
@@ -112,7 +113,7 @@ class PrescriptionController extends Controller
             $this->authorizePermission($request->user(), 'update', 'Pharmacy');
             abort_unless(in_array($prescription->status, ['pending', 'verified'], true), 422, 'Prescription cannot be dispensed.');
             DB::transaction(function () use ($prescription, $request) {
-                $this->dispense($prescription, $request->user()->id);
+                $this->dispense($prescription, $request->user());
                 $prescription->dispensed_at = now();
                 if (! $prescription->verified_at) {
                     $prescription->verified_by = $request->user()->id;
@@ -161,7 +162,22 @@ class PrescriptionController extends Controller
             'unit_price' => ['sometimes', 'integer', 'min:0'],
         ]);
 
-        $medication->update($data);
+        if (array_key_exists('stock_qty', $data) && $medication->inventoryItem) {
+            $delta = (int) $data['stock_qty'] - (int) $medication->stock_qty;
+            app(InventoryPoster::class)->adjustMedication(
+                $medication,
+                $delta,
+                $request->user()->id,
+                $request->user()->hasPermission('approve', 'Inventory')
+                    || $request->user()->hasPermission('manage', 'Inventory')
+                    || $request->user()->hasPermission('manage', 'all')
+            );
+            unset($data['stock_qty']);
+        }
+
+        if ($data) {
+            $medication->update($data);
+        }
 
         return $medication->refresh();
     }
@@ -171,13 +187,22 @@ class PrescriptionController extends Controller
         return ClinicalService::query()->where('is_active', true)->orderBy('name')->get(['id', 'hospital_id', 'name', 'code', 'category', 'unit_price', 'is_active']);
     }
 
-    private function dispense(Prescription $prescription, string $userId): void
+    private function dispense(Prescription $prescription, $user): void
     {
-        $prescription->load(['items.medication', 'encounter']);
+        $userId = is_string($user) ? $user : $user->id;
+        $prescription->load(['items.medication.inventoryItem', 'encounter']);
+
+        $allowControlled = ! is_string($user) && (
+            $user->hasPermission('approve', 'Inventory')
+            || $user->hasPermission('manage', 'Inventory')
+            || $user->hasPermission('manage', 'all')
+        );
 
         foreach ($prescription->items as $item) {
-            abort_if($item->medication->stock_qty < $item->quantity, 422, $item->medication->name.' is out of stock.');
-            $item->medication->adjustStock(-1 * $item->quantity);
+            if (! $item->medication->inventoryItem) {
+                abort_if($item->medication->stock_qty < $item->quantity, 422, $item->medication->name.' is out of stock.');
+                $item->medication->adjustStock(-1 * $item->quantity);
+            }
             Dispensing::query()->create([
                 'hospital_id' => $prescription->hospital_id,
                 'patient_id' => $prescription->patient_id,
@@ -198,5 +223,7 @@ class PrescriptionController extends Controller
                 $item->quantity
             );
         }
+
+        app(InventoryPoster::class)->dispensePrescription($prescription, $userId, $allowControlled);
     }
 }

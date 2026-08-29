@@ -46,6 +46,8 @@ declare global {
   const fieldPlaceholder: typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']
   const finishPageNav: typeof import('./resources/js/composables/useRouteLoad.js')['finishPageNav']
   const forceFinishPageNav: typeof import('./resources/js/composables/useRouteLoad.js')['forceFinishPageNav']
+  const formatDate: typeof import('./resources/js/utils/helpers.js')['formatDate']
+  const formatQty: typeof import('./resources/js/utils/helpers.js')['formatQty']
   const formatWhen: typeof import('./resources/js/utils/helpers.js')['formatWhen']
   const getByPath: typeof import('./resources/js/utils/helpers.js')['getByPath']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
@@ -196,6 +198,8 @@ declare module 'vue' {
     readonly fieldPlaceholder: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']>
     readonly finishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['finishPageNav']>
     readonly forceFinishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['forceFinishPageNav']>
+    readonly formatDate: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatDate']>
+    readonly formatQty: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatQty']>
     readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
@@ -337,6 +341,8 @@ declare module '@vue/runtime-core' {
     readonly fieldPlaceholder: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['fieldPlaceholder']>
     readonly finishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['finishPageNav']>
     readonly forceFinishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['forceFinishPageNav']>
+    readonly formatDate: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatDate']>
+    readonly formatQty: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatQty']>
     readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>

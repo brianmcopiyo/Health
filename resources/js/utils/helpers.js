@@ -27,3 +27,23 @@ export const formatWhen = value => {
     minute: '2-digit',
   })
 }
+
+export const formatDate = value => {
+  if (!value)
+    return '—'
+
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(String(value))
+    ? new Date(`${value}T00:00:00`)
+    : new Date(value)
+
+  if (Number.isNaN(date.getTime()))
+    return '—'
+
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
+export const formatQty = value => Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 3 })

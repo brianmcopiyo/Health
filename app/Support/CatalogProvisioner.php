@@ -59,5 +59,7 @@ class CatalogProvisioner
                 ]
             );
         }
+
+        InventoryProvisioner::seedFor($hospital);
     }
 }
