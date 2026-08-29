@@ -18,10 +18,13 @@ const saving = ref(false)
 const formError = ref('')
 const payForm = ref({ amount: 0, method: 'cash' })
 
+const refundOpen = ref(false)
+const refundForm = ref({ amount: 0, method: 'cash', reason: '' })
 const tabs = [
   { title: 'Overview', value: 'overview' },
   { title: 'Items', value: 'items' },
   { title: 'Payments', value: 'payments' },
+  { title: 'Refunds', value: 'refunds' },
 ]
 
 const load = async () => {
@@ -47,6 +50,27 @@ const savePayment = async () => {
       body: { amount: Number(payForm.value.amount), method: payForm.value.method },
     })
     payOpen.value = false
+    await load()
+  })
+}
+
+const openRefund = () => {
+  formError.value = ''
+  refundForm.value = { amount: record.value.paid_amount || 0, method: 'cash', reason: '' }
+  refundOpen.value = true
+}
+
+const saveRefund = async () => {
+  await wrapSave(saving, formError, async () => {
+    await $api(`/invoices/${record.value.id}/refunds`, {
+      method: 'POST',
+      body: {
+        amount: Number(refundForm.value.amount),
+        method: refundForm.value.method,
+        reason: refundForm.value.reason || undefined,
+      },
+    })
+    refundOpen.value = false
     await load()
   })
 }
@@ -121,6 +145,10 @@ watch(() => route.params.id, () => run())
           <span>Total</span>
           <strong>{{ record.total }}</strong>
         </div>
+        <div class="h-metric">
+          <span>Outstanding</span>
+          <strong>{{ record.outstanding }}</strong>
+        </div>
       </HCard>
     </div>
 
@@ -131,12 +159,41 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Description', key: 'description' },
+          { title: 'Product', key: 'description' },
           { title: 'Qty', key: 'quantity' },
-          { title: 'Amount', key: 'unit_amount' },
+          { title: 'Price', key: 'unit_amount' },
+          { title: 'Discount', key: 'discount_amount' },
+          { title: 'Total', key: 'amount' },
         ]"
         :items="record.items || []"
         empty="No line items"
+      />
+    </HCard>
+
+    <HCard
+      v-if="record && tab === 'refunds'"
+      title="Refunds"
+      flush
+    >
+      <template
+        v-if="ability.can('refund', 'Invoice') && (record.paid_amount || 0) > 0"
+        #actions
+      >
+        <HButton
+          size="sm"
+          @click="openRefund"
+        >
+          Record refund
+        </HButton>
+      </template>
+      <HTable
+        :headers="[
+          { title: 'Amount', key: 'amount' },
+          { title: 'Method', key: 'method' },
+          { title: 'Reason', key: 'reason' },
+        ]"
+        :items="record.refunds || []"
+        empty="No refunds recorded"
       />
     </HCard>
 
@@ -197,6 +254,44 @@ watch(() => route.params.id, () => run())
           @click="savePayment"
         >
           Save payment
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      v-model="refundOpen"
+      title="Record refund"
+      :error="formError"
+      :persistent="saving"
+    >
+      <HNumber
+        v-model="refundForm.amount"
+        label="Amount"
+        :min="1"
+        required
+      />
+      <HRadioGroup
+        v-model="refundForm.method"
+        :items="paymentMethods"
+        label="Method"
+      />
+      <HInput
+        v-model="refundForm.reason"
+        label="Reason"
+      />
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="refundOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="saving || !refundForm.amount"
+          @click="saveRefund"
+        >
+          Save refund
         </HButton>
       </template>
     </HModal>

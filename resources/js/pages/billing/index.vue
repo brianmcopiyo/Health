@@ -19,15 +19,80 @@ const formOpen = ref(false)
 const payOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
-const form = ref({
-  patient_id: null,
-  encounter_id: null,
-  items: [{ description: '', quantity: 1, unit_amount: 0 }],
-})
+const catalog = ref({ services: [], medications: [], inventory: [], packages: [] })
+const overrideOpen = ref(false)
+const overrideLine = ref(null)
+const overrideForm = ref({ unit_amount: 0, reason: '' })
+const kinds = [
+  { title: 'Service', value: 'service' },
+  { title: 'Medication', value: 'medication' },
+  { title: 'Product', value: 'inventory' },
+  { title: 'Package', value: 'package' },
+]
+const form = ref(blankForm())
 const payForm = ref({
   id: null,
   amount: 0,
   method: 'cash',
+})
+
+function blankLine() {
+  return {
+    kind: 'service',
+    service_id: null,
+    medication_id: null,
+    inventory_item_id: null,
+    package_id: null,
+    description: '',
+    quantity: 1,
+    unit: 'each',
+    unit_amount: 0,
+    discount_amount: 0,
+    amount: 0,
+    override: false,
+    override_reason: '',
+  }
+}
+
+function blankForm() {
+  return {
+    patient_id: null,
+    encounter_id: null,
+    items: [blankLine()],
+  }
+}
+
+const money = value => Number(value || 0).toLocaleString()
+
+const catalogItems = line => {
+  if (line.kind === 'medication')
+    return catalog.value.medications
+  if (line.kind === 'inventory')
+    return catalog.value.inventory
+  if (line.kind === 'package')
+    return catalog.value.packages
+  return catalog.value.services
+}
+
+const selectedId = line => line.service_id || line.medication_id || line.inventory_item_id || line.package_id
+
+const quoteBody = line => ({
+  quantity: line.quantity || 1,
+  patient_id: form.value.patient_id || undefined,
+  ...(line.kind === 'medication'
+    ? { medication_id: line.medication_id }
+    : line.kind === 'inventory'
+      ? { inventory_item_id: line.inventory_item_id }
+      : line.kind === 'package'
+        ? { package_id: line.package_id }
+        : { service_id: line.service_id }),
+  ...(line.override
+    ? {
+        override: true,
+        unit_amount: line.unit_amount,
+        override_reason: line.override_reason,
+      }
+    : {}),
 })
 
 const encounterOptions = computed(() => encounters.value.map(item => ({
@@ -52,20 +117,96 @@ const loadEncounters = async patientId => {
   encounters.value = asList(await $api('/encounters', { query: { patient_id: patientId } }))
 }
 
-const openCreate = () => {
+const openCreate = async () => {
   formError.value = ''
   encounters.value = []
-  form.value = { patient_id: null, encounter_id: null, items: [{ description: '', quantity: 1, unit_amount: 0 }] }
+  form.value = blankForm()
+  catalog.value = await $api('/pricing/catalog')
   formOpen.value = true
 }
 
 const addItem = () => {
-  form.value.items.push({ description: '', quantity: 1, unit_amount: 0 })
+  form.value.items.push(blankLine())
+}
+
+const setKind = (line, kind) => {
+  line.kind = kind
+  line.service_id = null
+  line.medication_id = null
+  line.inventory_item_id = null
+  line.package_id = null
+  line.unit_amount = 0
+  line.discount_amount = 0
+  line.amount = 0
+  line.unit = 'each'
+  line.override = false
+  line.override_reason = ''
+}
+
+const setBillable = async (line, id) => {
+  line.service_id = line.kind === 'service' ? id : null
+  line.medication_id = line.kind === 'medication' ? id : null
+  line.inventory_item_id = line.kind === 'inventory' ? id : null
+  line.package_id = line.kind === 'package' ? id : null
+  line.override = false
+  line.override_reason = ''
+  await quoteLine(line)
+}
+
+const quoteLine = async line => {
+  if (!selectedId(line) || !line.quantity)
+    return
+  try {
+    const quote = await $api('/pricing/quote', {
+      method: 'POST',
+      body: quoteBody(line),
+    })
+    line.description = quote.description
+    line.unit = quote.unit || 'each'
+    line.unit_amount = quote.unit_price
+    line.discount_amount = quote.discount_amount
+    line.amount = quote.line_total
+  }
+  catch (error) {
+    formError.value = error?.data?.message || error?.message || 'Unable to quote this line'
+  }
+}
+
+const openOverride = line => {
+  formError.value = ''
+  overrideLine.value = line
+  overrideForm.value = { unit_amount: Number(line.unit_amount || 0), reason: line.override_reason || '' }
+  overrideOpen.value = true
+}
+
+const applyOverride = async () => {
+  const line = overrideLine.value
+  if (!line)
+    return
+  line.override = true
+  line.unit_amount = overrideForm.value.unit_amount
+  line.override_reason = overrideForm.value.reason
+  await quoteLine(line)
+  if (!formError.value)
+    overrideOpen.value = false
 }
 
 const save = async () => {
   await wrapSave(saving, formError, async () => {
-    const items = form.value.items.filter(item => item.description)
+    const items = form.value.items.filter(item => selectedId(item)).map(item => ({
+      quantity: item.quantity,
+      service_id: item.service_id || undefined,
+      medication_id: item.medication_id || undefined,
+      inventory_item_id: item.inventory_item_id || undefined,
+      package_id: item.package_id || undefined,
+      ...(item.override
+        ? {
+            override: true,
+            unit_amount: item.unit_amount,
+            override_reason: item.override_reason,
+          }
+        : {}),
+    }))
     await $api('/invoices', {
       method: 'POST',
       body: {
@@ -78,6 +219,8 @@ const save = async () => {
     await load()
   })
 }
+
+watch(() => form.value.patient_id, () => form.value.items.forEach(quoteLine))
 
 const updateStatus = async (invoice, status) => {
   await wrapSave(saving, formError, async () => {
@@ -253,30 +396,68 @@ const { pending } = usePageQuery(load)
           :disabled="saving"
         />
       </HFormGrid>
-      <fieldset
-        v-for="(item, index) in form.items"
-        :key="index"
-        class="h-form-grid is-3"
-        :disabled="saving"
+      <HTable
+        :headers="[
+          { title: 'Product', key: 'product' },
+          { title: 'Quantity', key: 'quantity' },
+          { title: 'Unit', key: 'unit' },
+          { title: 'Price', key: 'unit_amount' },
+          { title: 'Discount', key: 'discount_amount' },
+          { title: 'Total', key: 'amount' },
+        ]"
+        :items="form.items"
+        empty="Add a service or product"
       >
-        <HInput
-          v-model="item.description"
-          label="Description"
-          placeholder="e.g. Consultation"
-        />
-        <HNumber
-          v-model="item.quantity"
-          label="Qty"
-          placeholder="e.g. 1"
-          :min="1"
-        />
-        <HNumber
-          v-model="item.unit_amount"
-          label="Unit amount"
-          placeholder="e.g. 150.00"
-          :min="0"
-        />
-      </fieldset>
+        <template #cell-product="{ item }">
+          <div class="h-stack">
+            <HSelect
+              :model-value="item.kind"
+              :items="kinds"
+              :clearable="false"
+              :disabled="saving"
+              @update:model-value="value => setKind(item, value)"
+            />
+            <HSelect
+              :model-value="selectedId(item)"
+              :items="catalogItems(item)"
+              item-title="name"
+              item-value="id"
+              :disabled="saving"
+              @update:model-value="value => setBillable(item, value)"
+            />
+          </div>
+        </template>
+        <template #cell-quantity="{ item }">
+          <HNumber
+            v-model="item.quantity"
+            :min="1"
+            :disabled="saving"
+            @update:model-value="quoteLine(item)"
+          />
+        </template>
+        <template #cell-unit="{ item }">
+          {{ item.unit || 'each' }}
+        </template>
+        <template #cell-unit_amount="{ item }">
+          <div class="h-stack">
+            <strong>{{ money(item.unit_amount) }}</strong>
+            <HButton
+              v-if="ability.can('override', 'Invoice')"
+              variant="ghost"
+              size="sm"
+              @click="openOverride(item)"
+            >
+              Override Price
+            </HButton>
+          </div>
+        </template>
+        <template #cell-discount_amount="{ item }">
+          {{ money(item.discount_amount || 0) }}
+        </template>
+        <template #cell-amount="{ item }">
+          {{ money(item.amount || 0) }}
+        </template>
+      </HTable>
       <HButton
         variant="ghost"
         @click="addItem"
@@ -336,6 +517,40 @@ const { pending } = usePageQuery(load)
           @click="savePayment"
         >
           Save payment
+        </HButton>
+      </template>
+    </HModal>
+
+    <HModal
+      v-model="overrideOpen"
+      title="Override Price"
+      :error="formError"
+    >
+      <fieldset class="h-stack">
+        <HNumber
+          v-model="overrideForm.unit_amount"
+          label="New price"
+          :min="0"
+          required
+        />
+        <HTextarea
+          v-model="overrideForm.reason"
+          label="Reason"
+          required
+        />
+      </fieldset>
+      <template #actions>
+        <HButton
+          variant="ghost"
+          @click="overrideOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :disabled="!overrideForm.reason"
+          @click="applyOverride"
+        >
+          Apply override
         </HButton>
       </template>
     </HModal>

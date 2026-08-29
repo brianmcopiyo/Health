@@ -10,9 +10,9 @@ use Illuminate\Support\Facades\DB;
 
 class ChargeLedger
 {
-    public static function post(Encounter $encounter, string $sourceType, string $sourceId, string $description, int $unitAmount, int $quantity = 1, ?string $serviceId = null): InvoiceItem
+    public static function post(Encounter $encounter, string $sourceType, string $sourceId, string $description, int $unitAmount, int $quantity = 1, ?string $serviceId = null, array $snapshot = []): InvoiceItem
     {
-        return DB::transaction(function () use ($encounter, $sourceType, $sourceId, $description, $unitAmount, $quantity, $serviceId) {
+        return DB::transaction(function () use ($encounter, $sourceType, $sourceId, $description, $unitAmount, $quantity, $serviceId, $snapshot) {
             $invoice = self::openInvoice($encounter);
 
             $existing = InvoiceItem::query()
@@ -29,11 +29,22 @@ class ChargeLedger
                 'invoice_id' => $invoice->id,
                 'source_type' => $sourceType,
                 'source_id' => $sourceId,
-                'service_id' => $serviceId,
+                'service_id' => $serviceId ?? $snapshot['service_id'] ?? null,
+                'billable_type' => $snapshot['billable_type'] ?? ($serviceId ? 'service' : null),
+                'billable_id' => $snapshot['billable_id'] ?? $serviceId,
                 'description' => $description,
                 'quantity' => $quantity,
                 'unit_amount' => $unitAmount,
-                'amount' => $quantity * $unitAmount,
+                'list_price' => $snapshot['list_price'] ?? $unitAmount,
+                'original_unit_price' => $snapshot['original_unit_price'] ?? $unitAmount,
+                'discount_amount' => $snapshot['discount_amount'] ?? 0,
+                'discount_percent' => $snapshot['discount_percent'] ?? 0,
+                'tax_amount' => $snapshot['tax_amount'] ?? 0,
+                'tax_rate' => $snapshot['tax_rate'] ?? 0,
+                'amount' => $snapshot['line_total'] ?? ($quantity * $unitAmount),
+                'price_list_id' => $snapshot['price_list_id'] ?? null,
+                'pricing_rule_id' => $snapshot['pricing_rule_id'] ?? null,
+                'is_override' => $snapshot['is_override'] ?? false,
             ]);
 
             $invoice->recalculateTotal();
@@ -47,16 +58,27 @@ class ChargeLedger
         $service = ClinicalService::query()
             ->where('hospital_id', $encounter->hospital_id)
             ->where('code', $code)
-            ->first(['id', 'name', 'code', 'unit_price', 'hospital_id']);
+            ->first(['id', 'name', 'code', 'unit_price', 'hospital_id', 'department_id', 'category']);
 
-        $name = $service?->name ?: $fallbackName;
-        $price = $service?->unit_price ?? $fallbackPrice;
+        if ($service) {
+            $quote = app(PriceResolver::class)->quote([
+                'service_id' => $service->id,
+                'patient_id' => $encounter->patient_id,
+                'department_id' => $service->department_id,
+                'quantity' => 1,
+            ]);
+
+            return self::post($encounter, $sourceType, $sourceId, $quote['description'], $quote['unit_price'], 1, $service->id, $quote);
+        }
+
+        $name = $fallbackName;
+        $price = $fallbackPrice;
 
         if (! $name || $price < 0) {
             return null;
         }
 
-        return self::post($encounter, $sourceType, $sourceId, $name, $price, 1, $service?->id);
+        return self::post($encounter, $sourceType, $sourceId, $name, $price, 1);
     }
 
     public static function openInvoice(Encounter $encounter): Invoice
@@ -81,6 +103,7 @@ class ChargeLedger
                 'number' => HospitalSequence::nextInvoiceNumber($hospital),
                 'status' => 'draft',
                 'total' => 0,
+                'payer_type' => 'self_pay',
             ]);
         });
     }

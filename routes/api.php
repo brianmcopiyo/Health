@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\InventoryController;
 use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\ModuleBoardController;
 use App\Http\Controllers\Api\PatientController;
+use App\Http\Controllers\Api\PricingController;
 use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\ReferralController;
 use App\Http\Controllers\Api\RoleController;
@@ -178,11 +179,29 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/inventory/counts', [InventoryController::class, 'storeCount']);
     Route::get('/inventory/counts/{count}', [InventoryController::class, 'showCount']);
 
+    Route::get('/invoices/reports', [InvoiceController::class, 'reports'])->middleware('permission:read,Invoice');
     Route::get('/invoices', [InvoiceController::class, 'index'])->middleware('permission:read,Invoice');
     Route::post('/invoices', [InvoiceController::class, 'store'])->middleware('permission:create,Invoice');
     Route::get('/invoices/{invoice}', [InvoiceController::class, 'show'])->middleware('permission:read,Invoice');
     Route::patch('/invoices/{invoice}/status', [InvoiceController::class, 'updateStatus'])->middleware('permission:update,Invoice');
     Route::post('/invoices/{invoice}/payments', [InvoiceController::class, 'pay'])->middleware('permission:update,Invoice');
+    Route::post('/invoices/{invoice}/refunds', [InvoiceController::class, 'refund'])->middleware('permission:refund,Invoice');
+
+    Route::post('/pricing/quote', [PricingController::class, 'quote'])->middleware('permission:create,Invoice');
+    Route::get('/pricing/history', [PricingController::class, 'history'])->middleware('permission:read,PriceList');
+    Route::get('/pricing/services', [PricingController::class, 'services'])->middleware('permission:read,Invoice');
+    Route::get('/pricing/catalog', [PricingController::class, 'catalog'])->middleware('permission:read,Invoice');
+    Route::get('/price-lists', [PricingController::class, 'lists'])->middleware('permission:read,PriceList');
+    Route::post('/price-lists', [PricingController::class, 'storeList'])->middleware('permission:create,PriceList');
+    Route::get('/price-lists/{priceList}', [PricingController::class, 'showList'])->middleware('permission:read,PriceList');
+    Route::put('/price-lists/{priceList}', [PricingController::class, 'updateList'])->middleware('permission:update,PriceList');
+    Route::post('/price-lists/{priceList}/items', [PricingController::class, 'storeItem'])->middleware('permission:update,PriceList');
+    Route::get('/pricing-rules', [PricingController::class, 'rules'])->middleware('permission:read,PriceList');
+    Route::post('/pricing-rules', [PricingController::class, 'storeRule'])->middleware('permission:create,PriceList');
+    Route::get('/tax-rates', [PricingController::class, 'taxes'])->middleware('permission:read,PriceList');
+    Route::post('/tax-rates', [PricingController::class, 'storeTax'])->middleware('permission:create,PriceList');
+    Route::get('/service-packages', [PricingController::class, 'packages'])->middleware('permission:read,PriceList');
+    Route::post('/service-packages', [PricingController::class, 'storePackage'])->middleware('permission:create,PriceList');
 
     Route::get('/referrals/eligible-hospitals', [ReferralController::class, 'eligibleHospitals'])->middleware('permission:create,Referral');
     Route::get('/referrals', [ReferralController::class, 'index'])->middleware('permission:read,Referral');

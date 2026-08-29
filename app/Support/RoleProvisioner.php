@@ -36,6 +36,7 @@ class RoleProvisioner
             'Referral' => 'Referrals',
             'AssistanceRequest' => 'Assistance',
             'Invoice' => 'Billing',
+            'PriceList' => 'Pricing',
             'Report' => 'Reports',
             'Department' => 'Departments',
             'Facility' => 'Facilities',
@@ -52,6 +53,15 @@ class RoleProvisioner
                     'group' => $group,
                 ];
             }
+        }
+
+        foreach ([
+            ['name' => 'Apply Invoice discount', 'action' => 'discount', 'subject' => 'Invoice', 'group' => 'Billing'],
+            ['name' => 'Override Invoice price', 'action' => 'override', 'subject' => 'Invoice', 'group' => 'Billing'],
+            ['name' => 'Refund Invoice', 'action' => 'refund', 'subject' => 'Invoice', 'group' => 'Billing'],
+            ['name' => 'Invoice credit', 'action' => 'credit', 'subject' => 'Invoice', 'group' => 'Billing'],
+        ] as $extra) {
+            $items[] = $extra;
         }
 
         return $items;
@@ -132,6 +142,8 @@ class RoleProvisioner
             'billing-clerk' => ['Billing Clerk', 'Invoices and billing reports', 'billing', [
                 'read.Patient',
                 'read.Invoice', 'create.Invoice', 'update.Invoice', 'manage.Invoice',
+                'discount.Invoice', 'override.Invoice', 'refund.Invoice', 'credit.Invoice',
+                'read.PriceList', 'create.PriceList', 'update.PriceList', 'manage.PriceList',
                 'read.Report',
             ]],
         ];

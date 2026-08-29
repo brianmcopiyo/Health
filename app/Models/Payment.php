@@ -12,7 +12,7 @@ class Payment extends BaseModel
     public const METHODS = ['cash', 'card', 'mobile_money', 'insurance'];
 
     protected $fillable = [
-        'hospital_id', 'invoice_id', 'patient_id', 'amount', 'method', 'received_by', 'received_at',
+        'hospital_id', 'invoice_id', 'patient_id', 'amount', 'method', 'reference', 'status', 'received_by', 'received_at',
     ];
 
     protected function casts(): array
