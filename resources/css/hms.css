@@ -1484,6 +1484,11 @@ fieldset.h-form-grid {
 .h-table .h-actions {
   flex-wrap: nowrap;
   justify-content: flex-end;
+  width: max-content;
+  margin-inline-start: auto;
+}
+.h-table .h-actions .h-btn {
+  flex: none;
 }
 .h-table th.is-num,
 .h-table td.is-num {

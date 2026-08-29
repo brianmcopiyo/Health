@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\StaffAssignment;
+use App\Models\User;
 use App\Support\TenantRules;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -56,6 +57,13 @@ class StaffAssignmentController extends Controller
             'status' => $data['status'] ?? 'active',
             'starts_at' => now(),
         ]);
+
+        if (! empty($data['department_id'])) {
+            $assignee = User::query()->find($data['user_id']);
+            if ($assignee && ! $assignee->department_id) {
+                $assignee->update(['department_id' => $data['department_id']]);
+            }
+        }
 
         return response()->json($assignment->load(['user', 'department', 'facility']), 201);
     }

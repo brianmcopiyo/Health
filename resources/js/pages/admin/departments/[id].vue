@@ -26,6 +26,20 @@ const tabs = [
   { title: 'Activity', value: 'activity' },
 ]
 
+const staffRows = computed(() => {
+  const assignments = record.value?.staff_assignments || []
+  if (assignments.length) {
+    return assignments.map(item => ({
+      id: item.user?.id || item.id,
+      name: item.user?.name || 'Staff',
+      job_title: item.user?.job_title || labelize(item.assignment_role),
+      role: item.user?.role,
+    }))
+  }
+
+  return record.value?.users || []
+})
+
 const load = async () => {
   record.value = await $api(`/departments/${route.params.id}`)
   if (ability.can('update', 'User') || ability.can('manage', 'User'))
@@ -102,7 +116,7 @@ watch(() => route.params.id, () => run())
           { title: 'Title', key: 'job_title' },
           { title: 'Role', key: 'role.name' },
         ]"
-        :items="record.users || []"
+        :items="staffRows"
         empty="No staff assigned to this department"
       >
         <template #cell-name="{ item }">

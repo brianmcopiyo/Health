@@ -34,6 +34,7 @@ const fitKeys = new Set([
   'is_active',
   'facilities_count',
   'dispatched_at',
+  'last_login_at',
   'when',
   'visits',
   'amount',

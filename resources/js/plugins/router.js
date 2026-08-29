@@ -54,19 +54,19 @@ const flattenRoutes = (routes, prefix = '') => {
   for (const route of routes || []) {
     const path = joinRoutePath(prefix, route.path)
     const children = route.children || []
-    if (!route.component && !route.redirect && children.length) {
-      out.push(...flattenRoutes(children, path))
+    if (!children.length) {
+      out.push({ ...route, path })
       continue
     }
-    if (children.length) {
-      out.push({
-        ...route,
-        path,
-        children: flattenRoutes(children, ''),
-      })
-      continue
+
+    // App.vue is the only RouterView. Hoist list+detail files such as
+    // admin/users.vue + admin/users/[id].vue into sibling routes.
+    if (route.component || route.redirect) {
+      const { children: _nested, ...page } = route
+      out.push({ ...page, path })
     }
-    out.push({ ...route, path })
+
+    out.push(...flattenRoutes(children, path))
   }
   return out
 }
