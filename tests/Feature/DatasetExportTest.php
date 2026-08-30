@@ -211,7 +211,7 @@ class DatasetExportTest extends TestCase
         $this->assertStringContainsString('Hier consult', $invoiceContent);
 
         $unit = InventoryUnit::query()->firstOrFail();
-        $store = InventoryStore::query()->where('code', 'PHARM')->firstOrFail();
+        $store = InventoryStore::query()->where('name', 'Main Pharmacy')->firstOrFail();
         $itemA = InventoryItem::query()->create([
             'unit_id' => $unit->id,
             'kind' => 'medicine',

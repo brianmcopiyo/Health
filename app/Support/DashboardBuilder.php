@@ -39,7 +39,7 @@ class DashboardBuilder
         return [
             'role' => $this->user->role?->slug,
             'workspace' => $this->user->role?->workspace,
-            'hospital' => $this->user->hospital?->only(['id', 'name', 'code']),
+            'hospital' => $this->user->hospital?->only(['id', 'name']),
             'generated_at' => now()->toIso8601String(),
             'panels' => $panels,
             'kpis' => $kpis,
@@ -75,7 +75,7 @@ class DashboardBuilder
         return [
             'role' => 'platform-admin',
             'workspace' => $this->user->role?->workspace,
-            'hospital' => ['id' => null, 'name' => 'Network operations', 'code' => 'NET'],
+            'hospital' => ['id' => null, 'name' => 'Network operations'],
             'generated_at' => now()->toIso8601String(),
             'panels' => ['kpis', 'activity'],
             'kpis' => [
@@ -624,7 +624,7 @@ class DashboardBuilder
     private function referrals(): array
     {
         return Referral::query()
-            ->with(['patient:id,mrn,first_name,last_name,status', 'fromHospital:id,name,code', 'toHospital:id,name,code'])
+            ->with(['patient:id,mrn,first_name,last_name,status', 'fromHospital:id,name', 'toHospital:id,name'])
             ->whereIn('status', ['pending', 'in_transit'])
             ->latest()
             ->limit(8)
@@ -711,7 +711,7 @@ class DashboardBuilder
 
     private function activity(): array
     {
-        $query = AuditEvent::query()->with('hospital:id,name,code')->latest('created_at')->limit(8);
+        $query = AuditEvent::query()->with('hospital:id,name')->latest('created_at')->limit(8);
 
         if (! $this->user->isPlatformAdmin()) {
             $query->where(function ($builder) {

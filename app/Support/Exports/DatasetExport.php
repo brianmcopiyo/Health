@@ -4,6 +4,7 @@ namespace App\Support\Exports;
 
 use App\Models\User;
 use App\Support\Audit;
+use App\Support\HospitalSequence;
 use App\Support\Reports\ReportValue;
 use App\Support\Reports\XlsxEngine;
 use Illuminate\Http\Request;
@@ -227,7 +228,7 @@ class DatasetExport
                 'kind' => $definition['label'] ?? 'Data export',
                 'organization' => [
                     'name' => $hospital?->name ?? 'Hospital',
-                    'code' => $hospital?->code ?? 'HMS',
+                    'code' => $hospital ? HospitalSequence::prefix($hospital) : 'HMS',
                     'city' => $hospital?->city,
                     'region' => $hospital?->region,
                     'address' => $hospital?->address,

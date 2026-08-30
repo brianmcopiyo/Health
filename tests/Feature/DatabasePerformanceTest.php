@@ -46,7 +46,7 @@ class DatabasePerformanceTest extends TestCase
 
     public function test_hot_queries_use_indexes(): void
     {
-        $hospitalId = Hospital::query()->where('code', 'RGH')->value('id');
+        $hospitalId = Hospital::query()->where('name', 'Riverside General Hospital')->value('id');
         $quoted = "'".$hospitalId."'";
 
         $patientPlan = $this->explain("SELECT id FROM patients WHERE hospital_id = {$quoted} AND last_name LIKE 'Patton%' ORDER BY last_name LIMIT 25");
@@ -81,7 +81,7 @@ class DatabasePerformanceTest extends TestCase
         $dashboard = $this->getJson('/api/reports')->assertOk()->json();
         $this->assertGreaterThan(100, $dashboard['patients']['total']);
 
-        $lakesideHospital = Hospital::query()->where('code', 'LMC')->firstOrFail();
+        $lakesideHospital = Hospital::query()->where('name', 'Lakeside Medical Center')->firstOrFail();
         $lakeside = Patient::withoutGlobalScope('hospital')->where('hospital_id', $lakesideHospital->id)->first()
             ?? Patient::withoutGlobalScope('hospital')->create([
                 'hospital_id' => $lakesideHospital->id,
@@ -132,7 +132,7 @@ class DatabasePerformanceTest extends TestCase
     public function test_hospital_delete_is_blocked_when_clinical_records_exist(): void
     {
         Sanctum::actingAs($this->user('platform@health.test'));
-        $hospital = Hospital::query()->where('code', 'RGH')->firstOrFail();
+        $hospital = Hospital::query()->where('name', 'Riverside General Hospital')->firstOrFail();
 
         $this->deleteJson('/api/hospitals/'.$hospital->id)
             ->assertStatus(422);

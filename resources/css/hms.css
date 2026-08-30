@@ -1349,6 +1349,9 @@ img { max-width: 100%; }
 .h-check-copy { display: flex; flex-direction: column; gap: 2px; }
 .h-check-copy strong { font-weight: 600; }
 .h-check-copy small { color: var(--muted); font-size: 0.8rem; }
+.h-check,
+.h-radio,
+.h-switch { position: relative; }
 .h-check-box {
   width: 18px;
   height: 18px;
@@ -1359,9 +1362,13 @@ img { max-width: 100%; }
   place-items: center;
   flex: none;
   margin-top: 2px;
-  color: var(--on-accent);
+  color: var(--knob);
 }
-.h-check-box.is-on { background: var(--teal); border-color: var(--teal); }
+.h-check-box.is-on {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--knob);
+}
 
 .h-radio-group { display: flex; flex-wrap: wrap; gap: 8px; }
 .h-radio-group.is-stack { flex-direction: column; }
@@ -1375,19 +1382,36 @@ img { max-width: 100%; }
   padding: 8px 12px;
   cursor: pointer;
 }
-.h-radio.is-on { border-color: var(--teal); background: var(--teal-mist); color: var(--teal-deep); font-weight: 650; }
+.h-radio.is-on {
+  border-color: var(--teal);
+  background: color-mix(in srgb, var(--teal) 20%, var(--surface));
+  color: var(--teal-deep);
+  font-weight: 650;
+}
 .h-radio-mark {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
   border: 1.5px solid var(--line-strong);
+  background: var(--surface);
   display: grid;
   place-items: center;
+  flex: none;
+}
+.h-radio-mark::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--teal);
+  transform: scale(0);
+  transition: transform var(--motion-fast) var(--motion-ease);
 }
 .h-radio.is-on .h-radio-mark {
   border-color: var(--teal);
-  box-shadow: inset 0 0 0 3px var(--teal);
+  background: var(--surface);
 }
+.h-radio.is-on .h-radio-mark::after { transform: scale(1); }
 
 .h-switch {
   display: inline-flex;
@@ -1403,12 +1427,18 @@ img { max-width: 100%; }
   background: var(--line-strong);
   position: relative;
   flex: none;
+  overflow: hidden;
 }
 .h-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  display: block;
   width: 18px;
   height: 18px;
   border-radius: 50%;
   background: var(--knob);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.28);
   transition: left var(--motion-fast) var(--motion-ease);
 }
 .h-switch.is-on .h-switch-track { background: var(--teal); }

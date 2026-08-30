@@ -25,14 +25,14 @@ class RelationshipWorkflowTest extends TestCase
     {
         Sanctum::actingAs($this->user('admin@riverside.test'));
 
-        $ward = Facility::query()->where('code', 'WARD-A')->firstOrFail();
+        $ward = Facility::query()->where('name', 'General Ward A')->firstOrFail();
         $beds = Facility::query()->where('parent_id', $ward->id)->whereHas('type', fn ($query) => $query->where('slug', 'bed'))->get();
 
         $this->assertSame((int) $beds->sum('capacity'), $ward->capacity);
         $this->assertSame((int) $beds->sum('current_utilization'), $ward->current_utilization);
 
         $board = $this->getJson('/api/modules/wards')->assertOk()->json();
-        $row = collect($board['facilities'])->firstWhere('code', 'WARD-A');
+        $row = collect($board['facilities'])->firstWhere('name', 'General Ward A');
         $this->assertSame((int) $beds->sum('capacity'), $row['capacity']);
         $this->assertSame((int) $beds->sum('current_utilization'), $row['current_utilization']);
         $this->assertNotEmpty($row['beds']);
@@ -43,9 +43,9 @@ class RelationshipWorkflowTest extends TestCase
         Sanctum::actingAs($this->user('nurse@riverside.test'));
 
         $patient = Patient::query()->where('mrn', 'RGH-0001')->firstOrFail();
-        $origin = Facility::query()->where('code', 'BED-6')->firstOrFail();
-        $destination = Facility::query()->where('code', 'BED-7')->firstOrFail();
-        $ward = Facility::query()->where('code', 'WARD-A')->firstOrFail();
+        $origin = Facility::query()->where('name', 'Bed 6')->firstOrFail();
+        $destination = Facility::query()->where('name', 'Bed 7')->firstOrFail();
+        $ward = Facility::query()->where('name', 'General Ward A')->firstOrFail();
         $used = $ward->current_utilization;
 
         $assignment = $this->postJson('/api/bed-assignments', [
@@ -74,9 +74,9 @@ class RelationshipWorkflowTest extends TestCase
     {
         Sanctum::actingAs($this->user('manager@riverside.test'));
 
-        $icu = Facility::query()->where('code', 'ICU-1')->firstOrFail();
-        $ward = Facility::query()->where('code', 'WARD-A')->firstOrFail();
-        $bed = Facility::query()->where('code', 'BED-8')->firstOrFail();
+        $icu = Facility::query()->where('name', 'ICU 1')->firstOrFail();
+        $ward = Facility::query()->where('name', 'General Ward A')->firstOrFail();
+        $bed = Facility::query()->where('name', 'Bed 8')->firstOrFail();
 
         $this->putJson('/api/facilities/'.$bed->id, [
             'parent_id' => $icu->id,
@@ -106,8 +106,8 @@ class RelationshipWorkflowTest extends TestCase
     {
         Sanctum::actingAs($this->user('nurse@riverside.test'));
 
-        $ward = Facility::query()->where('code', 'WARD-A')->firstOrFail();
-        $bed = Facility::query()->where('code', 'BED-1')->firstOrFail();
+        $ward = Facility::query()->where('name', 'General Ward A')->firstOrFail();
+        $bed = Facility::query()->where('name', 'Bed 1')->firstOrFail();
 
         $wardPayload = $this->getJson('/api/facilities/'.$ward->id)->assertOk()->json();
         $this->assertNotEmpty($wardPayload['beds']);
@@ -127,8 +127,8 @@ class RelationshipWorkflowTest extends TestCase
         Sanctum::actingAs($this->user('nurse@riverside.test'));
 
         $patient = Patient::query()->where('mrn', 'RGH-0001')->firstOrFail();
-        $ward = Facility::query()->where('code', 'WARD-A')->firstOrFail();
-        $bed = Facility::query()->where('code', 'BED-6')->firstOrFail();
+        $ward = Facility::query()->where('name', 'General Ward A')->firstOrFail();
+        $bed = Facility::query()->where('name', 'Bed 6')->firstOrFail();
 
         $this->postJson('/api/bed-assignments', [
             'patient_id' => $patient->id,
@@ -196,23 +196,22 @@ class RelationshipWorkflowTest extends TestCase
     {
         Sanctum::actingAs($this->user('admin@riverside.test'));
 
-        $typeId = Facility::query()->where('code', 'WARD-A')->value('facility_type_id');
+        $typeId = Facility::query()->where('name', 'General Ward A')->value('facility_type_id');
         $departmentId = \App\Models\Department::query()->where('slug', 'wards')->value('id');
 
         $ward = $this->postJson('/api/facilities', [
             'facility_type_id' => $typeId,
             'department_id' => $departmentId,
             'name' => 'Ward B',
-            'code' => 'WARD-B',
             'capacity' => 6,
             'status' => 'available',
         ])->assertCreated()->json();
 
-        $this->assertSame('WARD-B', $ward['code']);
+        $this->assertSame('Ward B', $ward['name']);
         $this->assertSame('ward', $ward['type']['slug'] ?? null);
 
         $board = $this->getJson('/api/modules/wards')->assertOk()->json();
-        $this->assertTrue(collect($board['facilities'])->contains(fn ($row) => $row['code'] === 'WARD-B'));
+        $this->assertTrue(collect($board['facilities'])->contains(fn ($row) => $row['name'] === 'Ward B'));
 
         $shown = $this->getJson('/api/facilities/'.$ward['id'])->assertOk()->json();
         $this->assertSame(6, $shown['capacity']);
@@ -223,11 +222,10 @@ class RelationshipWorkflowTest extends TestCase
     {
         Sanctum::actingAs($this->user('nurse@riverside.test'));
 
-        $typeId = Facility::query()->where('code', 'WARD-A')->value('facility_type_id');
+        $typeId = Facility::query()->where('name', 'General Ward A')->value('facility_type_id');
         $this->postJson('/api/facilities', [
             'facility_type_id' => $typeId,
             'name' => 'Overflow',
-            'code' => 'WARD-N',
             'capacity' => 2,
         ])->assertForbidden();
     }
@@ -244,7 +242,7 @@ class RelationshipWorkflowTest extends TestCase
     public function test_lakeside_cannot_see_riverside_ward_beds(): void
     {
         Sanctum::actingAs($this->user('admin@lakeside.test'));
-        $riversideWard = Facility::withoutGlobalScope('hospital')->where('code', 'WARD-A')->whereHas('hospital', fn ($query) => $query->where('code', 'RGH'))->firstOrFail();
+        $riversideWard = Facility::withoutGlobalScope('hospital')->where('name', 'General Ward A')->whereHas('hospital', fn ($query) => $query->where('name', 'Riverside General Hospital'))->firstOrFail();
         $this->getJson('/api/facilities/'.$riversideWard->id)->assertNotFound();
     }
 

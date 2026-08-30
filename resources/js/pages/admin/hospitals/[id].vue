@@ -32,7 +32,7 @@ watch(() => route.params.id, () => run())
 <template>
   <HRecord
     :title="record?.name || 'Hospital'"
-    :subtitle="record ? `${record.code} · ${record.city || ''}` : ''"
+    :subtitle="record?.city || ''"
     :status="record?.is_active ? 'active' : 'inactive'"
     :back="{ name: 'admin-hospitals' }"
     back-label="Hospitals"

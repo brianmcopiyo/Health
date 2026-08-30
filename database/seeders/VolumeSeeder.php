@@ -16,7 +16,7 @@ class VolumeSeeder extends Seeder
 
     public function run(): void
     {
-        $hospital = Hospital::query()->where('code', 'RGH')->firstOrFail();
+        $hospital = Hospital::query()->where('name', 'Riverside General Hospital')->firstOrFail();
         $doctor = User::query()->where('email', 'doctor@riverside.test')->firstOrFail();
         $now = now()->toDateTimeString();
         $count = max(50, $this->patients);

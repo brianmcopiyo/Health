@@ -30,7 +30,6 @@ const encounterId = ref(null)
 const statusForm = ref({ status: 'available', current_utilization: 0, resource_notes: '' })
 const form = ref({
   name: '',
-  code: '',
   facility_type_id: null,
   parent_id: null,
   department_id: null,
@@ -42,7 +41,7 @@ const form = ref({
 })
 const assignForm = ref({ patient_id: null, facility_id: null })
 const moveForm = ref({ parent_id: null })
-const bedForm = ref({ name: '', code: '', capacity: 1 })
+const bedForm = ref({ name: '', capacity: 1 })
 const transferOpen = ref(false)
 const transferForm = ref({ assignment_id: null, facility_id: null })
 
@@ -116,7 +115,6 @@ const openEdit = async () => {
     .filter(item => item.id !== record.value.id)
   form.value = {
     name: record.value.name,
-    code: record.value.code,
     facility_type_id: record.value.facility_type_id,
     parent_id: record.value.parent_id,
     department_id: record.value.department_id,
@@ -215,7 +213,7 @@ const unassignWard = async () => {
 const openAddBed = async () => {
   formError.value = ''
   const type = asList(await $api('/facility-types')).find(item => item.slug === 'bed')
-  bedForm.value = { name: '', code: '', capacity: 1, facility_type_id: type?.id }
+  bedForm.value = { name: '', capacity: 1, facility_type_id: type?.id }
   bedOpen.value = true
 }
 
@@ -248,7 +246,7 @@ watch(() => route.params.id, () => run())
 <template>
   <HRecord
     :title="record?.name || listLabel"
-    :subtitle="record ? `${record.type?.name || ''} · ${record.code}` : ''"
+    :subtitle="record ? (record.type?.name || '') : ''"
     :status="record?.status"
     :back="{ name: listTo }"
     :back-label="listLabel"
@@ -748,12 +746,6 @@ watch(() => route.params.id, () => run())
           :placeholder="isBed ? 'e.g. Bed 12' : 'e.g. Surgical Ward'"
           required
         />
-        <HInput
-          v-model="form.code"
-          label="Code"
-          :placeholder="isBed ? 'e.g. B-12' : 'e.g. WARD-B'"
-          required
-        />
         <HSelect
           v-model="form.department_id"
           :items="departments"
@@ -910,12 +902,6 @@ watch(() => route.params.id, () => run())
           placeholder="e.g. Bed 12"
           required
         />
-        <HInput
-          v-model="bedForm.code"
-          label="Code"
-          placeholder="e.g. B-12"
-          required
-        />
       </HFormGrid>
       <template #actions>
         <HButton
@@ -926,7 +912,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
-          :disabled="saving || !bedForm.name || !bedForm.code"
+          :disabled="saving || !bedForm.name"
           @click="addBed"
         >
           Add

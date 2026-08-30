@@ -11,7 +11,6 @@ class HospitalFactory extends Factory
     {
         return [
             'name' => fake()->company().' Hospital',
-            'code' => strtoupper(fake()->unique()->bothify('H##??')),
             'city' => fake()->city(),
             'region' => fake()->state(),
             'phone' => fake()->phoneNumber(),

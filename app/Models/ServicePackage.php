@@ -9,7 +9,7 @@ class ServicePackage extends BaseModel
 {
     use BelongsToHospital;
 
-    protected $fillable = ['hospital_id', 'name', 'code', 'unit_price', 'is_active'];
+    protected $fillable = ['hospital_id', 'name', 'unit_price', 'is_active'];
 
     protected function casts(): array
     {

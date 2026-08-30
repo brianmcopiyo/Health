@@ -25,7 +25,7 @@ class DepartmentController extends Controller
             'users.role:id,name,slug',
             'staffAssignments.user:id,name,email,job_title,role_id',
             'staffAssignments.user.role:id,name,slug',
-            'staffAssignments.facility:id,name,code',
+            'staffAssignments.facility:id,name',
             'services:id,name,code,category,is_active,department_id',
             'encounters' => fn ($query) => $query->with(['patient:id,mrn,first_name,last_name,status', 'clinician:id,name'])->latest()->limit(20),
         ])->loadCount(['facilities', 'users', 'encounters']);

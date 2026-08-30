@@ -75,8 +75,8 @@ class PatientTimeline
             $events->push(self::event($row->dispensed_at ?: $row->created_at, 'dispense', 'Medication dispensed', $row->medication?->label().' × '.$row->quantity, $row->encounter_id, $row->dispensedBy?->name));
         });
 
-        BedAssignment::query()->with('facility:id,name,code')->where('patient_id', $patient->id)->latest()->limit(40)->get()->each(function (BedAssignment $assignment) use ($events) {
-            $events->push(self::event($assignment->assigned_at ?: $assignment->created_at, 'bed', 'Assigned to '.$assignment->facility?->name, $assignment->facility?->code, $assignment->encounter_id, null));
+        BedAssignment::query()->with('facility:id,name')->where('patient_id', $patient->id)->latest()->limit(40)->get()->each(function (BedAssignment $assignment) use ($events) {
+            $events->push(self::event($assignment->assigned_at ?: $assignment->created_at, 'bed', 'Assigned to '.$assignment->facility?->name, $assignment->facility?->name, $assignment->encounter_id, null));
             if ($assignment->discharged_at) {
                 $events->push(self::event($assignment->discharged_at, 'bed', 'Left '.$assignment->facility?->name, null, $assignment->encounter_id, null));
             }

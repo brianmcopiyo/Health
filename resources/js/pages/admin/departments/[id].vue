@@ -159,7 +159,6 @@ watch(() => route.params.id, () => run())
       <HTable
         :headers="[
           { title: 'Service', key: 'name' },
-          { title: 'Code', key: 'code' },
           { title: 'Category', key: 'category' },
         ]"
         :items="record.services || []"

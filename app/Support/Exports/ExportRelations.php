@@ -293,7 +293,6 @@ class ExportRelations
             InventoryStore::class => [
                 'title' => fn (InventoryStore $store) => $store->name,
                 'facts' => fn (InventoryStore $store) => self::facts([
-                    ['label' => 'Code', 'value' => $store->code],
                     ['label' => 'Type', 'value' => $store->type],
                 ]),
                 'children' => [
@@ -324,17 +323,14 @@ class ExportRelations
                     ], 'occurred_at'),
                     self::child('locations', 'Locations', 'Inventory', [
                         ['title' => 'Name', 'key' => 'name'],
-                        ['title' => 'Code', 'key' => 'code'],
                     ], fn (InventoryLocation $location) => [
                         'name' => $location->name,
-                        'code' => $location->code,
                     ], 'name', 'asc'),
                 ],
             ],
             InventoryLocation::class => [
                 'title' => fn (InventoryLocation $location) => $location->name,
                 'facts' => fn (InventoryLocation $location) => self::facts([
-                    ['label' => 'Code', 'value' => $location->code],
                     ['label' => 'Store', 'value' => $location->store?->name],
                 ]),
                 'children' => [
@@ -350,7 +346,6 @@ class ExportRelations
             InventorySupplier::class => [
                 'title' => fn (InventorySupplier $supplier) => $supplier->name,
                 'facts' => fn (InventorySupplier $supplier) => self::facts([
-                    ['label' => 'Code', 'value' => $supplier->code],
                     ['label' => 'Phone', 'value' => $supplier->phone],
                 ]),
                 'children' => [
@@ -432,7 +427,6 @@ class ExportRelations
             Facility::class => [
                 'title' => fn (Facility $facility) => $facility->name,
                 'facts' => fn (Facility $facility) => self::facts([
-                    ['label' => 'Code', 'value' => $facility->code],
                     ['label' => 'Status', 'value' => $facility->status],
                     ['label' => 'Capacity', 'value' => $facility->capacity],
                 ]),
@@ -461,10 +455,8 @@ class ExportRelations
                 'children' => [
                     self::child('facilities', 'Facilities', 'Facility', [
                         ['title' => 'Name', 'key' => 'name'],
-                        ['title' => 'Code', 'key' => 'code'],
                     ], fn (Facility $facility) => [
                         'name' => $facility->name,
-                        'code' => $facility->code,
                     ], 'name', 'asc'),
                     self::child('encounters', 'Encounters', 'Patient', [
                         ['title' => 'Type', 'key' => 'type', 'format' => 'status'],
@@ -478,7 +470,6 @@ class ExportRelations
             Hospital::class => [
                 'title' => fn (Hospital $hospital) => $hospital->name,
                 'facts' => fn (Hospital $hospital) => self::facts([
-                    ['label' => 'Code', 'value' => $hospital->code],
                     ['label' => 'City', 'value' => $hospital->city],
                 ]),
                 'children' => [
@@ -489,10 +480,8 @@ class ExportRelations
                     ], 'name', 'asc'),
                     self::child('facilities', 'Facilities', 'Facility', [
                         ['title' => 'Name', 'key' => 'name'],
-                        ['title' => 'Code', 'key' => 'code'],
                     ], fn (Facility $facility) => [
                         'name' => $facility->name,
-                        'code' => $facility->code,
                     ], 'name', 'asc'),
                     self::child('ambulances', 'Ambulances', 'Ambulance', [
                         ['title' => 'Vehicle', 'key' => 'vehicle'],

@@ -39,7 +39,7 @@ class AccountProfileTest extends TestCase
             'availability' => 'busy',
             'preferences' => ['invoices' => false, 'referrals' => true],
             'role_id' => Role::query()->where('slug', 'administrator')->value('id'),
-            'hospital_id' => Hospital::query()->where('code', 'LMC')->value('id'),
+            'hospital_id' => Hospital::query()->where('name', 'Lakeside Medical Center')->value('id'),
         ])->assertOk()
             ->assertJsonPath('userData.fullName', 'Nurse Amina')
             ->assertJsonPath('userData.jobTitle', 'Charge nurse')
@@ -58,7 +58,7 @@ class AccountProfileTest extends TestCase
     {
         Sanctum::actingAs($this->user('admin@riverside.test'));
         $foreign = Department::withoutGlobalScopes()
-            ->where('hospital_id', Hospital::query()->where('code', 'LMC')->value('id'))
+            ->where('hospital_id', Hospital::query()->where('name', 'Lakeside Medical Center')->value('id'))
             ->firstOrFail();
 
         $this->putJson('/api/auth/profile', [

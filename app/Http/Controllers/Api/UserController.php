@@ -48,7 +48,7 @@ class UserController extends Controller
             'memberships.role',
             'memberships.hospital',
             'staffAssignments.department:id,name',
-            'staffAssignments.facility:id,name,code',
+            'staffAssignments.facility:id,name',
             'encounters' => fn ($query) => $query->with('patient:id,mrn,first_name,last_name,status')->latest()->limit(12),
         ]);
 

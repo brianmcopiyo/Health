@@ -34,7 +34,7 @@ class ModuleBoardController extends Controller
         $this->authorizePermission($request->user(), 'read', $catalog['subject']);
 
         $typeId = $this->facilityTypeId($catalog['facility_type'] ?? null);
-        $facilityQuery = Facility::query()->with(['type:id,name,slug,icon', 'parent:id,name,code', 'department:id,name', 'hospital:id,name,code']);
+        $facilityQuery = Facility::query()->with(['type:id,name,slug,icon', 'parent:id,name', 'department:id,name', 'hospital:id,name']);
 
         if ($typeId) {
             $facilityQuery->where('facility_type_id', $typeId);
@@ -73,7 +73,6 @@ class ModuleBoardController extends Controller
             'facilities' => $facilities->map(fn (Facility $facility) => [
                 'id' => $facility->id,
                 'name' => $facility->name,
-                'code' => $facility->code,
                 'status' => $facility->status,
                 'capacity' => $facility->capacity,
                 'current_utilization' => $facility->current_utilization,
@@ -93,7 +92,7 @@ class ModuleBoardController extends Controller
 
         if (! empty($catalog['orders'])) {
             $payload['orders'] = ServiceOrder::query()
-                ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code', 'orderedBy:id,name', 'encounter:id,type,status'])
+                ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name', 'orderedBy:id,name', 'encounter:id,type,status'])
                 ->where('module_key', $catalog['key'])
                 ->latest()
                 ->limit(50)
@@ -111,7 +110,7 @@ class ModuleBoardController extends Controller
 
         if (! empty($catalog['assignments'])) {
             $payload['assignments'] = BedAssignment::query()
-                ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code,status,parent_id', 'facility.parent:id,name,code', 'assignedBy:id,name', 'encounter:id,type,status', 'nurse:id,name', 'ward:id,name,code'])
+                ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,status,parent_id', 'facility.parent:id,name', 'assignedBy:id,name', 'encounter:id,type,status', 'nurse:id,name', 'ward:id,name'])
                 ->where('status', 'active')
                 ->latest()
                 ->limit(100)
@@ -122,7 +121,7 @@ class ModuleBoardController extends Controller
             $beds = Facility::query()
                 ->with([
                     'type:id,name,slug',
-                    'parent:id,name,code,status',
+                    'parent:id,name,status',
                     'department:id,name',
                     'activeAssignment.patient:id,mrn,first_name,last_name,status',
                     'activeAssignment.encounter:id,type,status',
@@ -135,7 +134,6 @@ class ModuleBoardController extends Controller
                 ->map(fn (Facility $bed) => [
                     'id' => $bed->id,
                     'name' => $bed->name,
-                    'code' => $bed->code,
                     'status' => $bed->status,
                     'capacity' => $bed->capacity,
                     'current_utilization' => $bed->current_utilization,
@@ -170,7 +168,7 @@ class ModuleBoardController extends Controller
 
         if (! empty($catalog['encounter_type'])) {
             $payload['encounters'] = Encounter::query()
-                ->with(['patient:id,mrn,first_name,last_name,sex,status', 'clinician:id,name', 'facility:id,name,code', 'department:id,name'])
+                ->with(['patient:id,mrn,first_name,last_name,sex,status', 'clinician:id,name', 'facility:id,name', 'department:id,name'])
                 ->where('type', $catalog['encounter_type'])
                 ->whereIn('status', ['waiting', 'in_progress'])
                 ->latest()

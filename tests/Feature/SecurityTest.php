@@ -144,7 +144,7 @@ class SecurityTest extends TestCase
     public function test_mass_assignment_cannot_change_tenant(): void
     {
         Sanctum::actingAs($this->user('reception@riverside.test'));
-        $foreign = Hospital::query()->where('code', 'LMC')->firstOrFail();
+        $foreign = Hospital::query()->where('name', 'Lakeside Medical Center')->firstOrFail();
 
         $created = $this->postJson('/api/patients', [
             'first_name' => 'Kwame',

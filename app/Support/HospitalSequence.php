@@ -4,17 +4,28 @@ namespace App\Support;
 
 use App\Models\Hospital;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class HospitalSequence
 {
     public static function nextMrn(Hospital $hospital): string
     {
-        return sprintf('%s-%04d', $hospital->code ?: 'HMS', self::bump($hospital, 'patient_seq'));
+        return sprintf('%s-%04d', self::prefix($hospital), self::bump($hospital, 'patient_seq'));
     }
 
     public static function nextInvoiceNumber(Hospital $hospital): string
     {
-        return sprintf('%s-INV-%04d', $hospital->code ?: 'HMS', self::bump($hospital, 'invoice_seq'));
+        return sprintf('%s-INV-%04d', self::prefix($hospital), self::bump($hospital, 'invoice_seq'));
+    }
+
+    public static function prefix(Hospital $hospital): string
+    {
+        $fromWords = collect(preg_split('/\s+/', trim((string) $hospital->name)))
+            ->filter()
+            ->map(fn ($word) => Str::upper(Str::substr($word, 0, 1)))
+            ->implode('');
+
+        return $fromWords !== '' ? $fromWords : 'HMS';
     }
 
     public static function bump(Hospital $hospital, string $column, int $count = 1): int

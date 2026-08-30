@@ -23,11 +23,9 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('code');
             $table->unsignedInteger('unit_price')->default(0);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->unique(['hospital_id', 'code']);
         });
 
         Schema::create('service_package_items', function (Blueprint $table) {
@@ -42,7 +40,6 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('code');
             $table->string('kind', 30)->default('self_pay');
             $table->foreignUuid('patient_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUuid('department_id')->nullable()->constrained()->nullOnDelete();
@@ -52,7 +49,7 @@ return new class extends Migration
             $table->timestamp('starts_at')->nullable();
             $table->timestamp('ends_at')->nullable();
             $table->timestamps();
-            $table->unique(['hospital_id', 'code']);
+            $table->index(['kind', 'is_active']);
         });
 
         Schema::create('price_list_items', function (Blueprint $table) {

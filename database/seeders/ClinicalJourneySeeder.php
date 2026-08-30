@@ -32,8 +32,8 @@ class ClinicalJourneySeeder extends Seeder
 {
     public function run(): void
     {
-        $riverside = Hospital::query()->where('code', 'RGH')->first();
-        $lakeside = Hospital::query()->where('code', 'LMC')->first();
+        $riverside = Hospital::query()->where('name', 'Riverside General Hospital')->first();
+        $lakeside = Hospital::query()->where('name', 'Lakeside Medical Center')->first();
         $doctor = User::query()->where('email', 'doctor@riverside.test')->first();
         $nurse = User::query()->where('email', 'nurse@riverside.test')->first();
         $lab = User::query()->where('email', 'lab@riverside.test')->first();
@@ -45,10 +45,10 @@ class ClinicalJourneySeeder extends Seeder
         $opd = Department::query()->where('hospital_id', $riverside->id)->where('slug', 'opd')->first();
         $wards = Department::query()->where('hospital_id', $riverside->id)->where('slug', 'wards')->first();
         $erDept = Department::query()->where('hospital_id', $riverside->id)->where('slug', 'emergency')->first();
-        $ward = Facility::query()->where('hospital_id', $riverside->id)->where('code', 'WARD-A')->first();
-        $bed1 = Facility::query()->where('hospital_id', $riverside->id)->where('code', 'BED-1')->first();
-        $consult = Facility::query()->where('hospital_id', $riverside->id)->where('code', 'CON-3')->first();
-        $erBay = Facility::query()->where('hospital_id', $riverside->id)->where('code', 'ER-1')->first();
+        $ward = Facility::query()->where('hospital_id', $riverside->id)->where('name', 'General Ward A')->first();
+        $bed1 = Facility::query()->where('hospital_id', $riverside->id)->where('name', 'Bed 1')->first();
+        $consult = Facility::query()->where('hospital_id', $riverside->id)->where('name', 'Consult 3')->first();
+        $erBay = Facility::query()->where('hospital_id', $riverside->id)->where('name', 'Emergency Bay')->first();
 
         $doctor->update(['department_id' => $opd?->id, 'specialty' => 'Cardiology', 'license_number' => 'MDC-2041']);
         $nurse->update(['department_id' => $wards?->id, 'specialty' => 'Inpatient nursing']);
@@ -371,9 +371,9 @@ class ClinicalJourneySeeder extends Seeder
 
         $icu = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $lakeside->id)
-            ->where('code', 'ICU-1')
+            ->where('name', 'ICU 1')
             ->first();
-        $wardTypeId = Facility::query()->where('hospital_id', $riverside->id)->where('code', 'WARD-A')->value('facility_type_id');
+        $wardTypeId = Facility::query()->where('hospital_id', $riverside->id)->where('name', 'General Ward A')->value('facility_type_id');
 
         Referral::query()->create([
             'from_hospital_id' => $riverside->id,

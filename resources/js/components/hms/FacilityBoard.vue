@@ -83,7 +83,6 @@ const createOpen = ref(false)
 const createWards = ref([])
 const createForm = ref({
   name: '',
-  code: '',
   department_id: null,
   parent_id: null,
   status: 'available',
@@ -174,7 +173,6 @@ const openCreate = async () => {
     : []
   createForm.value = {
     name: '',
-    code: '',
     department_id: board.value.departments?.[0]?.id || null,
     parent_id: null,
     status: 'available',
@@ -292,7 +290,6 @@ onBeforeUnmount(() => {
 const headers = computed(() => {
   const cols = [
     { title: 'Unit', key: 'name' },
-    { title: 'Code', key: 'code' },
     { title: 'Status', key: 'status' },
     { title: 'Capacity', key: 'capacity' },
     { title: 'In use', key: 'current_utilization' },
@@ -769,12 +766,6 @@ const headers = computed(() => {
           :placeholder="moduleKey === 'beds' ? 'e.g. Bed 12' : 'e.g. Surgical Ward'"
           required
         />
-        <HInput
-          v-model="createForm.code"
-          label="Code"
-          :placeholder="moduleKey === 'beds' ? 'e.g. B-12' : 'e.g. WARD-B'"
-          required
-        />
         <HSelect
           v-if="moduleKey === 'beds'"
           v-model="createForm.parent_id"
@@ -818,7 +809,7 @@ const headers = computed(() => {
           Cancel
         </HButton>
         <HButton
-          :disabled="saving || !createForm.name || !createForm.code"
+          :disabled="saving || !createForm.name"
           @click="createUnit"
         >
           Save

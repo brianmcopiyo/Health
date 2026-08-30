@@ -17,7 +17,6 @@ use App\Support\PriceResolver;
 use App\Support\QueryList;
 use App\Support\TenantRules;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class PricingController extends Controller
@@ -166,7 +165,6 @@ class PricingController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'code' => ['nullable', 'string', 'max:40'],
             'unit_price' => ['required', 'integer', 'min:0'],
             'items' => ['nullable', 'array'],
             'items.*.service_id' => ['required', TenantRules::inHospital('clinical_services')],
@@ -174,7 +172,6 @@ class PricingController extends Controller
         ]);
         $package = ServicePackage::query()->create([
             'name' => $data['name'],
-            'code' => $data['code'] ?? Str::upper(Str::slug($data['name'], '-')),
             'unit_price' => $data['unit_price'],
             'is_active' => true,
         ]);
@@ -196,7 +193,7 @@ class PricingController extends Controller
             'services' => ClinicalService::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code', 'category', 'unit_price']),
             'medications' => Medication::query()->orderBy('name')->get(['id', 'name', 'form', 'strength', 'sku', 'unit_price']),
             'inventory' => InventoryItem::query()->with('unit:id,name,symbol')->where('is_active', true)->orderBy('name')->get(['id', 'name', 'sku', 'kind', 'unit_id', 'unit_price', 'form', 'strength']),
-            'packages' => ServicePackage::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'code', 'unit_price']),
+            'packages' => ServicePackage::query()->where('is_active', true)->orderBy('name')->get(['id', 'name', 'unit_price']),
         ];
     }
 
@@ -204,7 +201,6 @@ class PricingController extends Controller
     {
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'code' => ['nullable', 'string', 'max:40'],
             'kind' => ['required', 'in:self_pay,insurance,customer,promotional,department'],
             'patient_id' => ['nullable', TenantRules::inHospital('patients')],
             'department_id' => ['nullable', TenantRules::inHospital('departments')],
@@ -214,7 +210,6 @@ class PricingController extends Controller
             'starts_at' => ['nullable', 'date'],
             'ends_at' => ['nullable', 'date'],
         ]);
-        $data['code'] = $data['code'] ?? Str::upper(Str::slug($data['name'], '-'));
         $data['tax_inclusive'] = $request->boolean('tax_inclusive', $list?->tax_inclusive ?? false);
         $data['is_default'] = $request->boolean('is_default', $list?->is_default ?? false);
         $data['is_active'] = $request->boolean('is_active', $list?->is_active ?? true);

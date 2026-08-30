@@ -21,7 +21,7 @@ class ServiceOrderController extends Controller
     {
         $module = $request->string('module')->toString();
         $query = ServiceOrder::query()
-            ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code', 'orderedBy:id,name', 'completedBy:id,name', 'encounter:id,type,status', 'service:id,name,code,unit_price'])
+            ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name', 'orderedBy:id,name', 'completedBy:id,name', 'encounter:id,type,status', 'service:id,name,code,unit_price'])
             ->latest();
 
         if ($module) {

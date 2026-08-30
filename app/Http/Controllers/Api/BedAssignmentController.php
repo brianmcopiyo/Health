@@ -19,7 +19,7 @@ class BedAssignmentController extends Controller
     public function index(Request $request)
     {
         $query = BedAssignment::query()
-            ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code,status', 'assignedBy:id,name', 'encounter:id,type,status', 'nurse:id,name', 'ward:id,name,code'])
+            ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,status', 'assignedBy:id,name', 'encounter:id,type,status', 'nurse:id,name', 'ward:id,name'])
             ->latest();
 
         if ($request->string('status')->toString() !== 'all') {

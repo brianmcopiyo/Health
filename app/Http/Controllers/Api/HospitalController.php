@@ -7,7 +7,6 @@ use App\Models\Hospital;
 use App\Models\Patient;
 use App\Support\HospitalProvisioner;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 
 class HospitalController extends Controller
 {
@@ -36,7 +35,7 @@ class HospitalController extends Controller
             $query->where('id', '!=', $user->hospital_id);
         }
 
-        return $query->get(['id', 'name', 'code', 'city', 'region', 'phone']);
+        return $query->get(['id', 'name', 'city', 'region', 'phone']);
     }
 
     public function store(Request $request)
@@ -45,7 +44,6 @@ class HospitalController extends Controller
 
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'code' => ['required', 'string', 'max:50', 'unique:hospitals,code'],
             'city' => ['nullable', 'string', 'max:120'],
             'region' => ['nullable', 'string', 'max:120'],
             'phone' => ['nullable', 'string', 'max:50'],
@@ -92,7 +90,6 @@ class HospitalController extends Controller
 
         $data = $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
-            'code' => ['sometimes', 'string', 'max:50', Rule::unique('hospitals', 'code')->ignore($hospital->id)],
             'city' => ['nullable', 'string', 'max:120'],
             'region' => ['nullable', 'string', 'max:120'],
             'phone' => ['nullable', 'string', 'max:50'],

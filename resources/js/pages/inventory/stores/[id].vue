@@ -27,7 +27,7 @@ watch(() => route.params.id, () => run())
 <template>
   <HRecord
     :title="record?.name || 'Store'"
-    :subtitle="record ? [record.code, record.type, record.department?.name].filter(Boolean).join(' · ') : ''"
+    :subtitle="record ? [record.type, record.department?.name].filter(Boolean).join(' · ') : ''"
     :back="{ name: 'inventory-stores' }"
     back-label="Stores"
     :tabs="tabs"
@@ -67,7 +67,7 @@ watch(() => route.params.id, () => run())
         flush
       >
         <HTable
-          :headers="[{ title: 'Location', key: 'name' }, { title: 'Code', key: 'code' }]"
+          :headers="[{ title: 'Location', key: 'name' }]"
           :items="record.locations || []"
           empty="No locations in this store"
         />

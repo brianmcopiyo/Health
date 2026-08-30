@@ -15,7 +15,7 @@ class AssistanceRequestController extends Controller
     public function index(Request $request)
     {
         $query = AssistanceRequest::query()
-            ->with(['fromHospital:id,name,code', 'toHospital:id,name,code', 'creator:id,name', 'responder:id,name', 'patient:id,mrn,first_name,last_name,status', 'facility:id,name,code', 'facilityType:id,name,slug'])
+            ->with(['fromHospital:id,name', 'toHospital:id,name', 'creator:id,name', 'responder:id,name', 'patient:id,mrn,first_name,last_name,status', 'facility:id,name', 'facilityType:id,name,slug'])
             ->latest();
 
         if ($status = $request->string('status')->toString()) {

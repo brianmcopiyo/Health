@@ -47,18 +47,17 @@ class InventoryProvisioner
         }
 
         InventorySupplier::query()->firstOrCreate(
-            ['hospital_id' => $hospital->id, 'code' => 'NMS'],
-            ['name' => 'National Medical Stores', 'is_active' => true]
+            ['hospital_id' => $hospital->id, 'name' => 'National Medical Stores'],
+            ['is_active' => true]
         );
 
         $pharmacyDept = Department::query()->where('hospital_id', $hospital->id)->where('slug', 'pharmacy')->first();
         $wardsDept = Department::query()->where('hospital_id', $hospital->id)->where('slug', 'wards')->first();
-        $pharmacyFacility = Facility::query()->where('hospital_id', $hospital->id)->where('code', 'PHARM-1')->first();
+        $pharmacyFacility = Facility::query()->where('hospital_id', $hospital->id)->where('name', 'Main Pharmacy')->first();
 
         $pharmacy = InventoryStore::query()->firstOrCreate(
-            ['hospital_id' => $hospital->id, 'code' => 'PHARM'],
+            ['hospital_id' => $hospital->id, 'name' => 'Main Pharmacy'],
             [
-                'name' => 'Main Pharmacy',
                 'type' => 'pharmacy',
                 'department_id' => $pharmacyDept?->id,
                 'facility_id' => $pharmacyFacility?->id,
@@ -68,19 +67,18 @@ class InventoryProvisioner
         );
 
         $pharmacy->locations()->firstOrCreate(
-            ['code' => 'SHELF-A'],
-            ['hospital_id' => $hospital->id, 'name' => 'Pharmacy shelf A', 'is_active' => true]
+            ['name' => 'Pharmacy shelf A'],
+            ['hospital_id' => $hospital->id, 'is_active' => true]
         );
 
         InventoryStore::query()->firstOrCreate(
-            ['hospital_id' => $hospital->id, 'code' => 'STORE'],
-            ['name' => 'Central Store', 'type' => 'warehouse', 'is_default' => false, 'is_active' => true]
+            ['hospital_id' => $hospital->id, 'name' => 'Central Store'],
+            ['type' => 'warehouse', 'is_default' => false, 'is_active' => true]
         );
 
         InventoryStore::query()->firstOrCreate(
-            ['hospital_id' => $hospital->id, 'code' => 'WARD'],
+            ['hospital_id' => $hospital->id, 'name' => 'Ward Store'],
             [
-                'name' => 'Ward Store',
                 'type' => 'ward',
                 'department_id' => $wardsDept?->id,
                 'is_default' => false,

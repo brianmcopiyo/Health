@@ -24,7 +24,7 @@ const saving = ref(false)
 const formError = ref('')
 const listForm = ref({ name: '', kind: 'self_pay', tax_inclusive: false, is_default: false })
 const ruleForm = ref({ name: '', type: 'discount_percent', scope: 'service', value: 0, is_active: true })
-const packageForm = ref({ name: '', code: '', unit_price: 0 })
+const packageForm = ref({ name: '', unit_price: 0 })
 
 const filters = [
   { key: 'tab', type: 'segmented', options: [

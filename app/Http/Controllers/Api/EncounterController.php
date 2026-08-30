@@ -33,7 +33,7 @@ class EncounterController extends Controller
             ->with([
                 'patient:id,hospital_id,mrn,first_name,last_name,sex,status',
                 'clinician:id,name',
-                'facility:id,name,code,status',
+                'facility:id,name,status',
                 'department:id,name',
             ])
             ->latest(), $type ?: null);
@@ -53,7 +53,7 @@ class EncounterController extends Controller
         }
 
         if ($type === 'admission') {
-            $query->with(['bedAssignments' => fn ($assignments) => $assignments->where('status', 'active')->with('facility:id,name,code,status')]);
+            $query->with(['bedAssignments' => fn ($assignments) => $assignments->where('status', 'active')->with('facility:id,name,status')]);
         }
 
         if ($status = $request->string('status')->toString()) {

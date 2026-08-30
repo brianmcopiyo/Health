@@ -15,7 +15,6 @@ const editing = ref(null)
 const removing = ref(null)
 const form = ref({
   name: '',
-  code: '',
   city: '',
   region: '',
   phone: '',
@@ -26,7 +25,6 @@ const form = ref({
 
 const headers = [
   { title: 'Hospital', key: 'name' },
-  { title: 'Code', key: 'code' },
   { title: 'City', key: 'city' },
   { title: 'Region', key: 'region' },
   { title: 'Active', key: 'is_active' },
@@ -42,7 +40,6 @@ const openCreate = () => {
   editing.value = null
   form.value = {
     name: '',
-    code: '',
     city: '',
     region: '',
     phone: '',
@@ -162,12 +159,6 @@ const { pending } = usePageQuery(load)
           v-model="form.name"
           label="Name"
           placeholder="e.g. Riverside General"
-          required
-        />
-        <HInput
-          v-model="form.code"
-          label="Code"
-          placeholder="e.g. RGH"
           required
         />
         <HInput

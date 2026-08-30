@@ -11,7 +11,7 @@ class InventoryStore extends BaseModel
     use BelongsToHospital;
 
     protected $fillable = [
-        'hospital_id', 'department_id', 'facility_id', 'name', 'code', 'type', 'is_default', 'is_active',
+        'hospital_id', 'department_id', 'facility_id', 'name', 'type', 'is_default', 'is_active',
     ];
 
     protected function casts(): array

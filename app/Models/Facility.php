@@ -22,7 +22,6 @@ class Facility extends BaseModel
         'parent_id',
         'department_id',
         'name',
-        'code',
         'status',
         'capacity',
         'current_utilization',
@@ -108,8 +107,7 @@ class Facility extends BaseModel
         $prefix = addcslashes($term, '%_').'%';
 
         return $query->where(function (Builder $builder) use ($prefix) {
-            $builder->where('name', 'like', $prefix)
-                ->orWhere('code', 'like', $prefix);
+            $builder->where('name', 'like', $prefix);
         });
     }
 

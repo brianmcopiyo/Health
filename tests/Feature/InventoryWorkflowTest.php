@@ -26,8 +26,8 @@ class InventoryWorkflowTest extends TestCase
 
     public function test_receive_transfer_issue_return_adjust_and_count_keep_a_ledger(): void
     {
-        $pharmacy = InventoryStore::query()->where('code', 'PHARM')->firstOrFail();
-        $ward = InventoryStore::query()->where('code', 'WARD')->firstOrFail();
+        $pharmacy = InventoryStore::query()->where('name', 'Main Pharmacy')->firstOrFail();
+        $ward = InventoryStore::query()->where('name', 'Ward Store')->firstOrFail();
         $item = InventoryItem::query()->where('sku', 'PCM-500')->firstOrFail();
         $opening = (float) InventoryBalance::query()->where('item_id', $item->id)->where('store_id', $pharmacy->id)->value('quantity');
 
@@ -109,7 +109,7 @@ class InventoryWorkflowTest extends TestCase
 
     public function test_expired_and_controlled_stock_are_restricted(): void
     {
-        $pharmacy = InventoryStore::query()->where('code', 'PHARM')->firstOrFail();
+        $pharmacy = InventoryStore::query()->where('name', 'Main Pharmacy')->firstOrFail();
         $item = InventoryItem::query()->where('sku', 'SUP-GLV')->firstOrFail();
 
         $receipt = $this->postJson('/api/inventory/receipts', [

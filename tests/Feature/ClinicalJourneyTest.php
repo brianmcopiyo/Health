@@ -142,7 +142,7 @@ class ClinicalJourneyTest extends TestCase
         $this->assertSame('admission', $admission['type']);
 
         Sanctum::actingAs($this->user('nurse@riverside.test'));
-        $bed = Facility::query()->where('code', 'BED-8')->first();
+        $bed = Facility::query()->where('name', 'Bed 8')->first();
         $assignment = $this->postJson('/api/bed-assignments', [
             'patient_id' => $patient->id,
             'facility_id' => $bed->id,
@@ -170,7 +170,7 @@ class ClinicalJourneyTest extends TestCase
         Sanctum::actingAs($this->user('doctor@riverside.test'));
         $patient = Patient::query()->where('mrn', 'RGH-0003')->first();
         $encounter = Encounter::query()->where('patient_id', $patient->id)->where('type', 'emergency')->first();
-        $wardTypeId = Facility::query()->where('code', 'WARD-A')->first()->facility_type_id;
+        $wardTypeId = Facility::query()->where('name', 'General Ward A')->first()->facility_type_id;
 
         $create = $this->postJson('/api/referrals', [
             'to_hospital_id' => $this->hospital('LMC')->id,
@@ -184,7 +184,7 @@ class ClinicalJourneyTest extends TestCase
         Sanctum::actingAs($this->user('doctor@lakeside.test'));
         $icu = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $this->hospital('LMC')->id)
-            ->where('code', 'ICU-1')
+            ->where('name', 'ICU 1')
             ->first();
 
         $accepted = $this->patchJson('/api/referrals/'.$create->json('id').'/status', [
@@ -205,7 +205,7 @@ class ClinicalJourneyTest extends TestCase
         Sanctum::actingAs($this->user('doctor@riverside.test'));
         $patient = Patient::query()->where('mrn', 'RGH-0003')->first();
         $encounter = Encounter::query()->where('patient_id', $patient->id)->where('type', 'emergency')->first();
-        $wardTypeId = Facility::query()->where('code', 'WARD-A')->first()->facility_type_id;
+        $wardTypeId = Facility::query()->where('name', 'General Ward A')->first()->facility_type_id;
 
         $referral = $this->postJson('/api/referrals', [
             'to_hospital_id' => $this->hospital('LMC')->id,
@@ -219,7 +219,7 @@ class ClinicalJourneyTest extends TestCase
         Sanctum::actingAs($this->user('doctor@lakeside.test'));
         $icu = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $this->hospital('LMC')->id)
-            ->where('code', 'ICU-1')
+            ->where('name', 'ICU 1')
             ->first();
         $this->patchJson('/api/referrals/'.$referral['id'].'/status', [
             'status' => 'accepted',
@@ -324,7 +324,7 @@ class ClinicalJourneyTest extends TestCase
         $this->getJson('/api/invoices/'.$invoice->id)->assertOk()->assertJsonStructure(['id', 'items', 'payments']);
 
         Sanctum::actingAs($this->user('admin@riverside.test'));
-        $facility = Facility::query()->where('code', 'WARD-A')->first();
+        $facility = Facility::query()->where('name', 'General Ward A')->first();
         $shown = $this->getJson('/api/facilities/'.$facility->id)->assertOk()->json();
         $this->assertArrayHasKey('children', $shown);
         $this->assertArrayHasKey('department', $shown);
@@ -361,6 +361,11 @@ class ClinicalJourneyTest extends TestCase
 
     private function hospital(string $code)
     {
-        return \App\Models\Hospital::query()->where('code', $code)->firstOrFail();
+        $names = [
+            'RGH' => 'Riverside General Hospital',
+            'LMC' => 'Lakeside Medical Center',
+        ];
+
+        return \App\Models\Hospital::query()->where('name', $names[$code] ?? $code)->firstOrFail();
     }
 }

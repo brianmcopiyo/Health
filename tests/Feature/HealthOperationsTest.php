@@ -69,7 +69,7 @@ class HealthOperationsTest extends TestCase
         $ids = $this->jsonList($this->getJson('/api/facilities')->assertOk())->pluck('id');
         $lakesideFacility = Facility::withoutGlobalScope('hospital')->where('hospital_id', $this->hospital('LMC')->id)->first();
 
-        $this->assertTrue($ids->contains(Facility::query()->where('code', 'WARD-A')->first()->id));
+        $this->assertTrue($ids->contains(Facility::query()->where('name', 'General Ward A')->first()->id));
         $this->assertFalse($ids->contains($lakesideFacility->id));
         $this->getJson('/api/facilities/'.$lakesideFacility->id)->assertNotFound();
     }
@@ -77,7 +77,7 @@ class HealthOperationsTest extends TestCase
     public function test_facility_status_and_capacity_rules(): void
     {
         Sanctum::actingAs($this->user('manager@riverside.test'));
-        $facility = Facility::query()->where('code', 'CON-3')->first();
+        $facility = Facility::query()->where('name', 'Consult 3')->first();
 
         $this->patchJson('/api/facilities/'.$facility->id.'/status', [
             'status' => 'maintenance',
@@ -97,7 +97,6 @@ class HealthOperationsTest extends TestCase
         $this->postJson('/api/facilities', [
             'facility_type_id' => 1,
             'name' => 'Overflow Ward',
-            'code' => 'WARD-X',
             'capacity' => 4,
         ])->assertForbidden();
     }
@@ -105,7 +104,7 @@ class HealthOperationsTest extends TestCase
     public function test_eligible_referral_hospitals_require_available_capacity(): void
     {
         Sanctum::actingAs($this->user('doctor@riverside.test'));
-        $wardTypeId = Facility::query()->where('code', 'WARD-A')->first()->facility_type_id;
+        $wardTypeId = Facility::query()->where('name', 'General Ward A')->first()->facility_type_id;
 
         $response = $this->getJson('/api/referrals/eligible-hospitals?facility_type_id='.$wardTypeId.'&required_capacity=1')
             ->assertOk();
@@ -120,13 +119,13 @@ class HealthOperationsTest extends TestCase
         Sanctum::actingAs($this->user('doctor@riverside.test'));
         $theatreTypeId = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $this->hospital('LMC')->id)
-            ->where('code', 'TH-1')
+            ->where('name', 'Theatre 1')
             ->first()
             ->facility_type_id;
 
         Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $this->hospital('LMC')->id)
-            ->where('code', 'TH-1')
+            ->where('name', 'Theatre 1')
             ->update(['status' => 'occupied', 'current_utilization' => 1, 'capacity' => 1]);
 
         $this->postJson('/api/referrals', [
@@ -141,7 +140,7 @@ class HealthOperationsTest extends TestCase
     public function test_referral_workflow_and_isolation(): void
     {
         Sanctum::actingAs($this->user('doctor@riverside.test'));
-        $wardTypeId = Facility::query()->where('code', 'WARD-A')->first()->facility_type_id;
+        $wardTypeId = Facility::query()->where('name', 'General Ward A')->first()->facility_type_id;
 
         $create = $this->postJson('/api/referrals', [
             'to_hospital_id' => $this->hospital('LMC')->id,
@@ -161,7 +160,7 @@ class HealthOperationsTest extends TestCase
         Sanctum::actingAs($this->user('doctor@lakeside.test'));
         $icu = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $this->hospital('LMC')->id)
-            ->where('code', 'ICU-1')
+            ->where('name', 'ICU 1')
             ->first();
         $before = $icu->current_utilization;
 
@@ -248,9 +247,8 @@ class HealthOperationsTest extends TestCase
 
         $this->postJson('/api/hospitals', [
             'name' => 'Hilltop Clinic',
-            'code' => 'HTC',
             'city' => 'Hilltop',
-        ])->assertCreated()->assertJsonPath('code', 'HTC');
+        ])->assertCreated()->assertJsonPath('name', 'Hilltop Clinic');
     }
 
     public function test_hospital_admin_cannot_create_hospitals(): void
@@ -259,7 +257,6 @@ class HealthOperationsTest extends TestCase
 
         $this->postJson('/api/hospitals', [
             'name' => 'Shadow Clinic',
-            'code' => 'SHC',
         ])->assertForbidden();
     }
 
@@ -384,11 +381,11 @@ class HealthOperationsTest extends TestCase
 
         $riversideWard = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $this->hospital('RGH')->id)
-            ->where('code', 'WARD-A')
+            ->where('name', 'General Ward A')
             ->first();
         $lakesideWard = Facility::withoutGlobalScope('hospital')
             ->where('hospital_id', $this->hospital('LMC')->id)
-            ->where('code', 'WARD-A')
+            ->where('name', 'General Ward A')
             ->first();
         $ids = collect($this->getJson('/api/modules/wards')->json('facilities'))->pluck('id');
         $this->assertTrue($ids->contains($lakesideWard->id));
@@ -416,7 +413,7 @@ class HealthOperationsTest extends TestCase
     public function test_bed_assignment_updates_utilization(): void
     {
         Sanctum::actingAs($this->user('nurse@riverside.test'));
-        $bed = Facility::query()->where('code', 'BED-8')->first();
+        $bed = Facility::query()->where('name', 'Bed 8')->first();
         $patient = \App\Models\Patient::query()->first();
         $before = $bed->current_utilization;
 
@@ -541,6 +538,11 @@ class HealthOperationsTest extends TestCase
 
     private function hospital(string $code): Hospital
     {
-        return Hospital::query()->where('code', $code)->firstOrFail();
+        $names = [
+            'RGH' => 'Riverside General Hospital',
+            'LMC' => 'Lakeside Medical Center',
+        ];
+
+        return Hospital::query()->where('name', $names[$code] ?? $code)->firstOrFail();
     }
 }

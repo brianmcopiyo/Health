@@ -11,7 +11,6 @@ class Hospital extends BaseModel
 
     protected $fillable = [
         'name',
-        'code',
         'city',
         'region',
         'phone',

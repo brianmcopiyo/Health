@@ -22,7 +22,7 @@ class StaffAssignmentController extends Controller
         );
 
         $query = StaffAssignment::query()
-            ->with(['user:id,name,email,job_title,department_id', 'department:id,name,slug', 'facility:id,name,code'])
+            ->with(['user:id,name,email,job_title,department_id', 'department:id,name,slug', 'facility:id,name'])
             ->latest();
 
         if ($departmentId = $request->input('department_id')) {

@@ -10,7 +10,7 @@ class InventoryLocation extends BaseModel
 {
     use BelongsToHospital;
 
-    protected $fillable = ['hospital_id', 'store_id', 'name', 'code', 'is_active'];
+    protected $fillable = ['hospital_id', 'store_id', 'name', 'is_active'];
 
     protected function casts(): array
     {

@@ -26,7 +26,6 @@ const removing = ref(null)
 const departments = ref([])
 const form = ref({
   name: '',
-  code: '',
   facility_type_id: null,
   parent_id: null,
   status: 'available',
@@ -75,7 +74,6 @@ const openCreate = () => {
   editing.value = null
   form.value = {
     name: '',
-    code: '',
     facility_type_id: types.value[0]?.id ?? null,
     parent_id: null,
     status: 'available',
@@ -93,7 +91,6 @@ const openEdit = item => {
   editing.value = item
   form.value = {
     name: item.name,
-    code: item.code,
     facility_type_id: item.facility_type_id,
     parent_id: item.parent_id,
     status: item.status,
@@ -239,12 +236,6 @@ const { pending } = usePageQuery(load)
           v-model="form.name"
           label="Name"
           placeholder="e.g. Surgical Ward"
-          required
-        />
-        <HInput
-          v-model="form.code"
-          label="Code"
-          placeholder="e.g. WARD-B"
           required
         />
         <HSelect

@@ -129,7 +129,7 @@ class ReportWorkspaceTest extends TestCase
     public function test_reports_stay_within_tenant_and_omit_sensitive_fields(): void
     {
         Sanctum::actingAs($this->user('admin@riverside.test'));
-        $lakeside = Hospital::query()->where('code', 'LMC')->firstOrFail();
+        $lakeside = Hospital::query()->where('name', 'Lakeside Medical Center')->firstOrFail();
         $foreign = Patient::withoutGlobalScope('hospital')->create([
             'hospital_id' => $lakeside->id,
             'mrn' => 'LMC-RPT-9',

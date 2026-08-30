@@ -343,12 +343,10 @@ class ExportCatalog
                 fn () => InventorySupplier::query()->orderBy('name'),
                 fn (InventorySupplier $supplier) => [
                     'name' => $supplier->name,
-                    'code' => $supplier->code,
                     'phone' => $supplier->phone,
                 ],
                 [
                     ['title' => 'Name', 'key' => 'name'],
-                    ['title' => 'Code', 'key' => 'code'],
                     ['title' => 'Phone', 'key' => 'phone'],
                 ],
                 ['q' => 'Search']
@@ -359,12 +357,10 @@ class ExportCatalog
                 fn () => InventoryStore::query()->orderBy('name'),
                 fn (InventoryStore $store) => [
                     'name' => $store->name,
-                    'code' => $store->code,
                     'type' => $store->type,
                 ],
                 [
                     ['title' => 'Name', 'key' => 'name'],
-                    ['title' => 'Code', 'key' => 'code'],
                     ['title' => 'Type', 'key' => 'type', 'format' => 'status'],
                 ],
                 []
@@ -407,7 +403,6 @@ class ExportCatalog
                 'filter_labels' => ['q' => 'Search', 'status' => 'Status', 'facility_type_id' => 'Type', 'department_id' => 'Department'],
                 'columns' => [
                     ['title' => 'Name', 'key' => 'name'],
-                    ['title' => 'Code', 'key' => 'code'],
                     ['title' => 'Status', 'key' => 'status', 'format' => 'status'],
                     ['title' => 'Capacity', 'key' => 'capacity', 'format' => 'number'],
                 ],
@@ -415,7 +410,7 @@ class ExportCatalog
                     $query = Facility::query()->orderBy('name');
                     if ($q = $request->string('q')->toString()) {
                         $term = '%'.addcslashes($q, '%_').'%';
-                        $query->where(fn ($builder) => $builder->where('name', 'like', $term)->orWhere('code', 'like', $term));
+                        $query->where(fn ($builder) => $builder->where('name', 'like', $term));
                     }
                     if ($status = $request->string('status')->toString()) {
                         $query->where('status', $status);
@@ -431,7 +426,6 @@ class ExportCatalog
                 },
                 'map' => fn (Facility $facility) => [
                     'name' => $facility->name,
-                    'code' => $facility->code,
                     'status' => $facility->status,
                     'capacity' => $facility->capacity,
                 ],
@@ -493,7 +487,6 @@ class ExportCatalog
                 'filter_labels' => [],
                 'columns' => [
                     ['title' => 'Name', 'key' => 'name'],
-                    ['title' => 'Code', 'key' => 'code'],
                     ['title' => 'City', 'key' => 'city'],
                     ['title' => 'Region', 'key' => 'region'],
                     ['title' => 'Active', 'key' => 'active', 'format' => 'status'],
@@ -501,7 +494,6 @@ class ExportCatalog
                 'query' => fn () => Hospital::query()->orderBy('name'),
                 'map' => fn (Hospital $hospital) => [
                     'name' => $hospital->name,
-                    'code' => $hospital->code,
                     'city' => $hospital->city,
                     'region' => $hospital->region,
                     'active' => $hospital->is_active ? 'Yes' : 'No',
@@ -611,7 +603,7 @@ class ExportCatalog
                 fn (Request $request) => tap(InventoryLocation::query()->with('store')->orderBy('name'), function ($query) use ($request) {
                     if ($q = $request->string('q')->toString()) {
                         $term = '%'.addcslashes($q, '%_').'%';
-                        $query->where(fn ($builder) => $builder->where('name', 'like', $term)->orWhere('code', 'like', $term));
+                        $query->where(fn ($builder) => $builder->where('name', 'like', $term));
                     }
                     if ($request->filled('store_id')) {
                         $query->where('store_id', $request->string('store_id'));
@@ -619,12 +611,10 @@ class ExportCatalog
                 }),
                 fn (InventoryLocation $location) => [
                     'name' => $location->name,
-                    'code' => $location->code,
                     'store' => $location->store?->name,
                 ],
                 [
                     ['title' => 'Name', 'key' => 'name'],
-                    ['title' => 'Code', 'key' => 'code'],
                     ['title' => 'Store', 'key' => 'store'],
                 ],
                 ['q' => 'Search', 'store_id' => 'Store']

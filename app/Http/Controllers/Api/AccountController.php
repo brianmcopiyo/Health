@@ -208,7 +208,7 @@ class AccountController extends Controller
         $hospitalIds = $user->memberships()->pluck('hospital_id')->filter()->push($user->hospital_id)->unique()->values();
 
         $query = AuditEvent::query()
-            ->with('hospital:id,name,code')
+            ->with('hospital:id,name')
             ->where('actor_id', $user->id)
             ->latest('created_at');
 

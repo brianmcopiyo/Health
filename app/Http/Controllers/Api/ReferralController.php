@@ -28,12 +28,12 @@ class ReferralController extends Controller
         $originId = $request->user()->hospital_id;
 
         $facilities = Facility::withoutGlobalScope('hospital')
-            ->with('hospital:id,name,code,city,region,is_active')
+            ->with('hospital:id,name,city,region,is_active')
             ->where('facility_type_id', $data['facility_type_id'])
             ->hasRemainingCapacity($required)
             ->whereHas('hospital', fn ($hospital) => $hospital->where('is_active', true))
             ->when($originId, fn ($query) => $query->where('hospital_id', '!=', $originId))
-            ->get(['id', 'hospital_id', 'name', 'code', 'status', 'capacity', 'current_utilization', 'facility_type_id']);
+            ->get(['id', 'hospital_id', 'name', 'status', 'capacity', 'current_utilization', 'facility_type_id']);
 
         return $facilities
             ->groupBy('hospital_id')
@@ -43,13 +43,11 @@ class ReferralController extends Controller
                 return [
                     'id' => $hospital->id,
                     'name' => $hospital->name,
-                    'code' => $hospital->code,
                     'city' => $hospital->city,
                     'region' => $hospital->region,
                     'available_facilities' => $group->map(fn (Facility $facility) => [
                         'id' => $facility->id,
                         'name' => $facility->name,
-                        'code' => $facility->code,
                         'status' => $facility->status,
                         'capacity' => $facility->capacity,
                         'current_utilization' => $facility->current_utilization,
@@ -64,10 +62,10 @@ class ReferralController extends Controller
     {
         $query = Referral::query()
             ->with([
-                'fromHospital:id,name,code,city,region',
-                'toHospital:id,name,code,city,region',
+                'fromHospital:id,name,city,region',
+                'toHospital:id,name,city,region',
                 'requiredFacilityType:id,name,slug',
-                'destinationFacility:id,name,code,status',
+                'destinationFacility:id,name,status',
                 'creator:id,name',
                 'reviewer:id,name',
                 'patient:id,mrn,first_name,last_name,status',

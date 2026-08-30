@@ -8,7 +8,7 @@ const stores = ref([])
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
-const form = ref({ name: '', code: '', type: 'warehouse', is_default: false })
+const form = ref({ name: '', type: 'warehouse', is_default: false })
 
 const load = async () => {
   stores.value = asList(await $api('/inventory/stores'))
@@ -46,7 +46,7 @@ const { pending } = usePageQuery(load)
     <HCard flush>
       <HTable
         :loading="pending"
-        :headers="[{ title: 'Store', key: 'name' }, { title: 'Code', key: 'code' }, { title: 'Type', key: 'type' }]"
+        :headers="[{ title: 'Store', key: 'name' }, { title: 'Type', key: 'type' }]"
         :items="stores"
         empty="No stores"
       >
@@ -70,11 +70,6 @@ const { pending } = usePageQuery(load)
         <HInput
           v-model="form.name"
           label="Name"
-          required
-        />
-        <HInput
-          v-model="form.code"
-          label="Code"
           required
         />
         <HSelect

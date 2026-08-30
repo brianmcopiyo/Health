@@ -94,7 +94,7 @@ class PatientController extends Controller
             'allergies.notedBy:id,name',
             'conditions.recordedBy:id,name',
             'encounters' => fn ($encounters) => $encounters->with(['clinician:id,name', 'department:id,name'])->latest()->limit(50),
-            'bedAssignments' => fn ($assignments) => $assignments->with(['facility:id,name,code,status,parent_id', 'facility.parent:id,name,code', 'ward:id,name,code', 'nurse:id,name'])->latest()->limit(20),
+            'bedAssignments' => fn ($assignments) => $assignments->with(['facility:id,name,status,parent_id', 'facility.parent:id,name', 'ward:id,name', 'nurse:id,name'])->latest()->limit(20),
             'invoices' => fn ($invoices) => $invoices->with('items')->latest()->limit(20),
             'prescriptions' => fn ($prescriptions) => $prescriptions->with('items.medication')->latest()->limit(20),
             'orders' => fn ($orders) => $orders->latest()->limit(30),
@@ -103,7 +103,7 @@ class PatientController extends Controller
 
         $payload = $this->serialize($patient);
         $payload['timeline'] = $patient->timeline();
-        $payload['active_bed'] = $patient->activeBed()?->load(['facility:id,name,code,status,parent_id', 'facility.parent:id,name,code', 'ward:id,name,code', 'nurse:id,name']);
+        $payload['active_bed'] = $patient->activeBed()?->load(['facility:id,name,status,parent_id', 'facility.parent:id,name', 'ward:id,name', 'nurse:id,name']);
         Audit::viewed($patient, ['mrn' => $patient->mrn]);
 
         return Redactor::patient($payload, $request->user());

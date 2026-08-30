@@ -11,7 +11,7 @@ class PriceList extends BaseModel
     use BelongsToHospital;
 
     protected $fillable = [
-        'hospital_id', 'name', 'code', 'kind', 'patient_id', 'department_id',
+        'hospital_id', 'name', 'kind', 'patient_id', 'department_id',
         'tax_inclusive', 'is_default', 'is_active', 'starts_at', 'ends_at',
     ];
 

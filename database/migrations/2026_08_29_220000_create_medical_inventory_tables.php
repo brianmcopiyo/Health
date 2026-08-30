@@ -44,13 +44,11 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
             $table->string('name');
-            $table->string('code');
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
             $table->text('notes')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->unique(['hospital_id', 'code']);
         });
 
         Schema::create('inventory_stores', function (Blueprint $table) {
@@ -59,12 +57,10 @@ return new class extends Migration
             $table->foreignUuid('department_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignUuid('facility_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
-            $table->string('code');
             $table->string('type', 30)->default('warehouse');
             $table->boolean('is_default')->default(false);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->unique(['hospital_id', 'code']);
         });
 
         Schema::create('inventory_locations', function (Blueprint $table) {
@@ -72,10 +68,8 @@ return new class extends Migration
             $table->foreignUuid('hospital_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('store_id')->constrained('inventory_stores')->restrictOnDelete();
             $table->string('name');
-            $table->string('code');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            $table->unique(['store_id', 'code']);
         });
 
         Schema::create('inventory_items', function (Blueprint $table) {

@@ -411,7 +411,6 @@ class ReportBuilder
                 fn (Facility $bed) => [
                     'id' => $bed->id,
                     'name' => $bed->name,
-                    'code' => $bed->code,
                     'ward' => $bed->parent?->name,
                     'status' => $bed->status,
                     'capacity' => (int) $bed->capacity,
@@ -421,7 +420,6 @@ class ReportBuilder
                 ],
                 [
                     ['title' => 'Bed', 'key' => 'name'],
-                    ['title' => 'Code', 'key' => 'code'],
                     ['title' => 'Ward', 'key' => 'ward'],
                     ['title' => 'Status', 'key' => 'status'],
                     ['title' => 'In use', 'key' => 'utilization'],
@@ -580,12 +578,12 @@ class ReportBuilder
             ])),
             'activity' => [],
             'table' => $this->paginate(
-                (clone $query)->with(['fromHospital:id,name,code', 'toHospital:id,name,code'])->latest(),
+                (clone $query)->with(['fromHospital:id,name', 'toHospital:id,name'])->latest(),
                 fn (Referral $row) => [
                     'id' => $row->id,
                     'reference' => $row->patient_reference,
-                    'from' => $row->fromHospital?->code,
-                    'destination' => $row->toHospital?->code,
+                    'from' => $row->fromHospital?->name,
+                    'destination' => $row->toHospital?->name,
                     'status' => $row->status,
                     'when' => optional($row->created_at)->toIso8601String(),
                     'to' => ['name' => 'referrals-id', 'params' => ['id' => $row->id]],
@@ -635,13 +633,13 @@ class ReportBuilder
             ])),
             'activity' => [],
             'table' => $this->paginate(
-                (clone $query)->with(['fromHospital:id,name,code', 'toHospital:id,name,code'])->latest(),
+                (clone $query)->with(['fromHospital:id,name', 'toHospital:id,name'])->latest(),
                 fn (AssistanceRequest $row) => [
                     'id' => $row->id,
                     'title' => $row->title,
                     'type' => $row->type,
-                    'from' => $row->fromHospital?->code,
-                    'destination' => $row->toHospital?->code,
+                    'from' => $row->fromHospital?->name,
+                    'destination' => $row->toHospital?->name,
                     'status' => $row->status,
                     'quantity' => (int) $row->quantity,
                     'when' => optional($row->created_at)->toIso8601String(),
@@ -819,7 +817,7 @@ class ReportBuilder
                     : null,
             ])),
             'activity' => StaffAssignment::query()
-                ->with(['user:id,name', 'department:id,name', 'facility:id,name,code'])
+                ->with(['user:id,name', 'department:id,name', 'facility:id,name'])
                 ->when($this->criteria->departmentId, fn ($query) => $query->where('department_id', $this->criteria->departmentId))
                 ->when($this->criteria->facilityId, fn ($query) => $query->where('facility_id', $this->criteria->facilityId))
                 ->latest('starts_at')
@@ -959,7 +957,7 @@ class ReportBuilder
     private function tableOrders(Builder $query, string $title): array
     {
         return $this->paginate(
-            (clone $query)->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code'])->latest('requested_at'),
+            (clone $query)->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name'])->latest('requested_at'),
             fn (ServiceOrder $row) => [
                 'id' => $row->id,
                 'patient' => $this->query->patientName($row->patient),

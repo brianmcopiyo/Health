@@ -33,7 +33,7 @@ class FacilityController extends Controller
 
         abort_unless($allowed, 403, 'This action is unauthorized.');
 
-        $query = Facility::query()->with(['type:id,name,slug,icon', 'parent:id,name,code', 'hospital:id,name,code', 'department:id,name'])->orderBy('name');
+        $query = Facility::query()->with(['type:id,name,slug,icon', 'parent:id,name', 'hospital:id,name', 'department:id,name'])->orderBy('name');
 
         if ($typeId = $request->input('facility_type_id')) {
             $query->where('facility_type_id', $typeId);
@@ -196,12 +196,6 @@ class FacilityController extends Controller
             'parent_id' => ['nullable', TenantRules::inHospital('facilities')],
             'department_id' => ['nullable', TenantRules::inHospital('departments')],
             'name' => [$facility ? 'sometimes' : 'required', 'string', 'max:255'],
-            'code' => [
-                $facility ? 'sometimes' : 'required',
-                'string',
-                'max:50',
-                Rule::unique('facilities', 'code')->where(fn ($query) => $query->where('hospital_id', $hospitalId))->ignore($facility?->id),
-            ],
             'status' => ['sometimes', Rule::in(Facility::STATUSES)],
             'capacity' => ['sometimes', 'integer', 'min:1'],
             'current_utilization' => ['sometimes', 'integer', 'min:0'],
@@ -257,7 +251,7 @@ class FacilityController extends Controller
                 : [],
             'occupants' => collect($beds)->filter(fn (Facility $bed) => $bed->activeAssignment)->map(function (Facility $bed) {
                 $assignment = $bed->activeAssignment->toArray();
-                $assignment['facility'] = ['id' => $bed->id, 'name' => $bed->name, 'code' => $bed->code];
+                $assignment['facility'] = ['id' => $bed->id, 'name' => $bed->name];
                 $assignment['facility_id'] = $bed->id;
 
                 return $assignment;
@@ -265,7 +259,6 @@ class FacilityController extends Controller
             'assignment' => $facility->relationLoaded('activeAssignment') ? $facility->activeAssignment : null,
             'staff_assignments' => $facility->relationLoaded('staffAssignments') ? $facility->staffAssignments : [],
             'name' => $facility->name,
-            'code' => $facility->code,
             'status' => $facility->status,
             'capacity' => $facility->capacity,
             'current_utilization' => $facility->current_utilization,
@@ -281,8 +274,8 @@ class FacilityController extends Controller
         $query = BedAssignment::query()
             ->with([
                 'patient:id,mrn,first_name,last_name,status',
-                'facility:id,name,code',
-                'ward:id,name,code',
+                'facility:id,name',
+                'ward:id,name',
                 'nurse:id,name',
                 'encounter:id,type,status',
             ])

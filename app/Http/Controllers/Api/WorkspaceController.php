@@ -24,7 +24,7 @@ class WorkspaceController extends Controller
             'role' => $user->role?->slug,
             'workspace' => $user->role?->workspace,
             'my_encounters' => Encounter::query()
-                ->with(['patient:id,mrn,first_name,last_name,status', 'department:id,name', 'facility:id,name,code'])
+                ->with(['patient:id,mrn,first_name,last_name,status', 'department:id,name', 'facility:id,name'])
                 ->whereIn('status', ['waiting', 'in_progress'])
                 ->where(function ($query) use ($user) {
                     $query->where('clinician_id', $user->id)
@@ -44,12 +44,12 @@ class WorkspaceController extends Controller
                 ? Prescription::query()->with(['patient:id,mrn,first_name,last_name,status', 'items.medication'])->whereIn('status', ['pending', 'verified'])->latest()->limit(30)->get()
                 : [],
             'referrals' => $user->hasPermission('read', 'Referral')
-                ? Referral::query()->with(['patient:id,mrn,first_name,last_name,status', 'fromHospital:id,name,code', 'toHospital:id,name,code'])->where('status', 'pending')->latest()->limit(20)->get()
+                ? Referral::query()->with(['patient:id,mrn,first_name,last_name,status', 'fromHospital:id,name', 'toHospital:id,name'])->where('status', 'pending')->latest()->limit(20)->get()
                 : [],
             'invoices' => $user->hasPermission('read', 'Invoice')
                 ? Invoice::query()->with('patient:id,mrn,first_name,last_name,status')->whereIn('status', ['draft', 'issued'])->latest()->limit(20)->get()
                 : [],
-            'assignments' => StaffAssignment::query()->with(['department:id,name', 'facility:id,name,code'])->where('user_id', $user->id)->where('status', 'active')->get(),
+            'assignments' => StaffAssignment::query()->with(['department:id,name', 'facility:id,name'])->where('user_id', $user->id)->where('status', 'active')->get(),
         ];
     }
 
@@ -62,7 +62,7 @@ class WorkspaceController extends Controller
             ->pluck('facility_id');
 
         $query = BedAssignment::query()
-            ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,code,status,parent_id', 'encounter:id,type,status'])
+            ->with(['patient:id,mrn,first_name,last_name,status', 'facility:id,name,status,parent_id', 'encounter:id,type,status'])
             ->where('status', 'active');
 
         if ($wardIds->isEmpty()) {

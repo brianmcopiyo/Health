@@ -12,7 +12,7 @@ const storeId = ref(null)
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
-const form = ref({ store_id: null, name: '', code: '' })
+const form = ref({ store_id: null, name: '' })
 
 const load = async () => {
   stores.value = asList(await $api('/inventory/stores'))
@@ -23,7 +23,7 @@ const load = async () => {
 
 const openCreate = () => {
   formError.value = ''
-  form.value = { store_id: storeId.value || stores.value[0]?.id || null, name: '', code: '' }
+  form.value = { store_id: storeId.value || stores.value[0]?.id || null, name: '' }
   formOpen.value = true
 }
 
@@ -70,7 +70,7 @@ const { pending } = usePageQuery(load)
       />
       <HTable
         :loading="pending"
-        :headers="[{ title: 'Location', key: 'name' }, { title: 'Code', key: 'code' }, { title: 'Store', key: 'store.name' }]"
+        :headers="[{ title: 'Location', key: 'name' }, { title: 'Store', key: 'store.name' }]"
         :items="rows"
         empty="No locations"
       />
@@ -96,11 +96,6 @@ const { pending } = usePageQuery(load)
         <HInput
           v-model="form.name"
           label="Name"
-          required
-        />
-        <HInput
-          v-model="form.code"
-          label="Code"
           required
         />
       </HFormGrid>

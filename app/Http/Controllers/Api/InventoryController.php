@@ -206,7 +206,6 @@ class InventoryController extends Controller
         $this->authorizeInventory($request, 'create');
         $data = $request->validate([
             'name' => ['required', 'string', 'max:160'],
-            'code' => ['required', 'string', 'max:40', Rule::unique('inventory_suppliers', 'code')->where('hospital_id', $request->user()->hospital_id)],
             'phone' => ['nullable', 'string', 'max:40'],
             'email' => ['nullable', 'email', 'max:120'],
         ]);
@@ -244,7 +243,6 @@ class InventoryController extends Controller
         $this->authorizeInventory($request, 'create');
         $data = $request->validate([
             'name' => ['required', 'string', 'max:120'],
-            'code' => ['required', 'string', 'max:20'],
             'type' => ['required', Rule::in(['warehouse', 'pharmacy', 'department', 'ward'])],
             'department_id' => ['nullable', TenantRules::inHospital('departments')],
             'facility_id' => ['nullable', TenantRules::inHospital('facilities')],
@@ -280,7 +278,6 @@ class InventoryController extends Controller
         $data = $request->validate([
             'store_id' => ['required', TenantRules::inHospital('inventory_stores')],
             'name' => ['required', 'string', 'max:120'],
-            'code' => ['required', 'string', 'max:20'],
         ]);
         $data['hospital_id'] = $request->user()->hospital_id;
         $data['is_active'] = true;

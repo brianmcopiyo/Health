@@ -33,7 +33,7 @@ class RoleController extends Controller
             'permissions',
             'users:id,name,email,job_title,role_id,department_id,status,last_login_at',
             'users.department:id,name',
-            'hospital:id,name,code',
+            'hospital:id,name',
         ]);
     }
 

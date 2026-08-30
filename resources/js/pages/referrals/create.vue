@@ -206,7 +206,7 @@ const { pending } = usePageQuery(async () => {
             >
               <strong>{{ hospital.name }}</strong>
               <p class="h-muted">
-                {{ hospital.city }} · {{ hospital.code }}
+                {{ hospital.city }}
               </p>
               <div
                 v-for="facility in hospital.available_facilities"

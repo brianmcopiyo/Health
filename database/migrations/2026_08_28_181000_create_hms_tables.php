@@ -11,7 +11,6 @@ return new class extends Migration
         Schema::create('hospitals', function (Blueprint $table) {
             $table->uuid('id')->primary();
             $table->string('name');
-            $table->string('code')->unique();
             $table->string('city')->nullable();
             $table->string('region')->nullable();
             $table->string('phone')->nullable();
@@ -69,14 +68,12 @@ return new class extends Migration
             $table->foreignUuid('facility_type_id')->constrained()->restrictOnDelete();
             $table->foreignUuid('parent_id')->nullable()->constrained('facilities')->nullOnDelete();
             $table->string('name');
-            $table->string('code');
             $table->string('status')->default('available');
             $table->unsignedInteger('capacity')->default(1);
             $table->unsignedInteger('current_utilization')->default(0);
             $table->text('resource_notes')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
-            $table->unique(['hospital_id', 'code']);
         });
 
         Schema::create('assistance_requests', function (Blueprint $table) {

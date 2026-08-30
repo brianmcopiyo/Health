@@ -19,6 +19,7 @@ use App\Models\ServiceOrder;
 use App\Models\StaffAssignment;
 use App\Models\User;
 use App\Support\Access;
+use App\Support\HospitalSequence;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -478,10 +479,10 @@ class ReportQuery
             ->with('type:id,name,slug')
             ->orderBy('name')
             ->limit(200)
-            ->get(['id', 'name', 'code', 'facility_type_id', 'department_id'])
+            ->get(['id', 'name', 'facility_type_id', 'department_id'])
             ->map(fn (Facility $row) => [
                 'value' => $row->id,
-                'title' => trim($row->name.($row->code ? ' · '.$row->code : '')),
+                'title' => $row->name,
             ])
             ->all();
     }
@@ -510,7 +511,7 @@ class ReportQuery
         return [
             'id' => $hospital?->id,
             'name' => $hospital?->name,
-            'code' => $hospital?->code,
+            'code' => $hospital ? HospitalSequence::prefix($hospital) : 'HMS',
             'city' => $hospital?->city,
             'region' => $hospital?->region,
             'address' => $hospital?->address,
