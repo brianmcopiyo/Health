@@ -61,6 +61,7 @@ const login = async () => {
       <p>One design system. Distinct workspaces for reception, wards, diagnostics, and administration.</p>
     </section>
     <section class="h-auth-panel">
+      <HThemeToggle class="h-theme-float" />
       <form
         class="h-auth-card"
         @submit.prevent="login"

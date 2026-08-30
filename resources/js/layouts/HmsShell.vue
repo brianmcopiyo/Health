@@ -342,6 +342,7 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="hms-header-tools">
+            <HThemeToggle />
             <div class="hms-notice">
               <button
                 ref="noticeTrigger"

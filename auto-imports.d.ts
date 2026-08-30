@@ -134,6 +134,7 @@ declare global {
   const useRoute: typeof import('vue-router/auto')['useRoute']
   const useRouter: typeof import('vue-router/auto')['useRouter']
   const useSlots: typeof import('vue')['useSlots']
+  const useTheme: typeof import('./resources/js/composables/useTheme.js')['useTheme']
   const useToast: typeof import('./resources/js/composables/useToast.js')['useToast']
   const userFormFrom: typeof import('./resources/js/utils/access.js')['userFormFrom']
   const userListQuery: typeof import('./resources/js/utils/access.js')['userListQuery']
@@ -288,6 +289,7 @@ declare module 'vue' {
     readonly useRoute: UnwrapRef<typeof import('vue-router/auto')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useTheme: UnwrapRef<typeof import('./resources/js/composables/useTheme.js')['useTheme']>
     readonly useToast: UnwrapRef<typeof import('./resources/js/composables/useToast.js')['useToast']>
     readonly userFormFrom: UnwrapRef<typeof import('./resources/js/utils/access.js')['userFormFrom']>
     readonly userListQuery: UnwrapRef<typeof import('./resources/js/utils/access.js')['userListQuery']>
@@ -434,6 +436,7 @@ declare module '@vue/runtime-core' {
     readonly useRoute: UnwrapRef<typeof import('vue-router/auto')['useRoute']>
     readonly useRouter: UnwrapRef<typeof import('vue-router/auto')['useRouter']>
     readonly useSlots: UnwrapRef<typeof import('vue')['useSlots']>
+    readonly useTheme: UnwrapRef<typeof import('./resources/js/composables/useTheme.js')['useTheme']>
     readonly useToast: UnwrapRef<typeof import('./resources/js/composables/useToast.js')['useToast']>
     readonly userFormFrom: UnwrapRef<typeof import('./resources/js/utils/access.js')['userFormFrom']>
     readonly userListQuery: UnwrapRef<typeof import('./resources/js/utils/access.js')['userListQuery']>

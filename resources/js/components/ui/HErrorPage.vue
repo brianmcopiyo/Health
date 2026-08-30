@@ -48,6 +48,7 @@ const goBack = () => {
       <p>Session, access, and service messages use the same Caregrid language as the rest of the system.</p>
     </section>
     <section class="h-error-panel">
+      <HThemeToggle class="h-theme-float" />
       <div class="h-error-card">
         <div
           class="h-error-mark"

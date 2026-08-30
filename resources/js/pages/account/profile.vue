@@ -113,6 +113,12 @@ const removePhoto = async () => {
 }
 
 const { pending } = usePageQuery(load)
+const { mode: themeMode, setTheme } = useTheme()
+const themeOptions = [
+  { title: 'Light', value: 'light' },
+  { title: 'Dark', value: 'dark' },
+  { title: 'System', value: 'system' },
+]
 </script>
 
 <template>
@@ -326,6 +332,24 @@ const { pending } = usePageQuery(load)
           </HButton>
         </div>
       </HForm>
+    </HCard>
+
+    <HCard title="Appearance">
+      <div class="h-account-rows">
+        <div class="h-account-row">
+          <div>
+            <strong>Theme</strong>
+            <p class="h-muted">
+              Light, dark, or match this device
+            </p>
+          </div>
+          <HSegmented
+            :model-value="themeMode"
+            :options="themeOptions"
+            @update:model-value="setTheme"
+          />
+        </div>
+      </div>
     </HCard>
   </div>
 </template>

@@ -65,6 +65,7 @@ declare module 'vue' {
     HSwitch: typeof import('./resources/js/components/ui/HSwitch.vue')['default']
     HTable: typeof import('./resources/js/components/ui/HTable.vue')['default']
     HTextarea: typeof import('./resources/js/components/ui/HTextarea.vue')['default']
+    HThemeToggle: typeof import('./resources/js/components/hms/HThemeToggle.vue')['default']
     HTimePicker: typeof import('./resources/js/components/ui/HTimePicker.vue')['default']
     HToastHost: typeof import('./resources/js/components/ui/HToastHost.vue')['default']
     HToolbar: typeof import('./resources/js/components/ui/HToolbar.vue')['default']
