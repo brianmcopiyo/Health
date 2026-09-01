@@ -76,7 +76,7 @@ const submit = async () => {
   >
     <div
       v-if="done"
-      class="h-auth-card"
+      class="h-auth-copy"
     >
       <p class="hms-kicker">
         Password updated
@@ -94,7 +94,7 @@ const submit = async () => {
     </div>
     <form
       v-else-if="token"
-      class="h-auth-card"
+      class="h-auth-copy"
       @submit.prevent="submit"
     >
       <p class="hms-kicker">
@@ -162,7 +162,7 @@ const submit = async () => {
     </form>
     <div
       v-else
-      class="h-auth-card"
+      class="h-auth-copy"
     >
       <p class="hms-kicker">
         Link not valid

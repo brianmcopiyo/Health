@@ -2556,8 +2556,15 @@ a.h-card.h-stat:hover {
 .h-error {
   min-height: 100dvh;
   display: grid;
-  grid-template-columns: minmax(0, 1.12fr) minmax(22rem, 0.88fr);
   background: var(--paper);
+}
+
+.h-auth {
+  grid-template-columns: minmax(20rem, 0.96fr) minmax(26rem, 1.04fr);
+}
+
+.h-error {
+  grid-template-columns: minmax(18rem, 0.76fr) minmax(28rem, 1.24fr);
 }
 
 .h-auth-art,
@@ -2566,23 +2573,22 @@ a.h-card.h-stat:hover {
   overflow: hidden;
   isolation: isolate;
   color: #f6f3ec;
-  padding: 36px 44px 40px;
+  padding: 0;
   display: grid;
-  grid-template-rows: minmax(140px, 1fr) auto;
-  gap: 24px;
+  min-height: 100dvh;
 }
 
 .h-auth-art {
   background:
-    radial-gradient(circle at 18% 14%, rgba(21, 145, 140, 0.42), transparent 34%),
-    radial-gradient(circle at 86% 86%, rgba(201, 132, 42, 0.26), transparent 40%),
+    radial-gradient(ellipse 80% 50% at 18% 12%, rgba(21, 145, 140, 0.46), transparent 52%),
+    radial-gradient(ellipse 58% 42% at 88% 78%, rgba(201, 132, 42, 0.24), transparent 58%),
     linear-gradient(158deg, #102a32 0%, #0b4f4d 58%, #0e3f3d 100%);
 }
 
 .h-error-art {
   background:
-    radial-gradient(circle at 16% 16%, rgba(21, 145, 140, 0.3), transparent 34%),
-    radial-gradient(circle at 88% 88%, rgba(201, 132, 42, 0.2), transparent 42%),
+    radial-gradient(ellipse 70% 46% at 16% 12%, rgba(21, 145, 140, 0.32), transparent 54%),
+    radial-gradient(ellipse 50% 36% at 88% 82%, rgba(201, 132, 42, 0.18), transparent 58%),
     linear-gradient(158deg, #102a32 0%, #0b4f4d 62%, #12343c 100%);
 }
 
@@ -2617,72 +2623,99 @@ a.h-card.h-stat:hover {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(246, 243, 236, 0.055) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(246, 243, 236, 0.055) 1px, transparent 1px);
-  background-size: 44px 48px;
-  mask-image: radial-gradient(ellipse at 28% 24%, #000 18%, transparent 78%);
+    linear-gradient(rgba(246, 243, 236, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(246, 243, 236, 0.05) 1px, transparent 1px);
+  background-size: 36px 36px;
+  mask-image: linear-gradient(180deg, #000 0%, #000 58%, transparent 100%);
   pointer-events: none;
   z-index: 0;
 }
 
 .h-auth-art::after,
 .h-error-art::after {
-  content: "";
+  content: none;
+}
+
+.h-scene-field {
   position: absolute;
-  width: 280px;
-  height: 280px;
-  border: 1px solid rgba(246, 243, 236, 0.12);
-  border-radius: 50%;
-  top: -72px;
-  right: -64px;
-  pointer-events: none;
+  inset: 0;
   z-index: 0;
 }
 
-.h-auth[data-scene="forgot"] .h-auth-art::after,
-.h-error[data-scene="403"] .h-error-art::after {
-  width: 180px;
-  height: 180px;
-  top: auto;
-  bottom: 18%;
-  right: 12%;
-  border-radius: 28px;
-  transform: rotate(18deg);
+.h-scene-plane {
+  position: absolute;
+  pointer-events: none;
+  border: 1px solid rgba(246, 243, 236, 0.1);
 }
 
-.h-auth[data-scene="reset"] .h-auth-art::after,
-.h-auth[data-scene="verify"] .h-auth-art::after {
-  width: 220px;
-  height: 220px;
-  top: 12%;
-  right: -40px;
+.h-scene-plane.is-a {
+  width: 118%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  top: -32%;
+  left: -42%;
+  background: radial-gradient(circle, rgba(21, 145, 140, 0.26), transparent 68%);
 }
 
-.h-scene-figure,
-.h-scene-copy {
-  position: relative;
-  z-index: 1;
+.h-scene-plane.is-b {
+  width: 64%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  right: -22%;
+  top: 6%;
+  background: radial-gradient(circle, rgba(201, 132, 42, 0.16), transparent 70%);
 }
 
-.h-scene-figure {
-  display: grid;
-  place-items: center;
-  min-height: 0;
+.h-scene-plane.is-c {
+  width: 72%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  left: 18%;
+  bottom: -18%;
+  border: 1px solid rgba(246, 243, 236, 0.08);
+  background: radial-gradient(circle, rgba(246, 243, 236, 0.04), transparent 72%);
 }
 
 .h-scene-svg {
-  width: min(100%, 420px);
-  height: auto;
-  max-height: 280px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-height: none;
   color: #f6f3ec;
+}
+
+.h-scene-code {
+  position: absolute;
+  left: 7%;
+  top: 8%;
+  font-family: var(--display);
+  font-size: clamp(6rem, 14vw, 11rem);
+  font-weight: 560;
+  letter-spacing: -0.08em;
+  line-height: 0.78;
+  color: rgba(246, 243, 236, 0.08);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+.h-scene-copy {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: clamp(28px, 4.5vh, 44px) clamp(24px, 4vw, 44px) clamp(28px, 4.5vh, 48px);
+  background: linear-gradient(180deg, transparent 0%, rgba(16, 42, 50, 0.42) 26%, rgba(16, 42, 50, 0.92) 100%);
 }
 
 .h-scene-copy h2 {
   font-family: var(--display);
-  font-size: clamp(1.7rem, 3.4vw, 2.7rem);
-  line-height: 1.08;
-  margin: 10px 0 12px;
-  max-width: 18ch;
+  font-size: clamp(1.55rem, 2.6vw, 2.35rem);
+  line-height: 1.12;
+  margin: 8px 0 10px;
+  max-width: 16ch;
 }
 
 .h-auth-art .hms-kicker,
@@ -2692,52 +2725,43 @@ a.h-card.h-stat:hover {
 
 .h-scene-copy > p {
   margin: 0;
-  max-width: 32rem;
-  color: rgba(246, 243, 236, 0.82);
+  max-width: 34rem;
+  color: rgba(246, 243, 236, 0.78);
+  font-size: 0.95rem;
 }
 
 .h-scene-points {
   list-style: none;
-  margin: 20px 0 0;
-  padding: 0;
+  margin: 16px 0 0;
+  padding: 12px 0 0;
+  border-top: 1px solid rgba(246, 243, 236, 0.12);
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .h-scene-points li {
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  gap: 10px;
-  align-items: start;
-  color: rgba(246, 243, 236, 0.84);
-  font-size: 0.9rem;
+  color: rgba(246, 243, 236, 0.72);
+  font-size: 0.84rem;
+  line-height: 1.4;
 }
 
 .h-scene-points strong {
-  display: block;
+  display: inline;
+  margin-right: 6px;
   color: #f6f3ec;
-  font-size: 0.92rem;
-}
-
-.h-scene-point-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: rgba(246, 243, 236, 0.1);
-  color: #e8d6b0;
+  font-size: 0.84rem;
 }
 
 .h-auth-panel,
 .h-error-panel {
   position: relative;
-  display: grid;
-  place-items: center;
-  padding: 48px 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(40px, 8vh, 96px) clamp(28px, 6vw, 88px) clamp(48px, 9vh, 104px);
   background:
-    radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--teal) 14%, transparent), transparent 26%),
-    radial-gradient(circle at 6% 92%, color-mix(in srgb, var(--gold) 12%, transparent), transparent 30%),
+    radial-gradient(circle at 92% 0%, color-mix(in srgb, var(--teal) 11%, transparent), transparent 28%),
+    radial-gradient(circle at 6% 100%, color-mix(in srgb, var(--gold) 8%, transparent), transparent 32%),
     var(--paper);
 }
 
@@ -2746,55 +2770,72 @@ a.h-card.h-stat:hover {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: radial-gradient(color-mix(in srgb, var(--line) 80%, var(--teal)) 0.8px, transparent 0.85px);
-  background-size: 18px 18px;
-  opacity: 0.35;
+  background-image: radial-gradient(color-mix(in srgb, var(--line) 70%, var(--teal)) 0.7px, transparent 0.85px);
+  background-size: 22px 22px;
+  opacity: 0.2;
+  mask-image: radial-gradient(ellipse at 100% 0%, #000 0%, transparent 64%);
   pointer-events: none;
 }
 
 .h-stage-shell {
   position: relative;
   z-index: 1;
-  width: min(100%, 28.5rem);
+  width: min(100%, 34rem);
 }
 
-.h-auth-card,
-.h-error-card {
-  width: min(100%, 28.5rem);
+.h-auth-copy,
+.h-error-copy {
+  width: 100%;
   display: grid;
-  gap: var(--space-4);
-  padding: 28px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  gap: 20px;
+  justify-items: start;
 }
 
-.h-error-card { justify-items: start; }
+.h-error-copy { gap: 18px; }
 
-.h-auth-card h1,
-.h-error-card h1 {
+.h-auth-copy h1,
+.h-error-copy h1 {
   margin: 0;
   font-family: var(--display);
-  font-size: 2.05rem;
   font-weight: 560;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
+  letter-spacing: -0.035em;
+  line-height: 1.12;
+  color: var(--ink);
+}
+
+.h-auth-copy h1 {
+  font-size: clamp(1.9rem, 2.8vw, 2.5rem);
+}
+
+.h-error-copy h1 {
+  font-size: clamp(2.15rem, 3.8vw, 3.2rem);
+  max-width: 16ch;
 }
 
 .h-auth-lead,
-.h-error-card > p,
+.h-error-copy > p:not(.hms-kicker):not(.h-error-hint),
 .h-error-hint {
   margin: 0;
   color: var(--ink-soft);
+  max-width: 38rem;
+}
+
+.h-error-copy > p:not(.hms-kicker):not(.h-error-hint) {
+  font-size: 1.05rem;
+  line-height: 1.55;
 }
 
 .h-error-hint {
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--surface-2);
-  border: 1px solid var(--line);
-  font-size: 0.92rem;
+  padding: 2px 0 2px 16px;
+  border-left: 2px solid var(--teal);
+  font-size: 0.95rem;
+  max-width: 36rem;
+}
+
+.h-auth-copy .h-stack,
+.h-auth-copy .h-btn.is-block,
+.h-auth-copy .h-alert {
+  width: 100%;
 }
 
 .h-auth-links {
@@ -2840,30 +2881,12 @@ a.h-card.h-stat:hover {
 }
 .blank-state p { margin: 0; color: var(--ink-soft); }
 
-.h-error-mark {
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  display: grid;
-  place-items: center;
-  background: var(--teal-mist);
-  color: var(--teal-deep);
-}
-
-.h-error-mark.is-access { background: var(--warn-mist); color: var(--warn); }
-.h-error-mark.is-session { background: var(--info-mist); color: var(--info); }
-.h-error-mark.is-limit { background: var(--warn-mist); color: var(--warn); }
-.h-error-mark.is-fault { background: var(--danger-mist); color: var(--danger); }
-.h-error-mark.is-wait { background: var(--info-mist); color: var(--info); }
-.h-error-mark.is-invalid { background: var(--danger-mist); color: var(--danger); }
-.h-error-mark.is-missing { background: var(--teal-mist); color: var(--teal-deep); }
-
 .h-error-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 10px;
+  margin-top: 6px;
 }
 
 html[data-theme="dark"] .h-auth-art {
@@ -3362,6 +3385,10 @@ html[data-theme="dark"] .h-error-art[data-tone="fault"] {
 }
 
 @media (max-width: 1100px) {
+  .h-scene-points { display: none; }
+  .h-scene-copy h2 { font-size: 1.45rem; }
+  .h-auth-panel,
+  .h-error-panel { padding: 48px 36px 64px; }
   .hms-shell,
   .hms-shell.is-collapsed { grid-template-columns: minmax(0, 1fr); }
   .hms-sidebar {
@@ -3428,19 +3455,14 @@ html[data-theme="dark"] .h-error-art[data-tone="fault"] {
   .h-auth,
   .h-error { grid-template-columns: 1fr; }
   .h-auth-art,
-  .h-error-art {
-    min-height: 240px;
-    padding: 24px 22px 22px;
-    grid-template-rows: 108px auto;
-    gap: 12px;
-  }
-  .h-scene-copy h2 { font-size: 1.45rem; max-width: none; }
-  .h-scene-svg { max-height: 120px; }
-  .h-scene-points { display: none; }
+  .h-error-art { display: none; }
   .h-auth-panel,
-  .h-error-panel { padding: 28px 16px 36px; }
-  .h-auth-card,
-  .h-error-card { padding: 22px 18px; }
+  .h-error-panel {
+    min-height: 100dvh;
+    justify-content: flex-start;
+    padding: 64px 20px 40px;
+  }
+  .h-error-copy h1 { max-width: none; font-size: 2rem; }
   .hms-content { padding: 16px 16px 28px; }
   :root { --page-pad-x: 16px; }
   .hms-page-title { align-items: flex-start; flex-direction: column; }

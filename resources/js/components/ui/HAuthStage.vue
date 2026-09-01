@@ -23,8 +23,18 @@ defineProps({
       :data-scene="scene"
       :data-tone="tone || undefined"
     >
-      <div class="h-scene-figure">
+      <div
+        class="h-scene-field"
+        aria-hidden="true"
+      >
+        <span class="h-scene-plane is-a" />
+        <span class="h-scene-plane is-b" />
+        <span class="h-scene-plane is-c" />
         <HSceneArt :scene="scene" />
+        <span
+          v-if="kind === 'error'"
+          class="h-scene-code"
+        >{{ scene }}</span>
       </div>
       <div class="h-scene-copy">
         <p class="hms-kicker">
@@ -42,16 +52,8 @@ defineProps({
             v-for="point in points"
             :key="point.title"
           >
-            <span class="h-scene-point-icon">
-              <HIcon
-                :name="point.icon"
-                :size="16"
-              />
-            </span>
-            <span>
-              <strong>{{ point.title }}</strong>
-              {{ point.body }}
-            </span>
+            <strong>{{ point.title }}</strong>
+            {{ point.body }}
           </li>
         </ul>
       </div>

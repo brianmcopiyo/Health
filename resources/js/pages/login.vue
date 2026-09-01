@@ -69,7 +69,7 @@ const login = async () => {
     ]"
   >
     <form
-      class="h-auth-card"
+      class="h-auth-copy"
       @submit.prevent="login"
     >
       <p class="hms-kicker">

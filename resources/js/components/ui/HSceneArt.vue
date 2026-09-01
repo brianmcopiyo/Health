@@ -6,22 +6,22 @@ const props = defineProps({
 const kind = computed(() => {
   const scene = String(props.scene)
   const map = {
-    login: 'login',
-    forgot: 'forgot',
-    reset: 'reset',
-    verify: 'verify',
-    sent: 'sent',
+    login: 'identity',
+    forgot: 'restore',
+    reset: 'restore',
+    verify: 'restore',
+    sent: 'restore',
     401: 'session',
     403: 'access',
     404: 'missing',
     408: 'wait',
-    410: 'gone',
-    419: 'expired',
+    410: 'missing',
+    419: 'session',
     422: 'invalid',
-    429: 'limit',
+    429: 'wait',
     500: 'fault',
-    502: 'gateway',
-    503: 'offline',
+    502: 'fault',
+    503: 'fault',
     504: 'wait',
   }
   return map[scene] || 'missing'
@@ -31,602 +31,348 @@ const kind = computed(() => {
 <template>
   <svg
     class="h-scene-svg"
-    viewBox="0 0 400 240"
+    viewBox="0 0 520 780"
+    preserveAspectRatio="xMidYMid slice"
     fill="none"
     aria-hidden="true"
   >
+    <defs>
+      <linearGradient
+        id="h-wash"
+        x1="0.2"
+        y1="0"
+        x2="0.9"
+        y2="1"
+      >
+        <stop
+          offset="0%"
+          stop-color="currentColor"
+          stop-opacity="0.14"
+        />
+        <stop
+          offset="100%"
+          stop-color="currentColor"
+          stop-opacity="0.02"
+        />
+      </linearGradient>
+      <pattern
+        id="h-ward"
+        width="28"
+        height="22"
+        patternUnits="userSpaceOnUse"
+      >
+        <rect
+          x="3"
+          y="4"
+          width="20"
+          height="14"
+          rx="2"
+          stroke="currentColor"
+          stroke-width="0.8"
+          opacity="0.32"
+        />
+      </pattern>
+    </defs>
     <g
-      v-if="kind === 'login'"
       stroke="currentColor"
       stroke-linecap="round"
       stroke-linejoin="round"
     >
       <circle
-        cx="200"
-        cy="118"
-        r="102"
+        cx="260"
+        cy="292"
+        r="310"
         opacity="0.1"
         stroke-width="1"
       />
       <circle
-        cx="200"
-        cy="118"
-        r="74"
-        opacity="0.16"
-        stroke-width="1"
-      />
-      <circle
-        cx="200"
-        cy="118"
-        r="46"
-        opacity="0.28"
-        stroke-width="1.4"
-      />
-      <rect
-        x="148"
-        y="78"
-        width="104"
-        height="96"
-        rx="8"
-        fill="currentColor"
-        opacity="0.12"
-        stroke="none"
-      />
-      <path
-        d="M164 174V94h72v80"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M190 78V64h20v14"
-        opacity="0.8"
-        stroke-width="1.6"
-      />
-      <path
-        d="M194 68h12M200 62v12"
-        opacity="0.95"
-        stroke-width="2.2"
-      />
-      <rect
-        x="176"
-        y="108"
-        width="16"
-        height="14"
-        rx="2"
-        opacity="0.55"
-        stroke-width="1.2"
-      />
-      <rect
-        x="208"
-        y="108"
-        width="16"
-        height="14"
-        rx="2"
-        opacity="0.55"
-        stroke-width="1.2"
-      />
-      <rect
-        x="176"
-        y="132"
-        width="16"
-        height="14"
-        rx="2"
-        opacity="0.35"
-        stroke-width="1.2"
-      />
-      <rect
-        x="208"
-        y="132"
-        width="16"
-        height="14"
-        rx="2"
-        opacity="0.35"
-        stroke-width="1.2"
-      />
-      <path
-        d="M188 174v-22h24v22"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <polyline
-        points="48,208 96,208 118,176 138,218 164,158 188,208 352,208"
-        opacity="0.55"
-        stroke-width="2"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'forgot'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle
-        cx="132"
-        cy="118"
-        r="70"
-        opacity="0.12"
-        stroke-width="1"
-      />
-      <rect
-        x="86"
-        y="78"
-        width="92"
-        height="64"
-        rx="8"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M86 86l46 32 46-32"
-        opacity="0.8"
-        stroke-width="1.6"
-      />
-      <rect
-        x="214"
-        y="96"
-        width="72"
-        height="58"
-        rx="10"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M232 96V82a18 18 0 0 1 36 0v14"
-        opacity="0.85"
-        stroke-width="1.8"
-      />
-      <circle
-        cx="250"
-        cy="124"
-        r="6"
-        opacity="0.8"
-        stroke-width="1.6"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'reset'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle
-        cx="200"
-        cy="120"
-        r="88"
-        opacity="0.12"
-        stroke-width="1"
-      />
-      <circle
-        cx="148"
-        cy="118"
-        r="28"
-        opacity="0.8"
-        stroke-width="1.8"
-      />
-      <path
-        d="M176 118h90l18 18M248 118l16 16M266 136l14-8"
-        opacity="0.85"
-        stroke-width="1.8"
-      />
-      <rect
-        x="168"
-        y="158"
-        width="86"
-        height="28"
-        rx="8"
-        opacity="0.35"
-        stroke-width="1.2"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'verify' || kind === 'session'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle
-        cx="168"
-        cy="118"
-        r="54"
-        opacity="0.18"
-        stroke-width="1.4"
-      />
-      <circle
-        cx="168"
-        cy="118"
-        r="36"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M168 96v24l16 10"
-        opacity="0.9"
-        stroke-width="1.8"
-      />
-      <rect
-        x="236"
-        y="96"
-        width="70"
-        height="56"
-        rx="10"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M254 96V84a17 17 0 0 1 34 0v12"
-        opacity="0.8"
-        stroke-width="1.8"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'sent'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle
-        cx="200"
-        cy="118"
-        r="86"
-        opacity="0.12"
-        stroke-width="1"
-      />
-      <rect
-        x="118"
-        y="78"
-        width="164"
-        height="84"
-        rx="10"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M118 92l82 48 82-48"
-        opacity="0.8"
-        stroke-width="1.6"
-      />
-      <circle
-        cx="278"
-        cy="78"
-        r="18"
-        fill="currentColor"
-        opacity="0.18"
-        stroke="none"
-      />
-      <path
-        d="M270 78l6 6 12-12"
-        opacity="0.95"
-        stroke-width="2"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'expired'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle
-        cx="200"
-        cy="118"
-        r="58"
-        opacity="0.7"
-        stroke-width="1.8"
-      />
-      <path
-        d="M200 86v36l22 12"
-        opacity="0.9"
-        stroke-width="1.8"
-      />
-      <path
-        d="M154 74l92 88M246 74L154 162"
-        opacity="0.45"
-        stroke-width="1.6"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'access'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path
-        d="M200 44l86 28v52c0 48-38 74-86 90-48-16-86-42-86-90V72z"
-        opacity="0.7"
-        stroke-width="1.8"
-      />
-      <path
-        d="M168 118h64M176 138h48"
-        opacity="0.55"
-        stroke-width="1.6"
-      />
-      <path
-        d="M188 102h24v28h-24z"
-        opacity="0.8"
-        stroke-width="1.6"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'missing'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect
-        x="72"
-        y="58"
-        width="256"
-        height="140"
-        rx="12"
+        cx="260"
+        cy="292"
+        r="248"
         opacity="0.14"
-        stroke-width="1"
-      />
-      <path
-        d="M96 174V86h56v88"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M168 174V102h52v72"
-        opacity="0.35"
-        stroke-dasharray="6 6"
-        stroke-width="1.6"
-      />
-      <path
-        d="M236 174V78h68v96"
-        opacity="0.7"
-        stroke-width="1.6"
+        stroke-width="1.15"
       />
       <circle
-        cx="194"
-        cy="128"
-        r="16"
-        opacity="0.8"
-        stroke-width="1.6"
-      />
-      <path
-        d="M206 140l14 16"
-        opacity="0.8"
-        stroke-width="1.8"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'gone'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect
-        x="128"
-        y="86"
-        width="144"
-        height="88"
-        rx="8"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M128 108h144M160 86V70h80v16"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M168 136h64M168 152h40"
-        opacity="0.45"
-        stroke-width="1.6"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'wait'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle
-        cx="200"
-        cy="120"
-        r="70"
-        opacity="0.16"
-        stroke-width="1"
-      />
-      <circle
-        cx="200"
-        cy="120"
-        r="46"
-        opacity="0.75"
-        stroke-width="1.8"
-      />
-      <path
-        d="M200 88v36l20 12"
-        opacity="0.9"
-        stroke-width="1.8"
-      />
-      <path
-        d="M200 48v16M200 176v16M128 120H112M288 120h-16"
-        opacity="0.35"
-        stroke-width="1.4"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'invalid'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect
-        x="118"
-        y="58"
-        width="164"
-        height="132"
-        rx="10"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M142 86h116M142 110h88M142 134h72"
-        opacity="0.45"
-        stroke-width="1.6"
-      />
-      <path
-        d="M236 148l28 28M264 148l-28 28"
-        opacity="0.85"
-        stroke-width="1.8"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'limit'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect
-        x="96"
-        y="70"
-        width="44"
-        height="108"
-        rx="8"
-        opacity="0.35"
-        stroke-width="1.4"
-      />
-      <rect
-        x="156"
-        y="94"
-        width="44"
-        height="84"
-        rx="8"
-        opacity="0.55"
-        stroke-width="1.4"
-      />
-      <rect
-        x="216"
-        y="54"
-        width="44"
-        height="124"
-        rx="8"
-        opacity="0.28"
-        stroke-dasharray="5 6"
-        stroke-width="1.4"
-      />
-      <rect
-        x="276"
-        y="118"
-        width="28"
-        height="60"
-        rx="6"
-        opacity="0.2"
+        cx="260"
+        cy="292"
+        r="186"
+        opacity="0.18"
         stroke-width="1.2"
       />
-      <path
-        d="M228 108v28M248 108v28"
-        opacity="0.9"
-        stroke-width="2.2"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'fault'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect
-        x="112"
-        y="58"
-        width="176"
-        height="48"
-        rx="8"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <rect
-        x="112"
-        y="118"
-        width="176"
-        height="48"
-        rx="8"
-        opacity="0.7"
-        stroke-width="1.6"
+      <circle
+        cx="260"
+        cy="292"
+        r="124"
+        opacity="0.28"
+        stroke-width="1.3"
       />
       <circle
-        cx="136"
-        cy="82"
-        r="4"
-        opacity="0.8"
-        stroke-width="1.4"
-      />
-      <circle
-        cx="136"
-        cy="142"
-        r="4"
-        opacity="0.8"
-        stroke-width="1.4"
-      />
-      <polyline
-        points="168,142 188,142 198,158 214,126 228,142 272,142"
-        opacity="0.7"
-        stroke-width="1.8"
-      />
-    </g>
-    <g
-      v-else-if="kind === 'gateway'"
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect
-        x="72"
-        y="86"
-        width="88"
-        height="68"
-        rx="10"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <rect
-        x="240"
-        y="86"
-        width="88"
-        height="68"
-        rx="10"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M160 120h28M212 120h28"
-        opacity="0.45"
-        stroke-dasharray="5 7"
-        stroke-width="1.8"
-      />
-      <path
-        d="M188 108l12 12-12 12"
-        opacity="0.35"
-        stroke-width="1.6"
-      />
-    </g>
-    <g
-      v-else
-      stroke="currentColor"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path
-        d="M132 174V86l68-28 68 28v88"
-        opacity="0.7"
-        stroke-width="1.6"
-      />
-      <path
-        d="M164 174v-40h72v40"
-        opacity="0.55"
-        stroke-width="1.6"
-      />
-      <path
-        d="M188 92h24M200 84v24"
+        cx="260"
+        cy="292"
+        r="62"
+        fill="url(#h-wash)"
         opacity="0.9"
-        stroke-width="2"
-      />
-      <path
-        d="M96 188h208"
-        opacity="0.25"
         stroke-width="1.4"
       />
+      <path
+        d="M-10 292h540"
+        opacity="0.1"
+        stroke-width="1"
+      />
+      <path
+        d="M260 -20v820"
+        opacity="0.08"
+        stroke-width="1"
+      />
+      <g v-if="kind === 'identity' || kind === 'restore'">
+        <rect
+          x="86"
+          y="176"
+          width="348"
+          height="232"
+          rx="8"
+          fill="url(#h-wash)"
+          stroke-width="1.4"
+        />
+        <rect
+          x="108"
+          y="200"
+          width="304"
+          height="184"
+          fill="url(#h-ward)"
+          stroke="none"
+        />
+        <path
+          d="M86 240h348"
+          opacity="0.22"
+          stroke-width="1.1"
+        />
+        <rect
+          x="236"
+          y="280"
+          width="48"
+          height="48"
+          rx="6"
+          fill="currentColor"
+          opacity="0.12"
+          stroke-width="1.5"
+        />
+        <path
+          d="M260 292v24M248 304h24"
+          opacity="0.8"
+          stroke-width="1.6"
+        />
+        <path
+          d="M40 468c48-36 102-36 150 0s110 40 168 4 102-28 142 18"
+          opacity="0.55"
+          stroke-width="2"
+        />
+        <path
+          d="M40 492c56-22 108-8 154 14 58 28 112 8 166-10 46-16 86-8 120 16"
+          opacity="0.2"
+          stroke-width="1.3"
+        />
+        <circle
+          cx="96"
+          cy="468"
+          r="6"
+          opacity="0.5"
+          stroke-width="1.2"
+        />
+        <circle
+          cx="246"
+          cy="468"
+          r="6"
+          opacity="0.7"
+          stroke-width="1.2"
+        />
+        <circle
+          cx="414"
+          cy="472"
+          r="6"
+          opacity="0.5"
+          stroke-width="1.2"
+        />
+        <rect
+          x="72"
+          y="528"
+          width="92"
+          height="58"
+          rx="6"
+          opacity="0.4"
+          stroke-width="1.2"
+        />
+        <rect
+          x="214"
+          y="518"
+          width="92"
+          height="68"
+          rx="6"
+          opacity="0.55"
+          stroke-width="1.3"
+        />
+        <rect
+          x="356"
+          y="534"
+          width="92"
+          height="52"
+          rx="6"
+          opacity="0.35"
+          stroke-width="1.2"
+        />
+        <path
+          d="M118 528v-18h-20M260 518v-22h-22M402 534v-16h18"
+          opacity="0.28"
+          stroke-width="1.1"
+        />
+        <g
+          v-if="kind === 'restore'"
+          opacity="0.85"
+        >
+          <circle
+            cx="412"
+            cy="168"
+            r="34"
+            stroke-width="1.6"
+          />
+          <path
+            d="M412 150v22l14 8"
+            stroke-width="1.6"
+          />
+        </g>
+      </g>
+      <g v-else>
+        <rect
+          x="86"
+          y="176"
+          width="348"
+          height="232"
+          rx="8"
+          stroke-width="1.3"
+          opacity="0.55"
+        />
+        <rect
+          x="108"
+          y="200"
+          width="118"
+          height="184"
+          fill="url(#h-ward)"
+          stroke="none"
+          opacity="0.7"
+        />
+        <rect
+          x="246"
+          y="200"
+          width="146"
+          height="184"
+          stroke-dasharray="7 8"
+          opacity="0.4"
+          stroke-width="1.3"
+        />
+        <circle
+          cx="319"
+          cy="292"
+          r="26"
+          opacity="0.7"
+          stroke-width="1.5"
+        />
+        <path
+          d="M40 468c48-20 96-8 140 18"
+          opacity="0.35"
+          stroke-width="1.8"
+        />
+        <path
+          d="M250 486c54 8 110-24 230-8"
+          opacity="0.18"
+          stroke-dasharray="8 10"
+          stroke-width="1.6"
+        />
+        <rect
+          x="72"
+          y="528"
+          width="92"
+          height="58"
+          rx="6"
+          opacity="0.4"
+          stroke-width="1.2"
+        />
+        <rect
+          x="214"
+          y="518"
+          width="92"
+          height="68"
+          rx="6"
+          stroke-dasharray="6 7"
+          opacity="0.4"
+          stroke-width="1.2"
+        />
+        <rect
+          x="356"
+          y="534"
+          width="92"
+          height="52"
+          rx="6"
+          opacity="0.3"
+          stroke-width="1.2"
+        />
+        <g v-if="kind === 'session'">
+          <circle
+            cx="260"
+            cy="168"
+            r="40"
+            opacity="0.45"
+            stroke-width="1.4"
+          />
+          <path
+            d="M260 146v26l16 8"
+            opacity="0.85"
+            stroke-width="1.6"
+          />
+        </g>
+        <g v-if="kind === 'access'">
+          <rect
+            x="296"
+            y="266"
+            width="46"
+            height="58"
+            stroke-width="1.5"
+          />
+          <path
+            d="M306 266V250a13 13 0 0 1 26 0v16"
+            stroke-width="1.5"
+          />
+        </g>
+        <g v-if="kind === 'wait'">
+          <circle
+            cx="319"
+            cy="168"
+            r="24"
+            opacity="0.4"
+            stroke-width="1.3"
+          />
+          <circle
+            cx="319"
+            cy="168"
+            r="42"
+            opacity="0.2"
+            stroke-width="1.1"
+          />
+        </g>
+        <g v-if="kind === 'fault'">
+          <path
+            d="M70 168h64l16 24 20-44 18 28h90"
+            opacity="0.55"
+            stroke-width="1.6"
+          />
+        </g>
+        <g v-if="kind === 'invalid'">
+          <path
+            d="M300 274l38 38M338 274l-38 38"
+            opacity="0.7"
+            stroke-width="1.6"
+          />
+        </g>
+      </g>
     </g>
   </svg>
 </template>

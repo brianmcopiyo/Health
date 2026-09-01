@@ -14,7 +14,6 @@ const userData = useCookie('userData')
 const meta = computed(() => resolveError(props.code))
 const heading = computed(() => props.title || meta.value.title)
 const body = computed(() => props.copy || meta.value.copy)
-const mark = computed(() => props.icon || meta.value.icon)
 const home = computed(() => resolveHomeRoute(userData.value))
 const signedIn = computed(() => Boolean(userData.value))
 const needsLogin = computed(() => meta.value.action === 'login' || !signedIn.value || home.value.name === 'not-authorized')
@@ -50,17 +49,7 @@ const refresh = () => {
     :headline="meta.artTitle"
     :lead="meta.artCopy"
   >
-    <div class="h-error-card">
-      <div
-        class="h-error-mark"
-        :class="meta.tone ? `is-${meta.tone}` : null"
-        aria-hidden="true"
-      >
-        <HIcon
-          :name="mark"
-          :size="28"
-        />
-      </div>
+    <div class="h-error-copy">
       <p class="hms-kicker">
         {{ meta.label }} · {{ code }}
       </p>

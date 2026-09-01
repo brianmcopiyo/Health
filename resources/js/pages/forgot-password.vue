@@ -35,7 +35,7 @@ const submit = () => {
   >
     <form
       v-if="!sent"
-      class="h-auth-card"
+      class="h-auth-copy"
       @submit.prevent="submit"
     >
       <p class="hms-kicker">
@@ -80,7 +80,7 @@ const submit = () => {
     </form>
     <div
       v-else
-      class="h-auth-card"
+      class="h-auth-copy"
     >
       <p class="hms-kicker">
         Next step
