@@ -17,13 +17,15 @@ const body = computed(() => props.copy || meta.value.copy)
 const mark = computed(() => props.icon || meta.value.icon)
 const home = computed(() => resolveHomeRoute(userData.value))
 const signedIn = computed(() => Boolean(userData.value))
+const needsLogin = computed(() => meta.value.action === 'login' || !signedIn.value || home.value.name === 'not-authorized')
 const exit = computed(() => {
-  if (meta.value.action === 'login' || !signedIn.value || home.value.name === 'not-authorized')
+  if (needsLogin.value)
     return { name: 'login', query: Number(props.code) === 401 || Number(props.code) === 419 ? { reason: 'expired' } : undefined }
 
   return home.value
 })
-const exitLabel = computed(() => exit.value.name === 'login' ? 'Sign in' : 'Open workspace')
+const exitLabel = computed(() => meta.value.next || (needsLogin.value ? 'Sign in to Caregrid' : 'Open Caregrid'))
+const canRefresh = computed(() => ![401, 403, 404, 410].includes(Number(props.code)))
 
 const goBack = () => {
   if (window.history.length > 1) {
@@ -33,50 +35,62 @@ const goBack = () => {
 
   router.replace(exit.value)
 }
+
+const refresh = () => {
+  window.location.reload()
+}
 </script>
 
 <template>
-  <div class="h-error">
-    <section class="h-error-art">
-      <div>
-        <p class="hms-kicker">
-          Caregrid
-        </p>
-        <h2>Clinical work, kept on a clear path.</h2>
-        <p>When a page cannot be opened, the hospital map should say so plainly and send you back to care.</p>
+  <HAuthStage
+    kind="error"
+    :scene="code"
+    :tone="meta.tone"
+    brand="Caregrid"
+    :headline="meta.artTitle"
+    :lead="meta.artCopy"
+  >
+    <div class="h-error-card">
+      <div
+        class="h-error-mark"
+        :class="meta.tone ? `is-${meta.tone}` : null"
+        aria-hidden="true"
+      >
+        <HIcon
+          :name="mark"
+          :size="28"
+        />
       </div>
-      <p>Session, access, and service messages use the same Caregrid language as the rest of the system.</p>
-    </section>
-    <section class="h-error-panel">
-      <HThemeToggle class="h-theme-float" />
-      <div class="h-error-card">
-        <div
-          class="h-error-mark"
-          aria-hidden="true"
+      <p class="hms-kicker">
+        {{ meta.label }} · {{ code }}
+      </p>
+      <h1>{{ heading }}</h1>
+      <p>{{ body }}</p>
+      <p
+        v-if="meta.hint"
+        class="h-error-hint"
+      >
+        {{ meta.hint }}
+      </p>
+      <div class="h-error-actions">
+        <HButton :to="exit">
+          {{ exitLabel }}
+        </HButton>
+        <HButton
+          variant="ghost"
+          @click="goBack"
         >
-          <HIcon
-            :name="mark"
-            :size="28"
-          />
-        </div>
-        <p class="hms-kicker">
-          {{ code }}
-        </p>
-        <h1>{{ heading }}</h1>
-        <p>{{ body }}</p>
-        <div class="h-error-actions">
-          <HButton :to="exit">
-            {{ exitLabel }}
-          </HButton>
-          <HButton
-            variant="ghost"
-            @click="goBack"
-          >
-            Go back
-          </HButton>
-          <slot />
-        </div>
+          Go back
+        </HButton>
+        <HButton
+          v-if="canRefresh"
+          variant="ghost"
+          @click="refresh"
+        >
+          Try again
+        </HButton>
+        <slot />
       </div>
-    </section>
-  </div>
+    </div>
+  </HAuthStage>
 </template>

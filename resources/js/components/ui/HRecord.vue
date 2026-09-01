@@ -47,15 +47,23 @@ const statusItems = computed(() => {
 <template>
   <div class="h-record">
     <div class="h-record-head">
-      <HButton
+      <div
         v-if="back"
-        class="h-record-back"
-        variant="ghost"
-        :to="back"
+        class="h-record-nav"
       >
-        <HIcon name="back" />
-        {{ backLabel }}
-      </HButton>
+        <HButton
+          class="h-record-back"
+          variant="ghost"
+          size="sm"
+          :to="back"
+        >
+          <HIcon
+            name="back"
+            :size="14"
+          />
+          {{ backLabel }}
+        </HButton>
+      </div>
       <div class="hms-page-copy">
         <h1>{{ title || 'Record' }}</h1>
         <p v-if="subtitle">

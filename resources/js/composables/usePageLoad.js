@@ -1,12 +1,21 @@
 import { ref, unref, watch, onBeforeUnmount } from 'vue'
 import { httpStatus, pageErrorCode } from '@/utils/errors'
+import { forceFinishPageNav } from '@/composables/useRouteLoad'
 
 export const pageLoadError = ref(null)
-export const pageError = ref(null)
+export const pageError = ref((() => {
+  const code = typeof window !== 'undefined' ? window.__PAGE_ERROR__ : null
+  if (typeof window !== 'undefined')
+    window.__PAGE_ERROR__ = null
+
+  return code ? { code: Number(code) } : null
+})())
 export const LOAD_HINT_DELAY = 180
 
 export const setPageError = code => {
   pageError.value = code ? { code: Number(code) } : null
+  if (code)
+    forceFinishPageNav()
 }
 
 export const clearPageError = () => {
@@ -92,7 +101,7 @@ export const useDelayedVisible = (source, delay = LOAD_HINT_DELAY) => {
 
 export const withPageLoad = async (loader, options = {}) => {
   if (!options.silent)
-    clearPageError()
+    pageLoadError.value = null
 
   try {
     await loader()
@@ -102,15 +111,12 @@ export const withPageLoad = async (loader, options = {}) => {
     if (status === 401)
       return
 
-    const code = pageErrorCode(status)
-    if (code && !options.silent) {
+    if (!options.silent) {
       pageLoadError.value = null
-      setPageError(code)
+      setPageError(pageErrorCode(status) || 500)
       return
     }
 
-    if (!options.silent)
-      pageLoadError.value = 'Unable to load this page'
     console.error(error)
   }
 }

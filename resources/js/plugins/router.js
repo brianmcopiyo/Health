@@ -74,7 +74,7 @@ const namedLocationPath = to => {
 }
 
 export const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory('/'),
   extendRoutes: pages => {
     const reserved = new Set(['account-profile', 'account-security'])
     const rest = flattenRoutes(pages).filter(page => !reserved.has(page.name))

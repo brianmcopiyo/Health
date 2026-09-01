@@ -49,5 +49,27 @@ return Application::configure(basePath: dirname(__DIR__))
             ) {
                 return response()->json(['message' => 'A server error occurred.'], 500);
             }
+
+            if ($request->is('api/*') || $request->expectsJson() || $request->is('up')) {
+                return;
+            }
+
+            if ($exception instanceof ValidationException || $exception instanceof AuthenticationException) {
+                return;
+            }
+
+            if ($exception instanceof \Illuminate\Session\TokenMismatchException) {
+                return response()->view('application', ['pageError' => 419], 419);
+            }
+
+            $status = $exception instanceof HttpExceptionInterface
+                ? $exception->getStatusCode()
+                : 500;
+
+            if ($status < 400) {
+                return;
+            }
+
+            return response()->view('application', ['pageError' => $status], $status);
         });
     })->create();

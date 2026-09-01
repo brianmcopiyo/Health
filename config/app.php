@@ -123,4 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'http_error_probe' => (bool) env('HTTP_ERROR_PROBE', false),
+
 ];

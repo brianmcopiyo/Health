@@ -16,6 +16,7 @@
       } catch (e) {}
     })()
   </script>
+  <script>window.__PAGE_ERROR__ = @json($pageError ?? null)</script>
   @vite(['resources/js/main.js'])
 </head>
 <body>

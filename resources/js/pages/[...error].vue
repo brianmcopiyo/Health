@@ -3,6 +3,7 @@ definePage({
   meta: {
     layout: 'blank',
     public: true,
+    pageError: 404,
   },
 })
 </script>

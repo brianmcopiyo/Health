@@ -31,6 +31,7 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="LOG_CHANNEL" value="null"/>
         <env name="HMS_ENCRYPTION_KEY" value="base64:YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY="/>
         <env name="HMS_ENCRYPTION_KEY_ID" value="k1"/>
         <env name="HMS_SEARCH_KEY" value="base64:QUJDREVGR0hJSktMTU5PUFFSU1RVVldYWXoxMjM0NTY="/>

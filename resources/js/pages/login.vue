@@ -18,6 +18,14 @@ const credentials = ref({
   email: 'admin@riverside.test',
   password: 'password',
 })
+const expired = computed(() => route.query.reason === 'expired')
+const scene = computed(() => expired.value ? 'verify' : 'login')
+const headline = computed(() => expired.value
+  ? 'Your clinical session ended for safety.'
+  : 'Clinical operations, visibly in control.')
+const lead = computed(() => expired.value
+  ? 'Sign in again to return to the hospital, ward, and records you were using.'
+  : 'Live capacity, referrals, and role-based work for every hospital in the Caregrid network.')
 
 const login = async () => {
   formError.value = ''
@@ -29,7 +37,7 @@ const login = async () => {
       body: credentials.value,
       onResponseError({ response }) {
         errors.value = response._data?.errors || {}
-        formError.value = response._data?.message || 'Unable to sign in'
+        formError.value = response._data?.message || 'Unable to sign in to Caregrid'
       },
     })
     applySession(res, ability)
@@ -40,7 +48,7 @@ const login = async () => {
   }
   catch (error) {
     if (!formError.value)
-      formError.value = error?.data?.message || 'Unable to sign in'
+      formError.value = error?.data?.message || 'Unable to sign in to Caregrid'
   }
   finally {
     submitting.value = false
@@ -49,82 +57,94 @@ const login = async () => {
 </script>
 
 <template>
-  <div class="h-auth">
-    <section class="h-auth-art">
-      <div>
-        <p class="hms-kicker">
-          Caregrid
-        </p>
-        <h2>Clinical operations, visibly in control.</h2>
-        <p>Live capacity, referrals, and role-based workspaces for every hospital in the network.</p>
-      </div>
-      <p>One design system. Distinct workspaces for reception, wards, diagnostics, and administration.</p>
-    </section>
-    <section class="h-auth-panel">
-      <HThemeToggle class="h-theme-float" />
-      <form
-        class="h-auth-card"
-        @submit.prevent="login"
-      >
-        <p class="hms-kicker">
-          Sign in
-        </p>
-        <h1>
-          Welcome back
-        </h1>
-        <HTransition name="h-fade">
-          <div
-            v-if="route.query.reason === 'expired' && !formError"
-            class="h-alert"
-          >
-            Your session ended. Sign in to return to your workspace.
-          </div>
-        </HTransition>
-        <HTransition name="h-fade">
-          <div
-            v-if="formError"
-            class="h-alert"
-          >
-            {{ formError }}
-          </div>
-        </HTransition>
-        <div class="h-stack">
-          <HInput
-            v-model="credentials.email"
-            label="Email"
-            type="email"
-            icon="mail"
-            autocomplete="username"
-            required
-            placeholder="you@hospital.org"
-            :error="errors.email"
-            :disabled="submitting"
-            :loading="submitting"
-          />
-          <HInput
-            v-model="credentials.password"
-            label="Password"
-            type="password"
-            icon="lock"
-            autocomplete="current-password"
-            required
-            placeholder="Enter password"
-            :error="errors.password"
-            :disabled="submitting"
-            :loading="submitting"
-          />
-          <HButton
-            type="submit"
-            class="is-block"
-            :disabled="submitting"
-          >
-            {{ submitting ? 'Signing in…' : 'Enter workspace' }}
-          </HButton>
+  <HAuthStage
+    :scene="scene"
+    brand="Caregrid"
+    :headline="headline"
+    :lead="lead"
+    :points="[
+      { icon: 'bed', title: 'Wards', body: 'Occupancy and bed status as they stand on the floor.' },
+      { icon: 'transfer', title: 'Referrals', body: 'Patients moving between hospitals stay on one register.' },
+      { icon: 'stethoscope', title: 'Roles', body: 'Reception, diagnostics, and administration each see their work.' },
+    ]"
+  >
+    <form
+      class="h-auth-card"
+      @submit.prevent="login"
+    >
+      <p class="hms-kicker">
+        {{ expired ? 'Session ended' : 'Hospital sign in' }}
+      </p>
+      <h1>
+        {{ expired ? 'Continue clinical work' : 'Sign in to Caregrid' }}
+      </h1>
+      <p class="h-auth-lead">
+        Use the staff account issued for your hospital. This desk opens live records, not a public directory.
+      </p>
+      <HTransition name="h-fade">
+        <div
+          v-if="expired && !formError"
+          class="h-alert"
+        >
+          Your session ended after a period of inactivity. Sign in to return to the last hospital you were using.
         </div>
-        <p class="h-muted">
-          Riverside admin: admin@riverside.test / password
-        </p>
-      </form>
-    </section>
-  </div>
+      </HTransition>
+      <HTransition name="h-fade">
+        <div
+          v-if="formError"
+          class="h-alert"
+        >
+          {{ formError }}
+        </div>
+      </HTransition>
+      <div class="h-stack">
+        <HInput
+          v-model="credentials.email"
+          label="Hospital email"
+          type="email"
+          icon="mail"
+          autocomplete="username"
+          required
+          placeholder="you@hospital.org"
+          :error="errors.email"
+          :disabled="submitting"
+          :loading="submitting"
+        />
+        <HInput
+          v-model="credentials.password"
+          label="Password"
+          type="password"
+          icon="lock"
+          autocomplete="current-password"
+          required
+          placeholder="Your Caregrid password"
+          :error="errors.password"
+          :disabled="submitting"
+          :loading="submitting"
+        />
+        <HButton
+          type="submit"
+          class="is-block"
+          :disabled="submitting"
+        >
+          {{ submitting ? 'Signing in…' : 'Sign in to Caregrid' }}
+        </HButton>
+      </div>
+      <p class="h-auth-links">
+        <RouterLink :to="{ name: 'forgot-password' }">
+          Need help signing in?
+        </RouterLink>
+      </p>
+      <p class="h-auth-note">
+        <HIcon
+          name="shield"
+          :size="16"
+        />
+        Keep this password to yourself. Shared hospital desks should lock the screen when you step away.
+      </p>
+      <p class="h-muted">
+        Demonstration hospital: admin@riverside.test · password
+      </p>
+    </form>
+  </HAuthStage>
 </template>

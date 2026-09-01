@@ -10,7 +10,7 @@ import {
   startPageNav,
 } from '@/composables/useRouteLoad'
 import { resolveHomeRoute } from '@/utils/session'
-import { clearPageError, setPageError } from '@/composables/usePageLoad'
+import { clearPageError, pageError, setPageError } from '@/composables/usePageLoad'
 
 export const setupGuards = router => {
   let hops = 0
@@ -26,12 +26,18 @@ export const setupGuards = router => {
     if (to.name === 'index')
       return
 
-    if (isNewPage(to, from))
+    if (from.matched.length && isNewPage(to, from))
       clearPageError()
 
     const begin = () => {
       if (isNewPage(to, from))
         startPageNav()
+    }
+
+    if (to.meta.pageError && !pageError.value) {
+      setPageError(to.meta.pageError)
+      begin()
+      return
     }
 
     if (to.meta.public) {
@@ -60,7 +66,8 @@ export const setupGuards = router => {
     }
 
     if (!canNavigate(to)) {
-      setPageError(403)
+      if (!pageError.value)
+        setPageError(403)
       begin()
       return
     }
