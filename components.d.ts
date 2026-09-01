@@ -57,6 +57,7 @@ declare module 'vue' {
     HReportFilters: typeof import('./resources/js/components/reports/HReportFilters.vue')['default']
     HReportTrend: typeof import('./resources/js/components/reports/HReportTrend.vue')['default']
     HReveal: typeof import('./resources/js/components/ui/HReveal.vue')['default']
+    HScrollbar: typeof import('./resources/js/components/ui/HScrollbar.vue')['default']
     HSection: typeof import('./resources/js/components/ui/HSection.vue')['default']
     HSegmented: typeof import('./resources/js/components/ui/HSegmented.vue')['default']
     HSelect: typeof import('./resources/js/components/ui/HSelect.vue')['default']
