@@ -115,76 +115,78 @@ const { pending } = usePageQuery(async () => {
     </HPage>
 
     <div class="h-form-card is-wide">
-    <HCard>
+      <HCard v-if="pending">
+        <HForm
+          wide
+          :loading="true"
+          :fields="8"
+        />
+      </HCard>
       <HForm
-        v-if="pending"
-        wide
-        :loading="true"
-        :fields="8"
-      />
-      <div
         v-else
-        class="h-form is-wide"
+        wide
+        @submit="submit"
       >
-        <div
-          v-if="formError"
-          class="h-alert"
-        >
-          {{ formError }}
-        </div>
-        <HFormGrid>
-          <HSelect
-            v-model="form.patient_id"
-            :items="patients"
-            item-title="full_name"
-            item-value="id"
-            label="Patient"
-            required
-            @update:model-value="onPatient"
-          />
-          <HSelect
-            v-model="form.encounter_id"
-            :items="encounterOptions"
-            label="Source encounter"
-            @update:model-value="onEncounter"
-          />
-          <p
-            v-if="selectedPatient"
-            class="h-muted is-span"
+        <HCard>
+          <div
+            v-if="formError"
+            class="h-alert"
           >
-            {{ selectedPatient.mrn }} · {{ selectedPatient.phone || 'No phone' }}
-          </p>
-          <HTextarea
-            span
-            v-model="form.reason"
-            label="Clinical reason"
-            placeholder="Why the patient needs transfer"
-            required
-          />
-          <HSelect
-            v-model="form.required_facility_type_id"
-            :items="types"
-            item-title="name"
-            item-value="id"
-            label="Required facility"
-            @update:model-value="searchHospitals"
-          />
-          <HSelect
-            v-model="form.required_service_id"
-            :items="services"
-            item-title="name"
-            item-value="id"
-            label="Required service"
-          />
-          <HNumber
-            v-model="form.required_capacity"
-            label="Required capacity"
-            placeholder="e.g. 1"
-            :min="1"
-            @update:model-value="searchHospitals"
-          />
-        </HFormGrid>
-
+            {{ formError }}
+          </div>
+          <HFormGrid>
+            <HSelect
+              v-model="form.patient_id"
+              :items="patients"
+              item-title="full_name"
+              item-value="id"
+              label="Patient"
+              required
+              @update:model-value="onPatient"
+            />
+            <HSelect
+              v-model="form.encounter_id"
+              :items="encounterOptions"
+              label="Source encounter"
+              @update:model-value="onEncounter"
+            />
+            <p
+              v-if="selectedPatient"
+              class="h-muted is-span"
+            >
+              {{ selectedPatient.mrn }} · {{ selectedPatient.phone || 'No phone' }}
+            </p>
+            <HTextarea
+              span
+              v-model="form.reason"
+              label="Clinical reason"
+              placeholder="Why the patient needs transfer"
+              required
+            />
+            <HSelect
+              v-model="form.required_facility_type_id"
+              :items="types"
+              item-title="name"
+              item-value="id"
+              label="Required facility"
+              @update:model-value="searchHospitals"
+            />
+            <HSelect
+              v-model="form.required_service_id"
+              :items="services"
+              item-title="name"
+              item-value="id"
+              label="Required service"
+            />
+            <HNumber
+              v-model="form.required_capacity"
+              label="Required capacity"
+              placeholder="e.g. 1"
+              :min="1"
+              @update:model-value="searchHospitals"
+            />
+          </HFormGrid>
+        </HCard>
         <HSection title="Eligible destination hospitals">
           <HLoading v-if="showSearch" />
           <div
@@ -217,8 +219,7 @@ const { pending } = usePageQuery(async () => {
             </div>
           </div>
         </HSection>
-
-        <div class="h-form-actions">
+        <template #actions>
           <HButton
             variant="ghost"
             :to="{ name: 'referrals' }"
@@ -226,14 +227,13 @@ const { pending } = usePageQuery(async () => {
             Cancel
           </HButton>
           <HButton
+            type="submit"
             :disabled="saving || !form.to_hospital_id || !form.patient_id || !form.reason"
-            @click="submit"
           >
             Create referral
           </HButton>
-        </div>
-      </div>
-    </HCard>
+        </template>
+      </HForm>
     </div>
   </div>
 </template>
