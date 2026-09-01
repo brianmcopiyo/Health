@@ -70,6 +70,7 @@
   --grid-gap: 16px;
   --card-pad: 16px;
   --stat-h: 8.75rem;
+  --stat-min: 15.25rem;
   --stat-icon: 40px;
   --motion-fast: 140ms;
   --motion-base: 200ms;
@@ -1164,9 +1165,13 @@ img { max-width: 100%; }
 .h-grid.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .h-grid.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .h-grid.cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.h-grid.cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.h-grid.cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
 
-.h-grid.is-stats.cols-2 {
-  max-width: calc(2 * 17.5rem + var(--grid-gap));
+.h-grid.is-stats,
+.h-stat-row {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--stat-min)), 1fr));
+  justify-content: start;
 }
 
 .h-grid.cols-3 > .h-card:not(.is-flush):not(.h-stat):not(.h-link-card) {
@@ -1847,7 +1852,6 @@ fieldset.h-form-grid {
   display: grid;
   gap: var(--grid-gap);
   align-items: stretch;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .h-card.h-stat {
@@ -1859,6 +1863,7 @@ fieldset.h-form-grid {
   min-height: var(--stat-h);
   height: 100%;
   padding: var(--card-pad);
+  min-width: 0;
 }
 
 .h-stat-icon {
@@ -1890,21 +1895,24 @@ fieldset.h-form-grid {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+  overflow-wrap: break-word;
 }
 
 .h-stat-value {
   display: block;
   font-family: var(--display);
-  font-size: 1.45rem;
+  font-size: clamp(1.15rem, 2.4vw, 1.45rem);
   font-weight: 560;
   letter-spacing: -0.02em;
   line-height: 1.15;
+  overflow-wrap: break-word;
 }
 
 .h-stat-hint {
   color: var(--muted);
   font-size: 0.78rem;
   line-height: 1.35;
+  overflow-wrap: break-word;
 }
 
 a.h-card.h-stat {
@@ -3377,23 +3385,22 @@ html[data-theme="dark"] .h-error-art[data-tone="fault"] {
   .hms-context-wrap,
   .hms-context,
   .hms-crumb .is-context { display: none; }
-  .h-grid.cols-4,
-  .h-grid.cols-3,
-  .h-stat-row,
+  .h-grid.cols-4:not(.is-stats),
+  .h-grid.cols-3:not(.is-stats),
   .h-panel-row,
   .h-link-grid,
   .h-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .h-dash-md,
   .h-dash-lg { grid-column: span 6; }
-  .h-grid.is-stats.cols-2 { max-width: none; }
   .h-detail { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 860px) {
-  .h-grid.cols-2,
-  .h-grid.cols-3,
-  .h-grid.cols-4,
-  .h-stat-row,
+  .h-grid.cols-2:not(.is-stats),
+  .h-grid.cols-3:not(.is-stats),
+  .h-grid.cols-4:not(.is-stats),
+  .h-grid.cols-5:not(.is-stats),
+  .h-grid.cols-6:not(.is-stats),
   .h-panel-row,
   .h-link-grid,
   .h-card-grid,

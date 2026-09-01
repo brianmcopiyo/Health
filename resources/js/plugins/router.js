@@ -62,15 +62,16 @@ const flattenRoutes = (routes, prefix = '') => {
   return out
 }
 
-const namedLocationPath = to => {
-  if (!to || typeof to !== 'object' || !to.name)
+const fillNamedPath = (recordPath, params = {}) => {
+  if (!recordPath)
     return null
-  const name = String(to.name)
-  if (name.endsWith('-id') && to.params?.id)
-    return `/${name.slice(0, -3).replaceAll('-', '/')}/${to.params.id}`
-  if (!name.includes('-') && !to.params)
-    return `/${name}`
-  return null
+
+  const filled = String(recordPath).replace(/:([^/?]+)\??/g, (_, key) => {
+    const value = params[key]
+    return value == null || value === '' ? '' : encodeURIComponent(String(value))
+  }).replace(/\/{2,}/g, '/').replace(/\/$/, '')
+
+  return filled || '/'
 }
 
 export const router = createRouter({
@@ -78,7 +79,9 @@ export const router = createRouter({
   extendRoutes: pages => {
     const reserved = new Set(['account-profile', 'account-security'])
     const rest = flattenRoutes(pages).filter(page => !reserved.has(page.name))
-    return [...redirects, ...accountRoutes, ...rest]
+    const fallback = rest.filter(page => page.name === '$error')
+    const pagesOnly = rest.filter(page => page.name !== '$error')
+    return [...redirects, ...accountRoutes, ...pagesOnly, ...fallback]
   },
 })
 
@@ -87,7 +90,10 @@ router.resolve = (to, current) => {
   try {
     return resolveLocation(to, current)
   } catch (error) {
-    const path = namedLocationPath(to)
+    if (!to || typeof to !== 'object' || !to.name)
+      throw error
+    const record = router.getRoutes().find(route => route.name === to.name)
+    const path = fillNamedPath(record?.path, to.params)
     if (path)
       return resolveLocation({ path, query: to.query, hash: to.hash }, current)
     throw error

@@ -33,6 +33,28 @@ class ExampleTest extends TestCase
         }
     }
 
+    public function test_valid_workspace_pages_are_served_by_the_spa(): void
+    {
+        $this->withoutVite();
+
+        foreach ([
+            '/billing/reports',
+            '/inventory/stores',
+            '/inventory/items',
+            '/admin/users',
+            '/admin/departments',
+            '/account/profile',
+            '/referrals/create',
+            '/forgot-password',
+            '/not-authorized',
+        ] as $path) {
+            $this->get($path)
+                ->assertOk()
+                ->assertSee('id="app"', false)
+                ->assertSee('window.__PAGE_ERROR__ = null', false);
+        }
+    }
+
     public function test_asset_base_paths_are_not_treated_as_pages(): void
     {
         $this->withoutVite();

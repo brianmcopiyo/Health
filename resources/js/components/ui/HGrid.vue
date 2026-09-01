@@ -8,7 +8,7 @@ defineProps({
 <template>
   <div
     class="h-grid"
-    :class="[`cols-${cols}`, `is-${kind}`]"
+    :class="[kind === 'stats' ? null : `cols-${cols}`, `is-${kind}`]"
   >
     <slot />
   </div>
