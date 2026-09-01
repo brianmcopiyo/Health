@@ -88,7 +88,6 @@ declare global {
   const onUpdated: typeof import('vue')['onUpdated']
   const pageError: typeof import('./resources/js/composables/usePageLoad.js')['pageError']
   const pageErrorCode: typeof import('./resources/js/utils/errors.js')['pageErrorCode']
-  const pageErrorRoute: typeof import('./resources/js/utils/errors.js')['pageErrorRoute']
   const pageLoadError: typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']
   const pageLoading: typeof import('./resources/js/composables/useRouteLoad.js')['pageLoading']
   const paymentMethods: typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']
