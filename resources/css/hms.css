@@ -2623,6 +2623,16 @@ a.h-card.h-stat:hover {
   margin-top: 8px;
 }
 
+.hms-page .h-error,
+.hms-page .h-page-view > .h-error {
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  gap: 0;
+  min-height: calc(100dvh - 7.5rem);
+  border-radius: 24px;
+  overflow: hidden;
+}
+
 @keyframes spin { to { transform: rotate(360deg); } }
 
 @keyframes h-fade {
@@ -3133,7 +3143,9 @@ a.h-card.h-stat:hover {
   .h-account-identity,
   .h-account-row,
   .h-auth,
-  .h-error { grid-template-columns: 1fr; }
+  .h-error,
+  .hms-page .h-error,
+  .hms-page .h-page-view > .h-error { grid-template-columns: 1fr; }
   .h-auth-art,
   .h-error-art { display: none; }
   .hms-content { padding: 16px 16px 28px; }

@@ -1,7 +1,7 @@
 import { ofetch } from 'ofetch'
 import { router } from '@/plugins/router'
 import { clearSession } from '@/utils/session'
-import { pageLoadError } from '@/composables/usePageLoad'
+import { clearPageError } from '@/composables/usePageLoad'
 
 let endingSession = false
 
@@ -15,11 +15,11 @@ const endSession = () => {
     return
 
   endingSession = true
-  pageLoadError.value = null
+  clearPageError()
   clearSession()
 
   const current = router.currentRoute.value
-  const next = current.meta?.public || current.name === 'login' || current.name === 'errors-code'
+  const next = current.meta?.public || current.name === 'login'
     ? undefined
     : current.fullPath
 

@@ -225,3 +225,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/ambulance-trips', [AmbulanceController::class, 'trips'])->middleware('permission:read,Ambulance');
     Route::patch('/ambulance-trips/{trip}/status', [AmbulanceController::class, 'updateTripStatus'])->middleware('permission:dispatch,Ambulance');
 });
+
+Route::fallback(fn () => abort(404, 'Not found.'));

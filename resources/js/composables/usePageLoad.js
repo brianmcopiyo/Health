@@ -1,9 +1,18 @@
 import { ref, unref, watch, onBeforeUnmount } from 'vue'
-import { router } from '@/plugins/router'
-import { httpStatus, pageErrorRoute } from '@/utils/errors'
+import { httpStatus, pageErrorCode } from '@/utils/errors'
 
 export const pageLoadError = ref(null)
+export const pageError = ref(null)
 export const LOAD_HINT_DELAY = 180
+
+export const setPageError = code => {
+  pageError.value = code ? { code: Number(code) } : null
+}
+
+export const clearPageError = () => {
+  pageError.value = null
+  pageLoadError.value = null
+}
 
 export const asList = value => {
   if (Array.isArray(value))
@@ -83,7 +92,7 @@ export const useDelayedVisible = (source, delay = LOAD_HINT_DELAY) => {
 
 export const withPageLoad = async (loader, options = {}) => {
   if (!options.silent)
-    pageLoadError.value = null
+    clearPageError()
 
   try {
     await loader()
@@ -93,15 +102,15 @@ export const withPageLoad = async (loader, options = {}) => {
     if (status === 401)
       return
 
-    const dest = pageErrorRoute(status)
-    if (dest && !options.silent) {
+    const code = pageErrorCode(status)
+    if (code && !options.silent) {
       pageLoadError.value = null
-      await router.replace(dest)
+      setPageError(code)
       return
     }
 
     if (!options.silent)
-      pageLoadError.value = error?.data?.message || error?.message || 'Unable to load this page'
+      pageLoadError.value = 'Unable to load this page'
     console.error(error)
   }
 }

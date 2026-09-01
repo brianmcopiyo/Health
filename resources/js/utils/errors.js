@@ -25,6 +25,11 @@ export const errorCatalog = {
     copy: 'It may have been archived, transferred, or removed from the live register.',
     icon: 'x',
   },
+  422: {
+    title: 'This request could not be processed',
+    copy: 'Some of the information sent was not accepted. Go back and try again.',
+    icon: 'x',
+  },
   419: {
     title: 'This page has expired',
     copy: 'Refresh and sign in again so your session stays secure.',
@@ -65,15 +70,14 @@ export const resolveError = code => {
   return errorCatalog[key] || errorCatalog[404]
 }
 
-export const pageErrorRoute = status => {
-  if (status === 401 || status === 419)
-    return { name: 'login', query: { reason: 'expired' } }
-
-  if (status === 403)
-    return { name: 'not-authorized' }
-
-  if (errorCatalog[status])
-    return { name: 'errors-code', params: { code: String(status) } }
+export const pageErrorCode = status => {
+  const code = Number(status)
+  if (!code || code === 401)
+    return null
+  if (errorCatalog[code])
+    return code
+  if (code >= 500)
+    return 500
 
   return null
 }

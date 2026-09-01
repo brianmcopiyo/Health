@@ -115,7 +115,7 @@ export const pageMeta = name => {
   if (key === 'account-security')
     return { title: 'Security', heading: 'Account' }
 
-  if (key === 'errors-code' || key === 'not-authorized' || key.startsWith('errors-'))
+  if (key === 'not-authorized')
     return { title: 'Caregrid', heading: 'Help' }
 
   return { title: 'Caregrid', heading: 'Workspace' }

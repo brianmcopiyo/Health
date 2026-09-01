@@ -1,61 +1,65 @@
 <script setup>
 import { pageLoading, forceFinishPageNav } from '@/composables/useRouteLoad'
-import { resolveHomeRoute } from '@/utils/session'
+import { pageError, setPageError } from '@/composables/usePageLoad'
+import { errorCatalog } from '@/utils/errors'
 
 const route = useRoute()
-const blank = computed(() => route.meta.layout === 'blank')
-const renderError = ref(null)
+const userData = useCookie('userData')
+const signedIn = computed(() => Boolean(userData.value))
+const renderError = ref(false)
 const pageKey = computed(() => `${String(route.name || '')}:${Object.values(route.params).join('/')}`)
-const home = computed(() => resolveHomeRoute(useCookie('userData').value))
+
+const pageFault = computed(() => pageError.value?.code || (renderError.value ? 500 : null))
+const showShell = computed(() => {
+  if (route.meta.unauthenticatedOnly)
+    return false
+
+  return signedIn.value
+})
+const canRetry = computed(() => {
+  const code = Number(pageFault.value)
+  return Boolean(code && errorCatalog[code] && ![401, 403, 404, 410].includes(code))
+})
 
 watch(() => route.fullPath, () => {
-  renderError.value = null
+  renderError.value = false
 })
 
 onErrorCaptured(error => {
   forceFinishPageNav()
-  renderError.value = error?.message || 'This page failed to render.'
+  renderError.value = true
+  setPageError(500)
   console.error(error)
   return false
 })
 
-const retry = () => {
-  renderError.value = null
+const recover = () => {
+  renderError.value = false
+  setPageError(null)
 }
 </script>
 
 <template>
-  <HmsShell v-if="!blank">
-    <Transition name="h-fade">
-      <div
-        v-if="renderError"
-        class="h-alert"
-      >
-        <span>{{ renderError }}</span>
-        <div class="h-actions">
-          <HButton
-            size="sm"
-            @click="retry"
-          >
-            Try again
-          </HButton>
-          <HButton
-            size="sm"
-            variant="ghost"
-            :to="home"
-          >
-            Open workspace
-          </HButton>
-        </div>
-      </div>
-    </Transition>
+  <HmsShell v-if="showShell">
     <div
       class="h-page-stage"
-      :class="{ 'is-loading': pageLoading }"
+      :class="{ 'is-loading': pageLoading && !pageFault }"
     >
-      <HPageLoader v-show="pageLoading" />
+      <HPageLoader v-show="pageLoading && !pageFault" />
+      <HErrorPage
+        v-if="pageFault"
+        :code="pageFault"
+      >
+        <HButton
+          v-if="canRetry"
+          variant="ghost"
+          @click="recover"
+        >
+          Refresh
+        </HButton>
+      </HErrorPage>
       <RouterView
-        v-if="!renderError"
+        v-else
         v-slot="{ Component }"
       >
         <div
@@ -69,10 +73,17 @@ const retry = () => {
     </div>
   </HmsShell>
   <HErrorPage
-    v-else-if="renderError"
-    code="500"
-    :copy="renderError"
-  />
+    v-else-if="pageFault"
+    :code="pageFault"
+  >
+    <HButton
+      v-if="canRetry"
+      variant="ghost"
+      @click="recover"
+    >
+      Refresh
+    </HButton>
+  </HErrorPage>
   <div
     v-else
     class="h-page-stage"

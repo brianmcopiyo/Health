@@ -10,6 +10,7 @@ import {
   startPageNav,
 } from '@/composables/useRouteLoad'
 import { resolveHomeRoute } from '@/utils/session'
+import { clearPageError, setPageError } from '@/composables/usePageLoad'
 
 export const setupGuards = router => {
   let hops = 0
@@ -24,6 +25,9 @@ export const setupGuards = router => {
 
     if (to.name === 'index')
       return
+
+    if (isNewPage(to, from))
+      clearPageError()
 
     const begin = () => {
       if (isNewPage(to, from))
@@ -56,11 +60,9 @@ export const setupGuards = router => {
     }
 
     if (!canNavigate(to)) {
-      const home = resolveHomeRoute(userData.value)
-      if (home.name && home.name !== to.name && home.name !== 'not-authorized')
-        return home
-
-      return { name: 'not-authorized' }
+      setPageError(403)
+      begin()
+      return
     }
 
     begin()
@@ -90,5 +92,6 @@ export const setupGuards = router => {
 
   router.onError(() => {
     forceFinishPageNav()
+    setPageError(500)
   })
 }

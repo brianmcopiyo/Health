@@ -42,8 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $exceptions->render(function (\Throwable $exception, Request $request) {
             if (
-                $request->is('api/*')
-                && app()->environment('production')
+                ($request->is('api/*') || $request->expectsJson())
                 && ! $exception instanceof ValidationException
                 && ! $exception instanceof AuthenticationException
                 && ! $exception instanceof HttpExceptionInterface

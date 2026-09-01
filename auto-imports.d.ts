@@ -22,6 +22,7 @@ declare global {
   const canNavigate: typeof import('./resources/js/composables/useAbility.js')['canNavigate']
   const canWriteRole: typeof import('./resources/js/utils/access.js')['canWriteRole']
   const canWriteUser: typeof import('./resources/js/utils/access.js')['canWriteUser']
+  const clearPageError: typeof import('./resources/js/composables/usePageLoad.js')['clearPageError']
   const clearSession: typeof import('./resources/js/utils/session.js')['clearSession']
   const compactListQuery: typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']
   const computed: typeof import('vue')['computed']
@@ -85,6 +86,8 @@ declare global {
   const onServerPrefetch: typeof import('vue')['onServerPrefetch']
   const onUnmounted: typeof import('vue')['onUnmounted']
   const onUpdated: typeof import('vue')['onUpdated']
+  const pageError: typeof import('./resources/js/composables/usePageLoad.js')['pageError']
+  const pageErrorCode: typeof import('./resources/js/utils/errors.js')['pageErrorCode']
   const pageErrorRoute: typeof import('./resources/js/utils/errors.js')['pageErrorRoute']
   const pageLoadError: typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']
   const pageLoading: typeof import('./resources/js/composables/useRouteLoad.js')['pageLoading']
@@ -104,6 +107,7 @@ declare global {
   const resolveHomeRoute: typeof import('./resources/js/utils/session.js')['resolveHomeRoute']
   const sameValue: typeof import('./resources/js/utils/formOptions.js')['sameValue']
   const saveError: typeof import('./resources/js/composables/usePageLoad.js')['saveError']
+  const setPageError: typeof import('./resources/js/composables/usePageLoad.js')['setPageError']
   const sexOptions: typeof import('./resources/js/utils/clinicalOptions.js')['sexOptions']
   const shallowReactive: typeof import('vue')['shallowReactive']
   const shallowReadonly: typeof import('vue')['shallowReadonly']
@@ -178,6 +182,7 @@ declare module 'vue' {
     readonly canNavigate: UnwrapRef<typeof import('./resources/js/composables/useAbility.js')['canNavigate']>
     readonly canWriteRole: UnwrapRef<typeof import('./resources/js/utils/access.js')['canWriteRole']>
     readonly canWriteUser: UnwrapRef<typeof import('./resources/js/utils/access.js')['canWriteUser']>
+    readonly clearPageError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['clearPageError']>
     readonly clearSession: UnwrapRef<typeof import('./resources/js/utils/session.js')['clearSession']>
     readonly compactListQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
@@ -240,7 +245,8 @@ declare module 'vue' {
     readonly onServerPrefetch: UnwrapRef<typeof import('vue')['onServerPrefetch']>
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
-    readonly pageErrorRoute: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorRoute']>
+    readonly pageError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageError']>
+    readonly pageErrorCode: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorCode']>
     readonly pageLoadError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']>
     readonly pageLoading: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['pageLoading']>
     readonly paymentMethods: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']>
@@ -259,6 +265,7 @@ declare module 'vue' {
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
     readonly sameValue: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['sameValue']>
     readonly saveError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['saveError']>
+    readonly setPageError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['setPageError']>
     readonly sexOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['sexOptions']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
@@ -325,6 +332,7 @@ declare module '@vue/runtime-core' {
     readonly canNavigate: UnwrapRef<typeof import('./resources/js/composables/useAbility.js')['canNavigate']>
     readonly canWriteRole: UnwrapRef<typeof import('./resources/js/utils/access.js')['canWriteRole']>
     readonly canWriteUser: UnwrapRef<typeof import('./resources/js/utils/access.js')['canWriteUser']>
+    readonly clearPageError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['clearPageError']>
     readonly clearSession: UnwrapRef<typeof import('./resources/js/utils/session.js')['clearSession']>
     readonly compactListQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['compactListQuery']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
@@ -387,7 +395,8 @@ declare module '@vue/runtime-core' {
     readonly onServerPrefetch: UnwrapRef<typeof import('vue')['onServerPrefetch']>
     readonly onUnmounted: UnwrapRef<typeof import('vue')['onUnmounted']>
     readonly onUpdated: UnwrapRef<typeof import('vue')['onUpdated']>
-    readonly pageErrorRoute: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorRoute']>
+    readonly pageError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageError']>
+    readonly pageErrorCode: UnwrapRef<typeof import('./resources/js/utils/errors.js')['pageErrorCode']>
     readonly pageLoadError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['pageLoadError']>
     readonly pageLoading: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['pageLoading']>
     readonly paymentMethods: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['paymentMethods']>
@@ -406,6 +415,7 @@ declare module '@vue/runtime-core' {
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
     readonly sameValue: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['sameValue']>
     readonly saveError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['saveError']>
+    readonly setPageError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['setPageError']>
     readonly sexOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['sexOptions']>
     readonly shallowReactive: UnwrapRef<typeof import('vue')['shallowReactive']>
     readonly shallowReadonly: UnwrapRef<typeof import('vue')['shallowReadonly']>
