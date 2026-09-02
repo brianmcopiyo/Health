@@ -228,6 +228,7 @@ const { pending } = usePageQuery(async () => {
           </HButton>
           <HButton
             type="submit"
+            :loading="saving"
             :disabled="saving || !form.to_hospital_id || !form.patient_id || !form.reason"
           >
             Create referral

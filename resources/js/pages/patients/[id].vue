@@ -755,6 +755,7 @@ const today = new Date().toISOString().slice(0, 10)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="save"
         >
@@ -784,6 +785,7 @@ const today = new Date().toISOString().slice(0, 10)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !uploadFile"
           @click="uploadDocument"
         >
@@ -812,6 +814,7 @@ const today = new Date().toISOString().slice(0, 10)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="saveStatus"
         >
@@ -845,6 +848,7 @@ const today = new Date().toISOString().slice(0, 10)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="startVisit"
         >

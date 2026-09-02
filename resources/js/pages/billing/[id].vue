@@ -250,6 +250,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !payForm.amount"
           @click="savePayment"
         >
@@ -288,6 +289,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !refundForm.amount"
           @click="saveRefund"
         >

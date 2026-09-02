@@ -725,6 +725,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="saveStatus"
         >
@@ -778,6 +779,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="saveEdit"
         >
@@ -820,6 +822,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !assignForm.patient_id || (isWard && !assignForm.facility_id)"
           @click="assignBed"
         >
@@ -851,6 +854,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !transferForm.facility_id"
           @click="transferAssignment"
         >
@@ -881,6 +885,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="moveBed"
         >
@@ -912,6 +917,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !bedForm.name"
           @click="addBed"
         >
@@ -937,6 +943,7 @@ watch(() => route.params.id, () => run())
         </HButton>
         <HButton
           variant="danger"
+          :loading="saving"
           :disabled="saving"
           @click="removeRecord"
         >

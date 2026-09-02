@@ -129,6 +129,7 @@ const save = async () => {
         Cancel
       </HButton>
       <HButton
+        :loading="saving"
         :disabled="saving"
         @click="save"
       >

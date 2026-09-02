@@ -137,6 +137,7 @@ const { pending } = usePageQuery(load)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="save"
         >

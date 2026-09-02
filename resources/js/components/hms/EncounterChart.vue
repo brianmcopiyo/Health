@@ -411,6 +411,7 @@ const openInvoice = async () => {
       <HButton
         v-if="canTreat && openStatuses"
         size="sm"
+        :loading="saving"
         :disabled="saving"
         @click="saveVitals"
       >
@@ -442,6 +443,7 @@ const openInvoice = async () => {
       <HButton
         v-if="canTreat && openStatuses"
         size="sm"
+        :loading="saving"
         :disabled="saving || !diagnosisForm.name"
         @click="saveDiagnosis"
       >
@@ -465,6 +467,7 @@ const openInvoice = async () => {
       <HButton
         v-if="canTreat && openStatuses"
         size="sm"
+        :loading="saving"
         :disabled="saving || !noteForm.body"
         @click="saveNote"
       >
@@ -504,6 +507,7 @@ const openInvoice = async () => {
         />
         <HButton
           size="sm"
+          :loading="saving"
           :disabled="saving || !planForm.title"
           @click="savePlan"
         >
@@ -557,6 +561,7 @@ const openInvoice = async () => {
       <HButton
         v-if="canTreat && openStatuses"
         size="sm"
+        :loading="saving"
         :disabled="saving || !orderForm.service_id"
         @click="saveOrder"
       >
@@ -613,6 +618,7 @@ const openInvoice = async () => {
       <HButton
         v-if="canTreat && openStatuses"
         size="sm"
+        :loading="saving"
         :disabled="saving || !rxForm.medication_id || !rxForm.dose"
         @click="saveRx"
       >
@@ -661,6 +667,7 @@ const openInvoice = async () => {
         Cancel
       </HButton>
       <HButton
+        :loading="saving"
         :disabled="saving"
         @click="admit"
       >
@@ -689,6 +696,7 @@ const openInvoice = async () => {
         Cancel
       </HButton>
       <HButton
+        :loading="saving"
         :disabled="saving"
         @click="discharge"
       >
@@ -729,6 +737,7 @@ const openInvoice = async () => {
         Cancel
       </HButton>
       <HButton
+        :loading="saving"
         :disabled="saving"
         @click="saveEdit"
       >

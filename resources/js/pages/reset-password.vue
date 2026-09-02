@@ -17,6 +17,9 @@ const errors = ref({})
 const done = ref(false)
 
 const submit = async () => {
+  if (submitting.value)
+    return
+
   formError.value = ''
   errors.value = {}
   if (password.value !== confirmation.value) {
@@ -149,9 +152,9 @@ const submit = async () => {
         <HButton
           type="submit"
           class="is-block"
-          :disabled="submitting"
+          :loading="submitting"
         >
-          {{ submitting ? 'Saving…' : 'Save new password' }}
+          Save new password
         </HButton>
       </div>
       <p class="h-auth-links">

@@ -436,6 +436,7 @@ const { pending } = usePageQuery(load)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="saveVehicle"
         >
@@ -521,6 +522,7 @@ const { pending } = usePageQuery(load)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="dispatch"
         >
@@ -559,6 +561,7 @@ const { pending } = usePageQuery(load)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="completeTrip"
         >
@@ -584,6 +587,7 @@ const { pending } = usePageQuery(load)
         </HButton>
         <HButton
           variant="danger"
+          :loading="saving"
           :disabled="saving"
           @click="removeVehicle"
         >

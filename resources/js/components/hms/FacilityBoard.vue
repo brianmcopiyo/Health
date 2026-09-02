@@ -643,6 +643,7 @@ const headers = computed(() => {
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="saveStatus"
         >
@@ -698,6 +699,7 @@ const headers = computed(() => {
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !orderForm.patient_id || !orderForm.item_name"
           @click="createOrder"
         >
@@ -742,6 +744,7 @@ const headers = computed(() => {
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !assignmentForm.patient_id || !assignmentForm.facility_id"
           @click="assignBed"
         >
@@ -809,6 +812,7 @@ const headers = computed(() => {
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !createForm.name"
           @click="createUnit"
         >
@@ -837,6 +841,7 @@ const headers = computed(() => {
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !resultForm.result"
           @click="saveResult"
         >

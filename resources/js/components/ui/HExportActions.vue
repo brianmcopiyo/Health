@@ -13,6 +13,7 @@ const { exporting, exportDataset } = useExport()
 <template>
   <HButton
     variant="ghost"
+    :loading="exporting === 'pdf'"
     :disabled="!!exporting || disabled"
     @click="exportDataset(props.dataset, props.query, 'pdf')"
   >
@@ -21,6 +22,7 @@ const { exporting, exportDataset } = useExport()
   </HButton>
   <HButton
     variant="ghost"
+    :loading="exporting === 'xlsx'"
     :disabled="!!exporting || disabled"
     @click="exportDataset(props.dataset, props.query, 'xlsx')"
   >

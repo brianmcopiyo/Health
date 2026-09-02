@@ -60,6 +60,9 @@ export const saveError = error => {
 }
 
 export const wrapSave = async (saving, formError, action) => {
+  if (unref(saving))
+    return false
+
   saving.value = true
   formError.value = ''
   try {

@@ -28,6 +28,9 @@ const lead = computed(() => expired.value
   : 'Live capacity, referrals, and role-based work for every hospital in the Caregrid network.')
 
 const login = async () => {
+  if (submitting.value)
+    return
+
   formError.value = ''
   errors.value = {}
   submitting.value = true
@@ -108,7 +111,6 @@ const login = async () => {
           placeholder="you@hospital.org"
           :error="errors.email"
           :disabled="submitting"
-          :loading="submitting"
         />
         <HInput
           v-model="credentials.password"
@@ -120,14 +122,13 @@ const login = async () => {
           placeholder="Your Caregrid password"
           :error="errors.password"
           :disabled="submitting"
-          :loading="submitting"
         />
         <HButton
           type="submit"
           class="is-block"
-          :disabled="submitting"
+          :loading="submitting"
         >
-          {{ submitting ? 'Signing in…' : 'Sign in to Caregrid' }}
+          Sign in to Caregrid
         </HButton>
       </div>
       <p class="h-auth-links">

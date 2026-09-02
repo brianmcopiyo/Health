@@ -31,6 +31,7 @@ const emit = defineEmits(['update:modelValue', 'confirm'])
       </HButton>
       <HButton
         variant="danger"
+        :loading="saving"
         :disabled="saving"
         @click="emit('confirm')"
       >

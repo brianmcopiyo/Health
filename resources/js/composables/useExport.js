@@ -30,6 +30,9 @@ export const useExport = () => {
   const exporting = ref('')
 
   const exportDataset = async (dataset, filters = {}, format = 'xlsx') => {
+    if (exporting.value)
+      return
+
     exporting.value = format
     try {
       await downloadExport(dataset, filters, format)

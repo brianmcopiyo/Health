@@ -161,6 +161,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="isOrigin && request?.status === 'pending' && ability.can('update', 'AssistanceRequest')"
           variant="ghost"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('cancelled')"
         >
@@ -169,6 +170,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="isDestination && request?.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
           variant="danger"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('declined')"
         >
@@ -177,6 +179,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="isDestination && request?.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
           variant="ok"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('accepted')"
         >
@@ -184,6 +187,7 @@ const { pending } = usePageQuery(load)
         </HButton>
         <HButton
           v-if="isDestination && request?.status === 'accepted' && ability.can('respond', 'AssistanceRequest')"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('fulfilled')"
         >

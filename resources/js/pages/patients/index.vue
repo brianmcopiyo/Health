@@ -264,6 +264,7 @@ const today = new Date().toISOString().slice(0, 10)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="save"
         >

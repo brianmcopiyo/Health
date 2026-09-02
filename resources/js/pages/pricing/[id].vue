@@ -105,6 +105,7 @@ watch(() => route.params.id, () => run())
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="saveItem"
         >

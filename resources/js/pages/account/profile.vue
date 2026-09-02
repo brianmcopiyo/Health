@@ -149,6 +149,7 @@ const themeOptions = [
           <div class="h-actions">
             <HButton
               size="sm"
+              :loading="photoSaving"
               :disabled="photoSaving"
               @click="choosePhoto"
             >
@@ -162,6 +163,7 @@ const themeOptions = [
               v-if="userData?.hasAvatar"
               variant="ghost"
               size="sm"
+              :loading="photoSaving"
               :disabled="photoSaving"
               @click="removePhoto"
             >
@@ -228,6 +230,7 @@ const themeOptions = [
         <div class="h-actions">
           <HButton
             type="submit"
+            :loading="saving"
             :disabled="saving"
           >
             Save profile
@@ -292,6 +295,7 @@ const themeOptions = [
         <div class="h-actions">
           <HButton
             type="submit"
+            :loading="saving"
             :disabled="saving"
           >
             Save details
@@ -326,6 +330,7 @@ const themeOptions = [
         <div class="h-actions">
           <HButton
             type="submit"
+            :loading="saving"
             :disabled="saving"
           >
             Save preferences

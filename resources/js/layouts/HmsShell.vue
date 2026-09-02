@@ -12,6 +12,8 @@ const userData = useCookie('userData')
 const accessToken = useCookie('accessToken')
 const collapsed = useCookie('hmsSidebarCollapsed', { default: () => false })
 const { photoUrl } = useProfilePhoto()
+const saving = ref(false)
+const formError = ref('')
 const navOpen = ref(false)
 const overlayNav = ref(false)
 const workspace = ref(null)
@@ -113,11 +115,13 @@ const switchHospital = async hospitalId => {
 const setAvailability = async value => {
   if (value === userData.value?.availability)
     return
-  const payload = await $api('/auth/profile', {
-    method: 'PUT',
-    body: { availability: value },
+  await wrapSave(saving, formError, async () => {
+    const payload = await $api('/auth/profile', {
+      method: 'PUT',
+      body: { availability: value },
+    })
+    applySession(payload, ability)
   })
-  applySession(payload, ability)
 }
 
 const logout = async () => {
@@ -450,6 +454,8 @@ onBeforeUnmount(() => {
                     v-for="option in availabilityOptions"
                     :key="option.value"
                     type="button"
+                    :disabled="saving"
+                    :aria-busy="saving ? 'true' : undefined"
                     :class="{ 'is-on': (userData?.availability || 'available') === option.value }"
                     @click="setAvailability(option.value)"
                   >

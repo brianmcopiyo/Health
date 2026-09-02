@@ -118,6 +118,7 @@ const stockHeaders = [
               v-if="ability.can('update', 'Pharmacy') && item.status === 'pending'"
               size="sm"
               variant="ghost"
+              :loading="saving"
               :disabled="saving"
               @click="updateRx(item, 'verified')"
             >
@@ -126,6 +127,7 @@ const stockHeaders = [
             <HButton
               v-if="ability.can('update', 'Pharmacy') && item.status !== 'dispensed' && item.status !== 'cancelled'"
               size="sm"
+              :loading="saving"
               :disabled="saving"
               @click="updateRx(item, 'dispensed')"
             >
@@ -135,6 +137,7 @@ const stockHeaders = [
               v-if="ability.can('update', 'Pharmacy') && !['dispensed', 'cancelled'].includes(item.status)"
               variant="ghost"
               size="sm"
+              :loading="saving"
               :disabled="saving"
               @click="updateRx(item, 'cancelled')"
             >
@@ -209,6 +212,7 @@ const stockHeaders = [
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="saveStock"
         >

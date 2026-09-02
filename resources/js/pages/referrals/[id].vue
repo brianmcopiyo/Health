@@ -200,6 +200,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="isOrigin && ['pending', 'accepted'].includes(referral?.status) && ability.can('update', 'Referral')"
           variant="ghost"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('cancelled')"
         >
@@ -208,6 +209,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="isDestination && referral?.status === 'pending' && ability.can('respond', 'Referral')"
           variant="ghost"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('more_info')"
         >
@@ -216,6 +218,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="isDestination && ['pending', 'more_info'].includes(referral?.status) && ability.can('respond', 'Referral')"
           variant="danger"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('declined')"
         >
@@ -224,6 +227,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="isDestination && ['pending', 'more_info'].includes(referral?.status) && ability.can('respond', 'Referral')"
           variant="ok"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('accepted')"
         >
@@ -231,6 +235,7 @@ const { pending } = usePageQuery(load)
         </HButton>
         <HButton
           v-if="referral?.status === 'accepted' && (ability.can('update', 'Referral') || ability.can('respond', 'Referral'))"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('in_transit')"
         >
@@ -239,6 +244,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="['accepted', 'in_transit'].includes(referral?.status) && (ability.can('update', 'Referral') || ability.can('respond', 'Referral'))"
           variant="ok"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('completed')"
         >

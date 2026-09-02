@@ -263,6 +263,7 @@ const { pending } = usePageQuery(load)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="create"
         >
@@ -296,6 +297,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="selected && userData?.hospitalId === selected.from_hospital_id && selected.status === 'pending'"
           variant="ghost"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('cancelled')"
         >
@@ -304,6 +306,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="selected && userData?.hospitalId === selected.to_hospital_id && selected.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
           variant="danger"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('declined')"
         >
@@ -312,6 +315,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="selected && userData?.hospitalId === selected.to_hospital_id && selected.status === 'pending' && ability.can('respond', 'AssistanceRequest')"
           variant="ok"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('accepted')"
         >
@@ -319,6 +323,7 @@ const { pending } = usePageQuery(load)
         </HButton>
         <HButton
           v-if="selected && userData?.hospitalId === selected.to_hospital_id && selected.status === 'accepted'"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('fulfilled')"
         >

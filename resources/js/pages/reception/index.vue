@@ -217,6 +217,7 @@ const { pending } = usePageQuery(load)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !patientForm.first_name || !patientForm.last_name"
           @click="registerPatient"
         >
@@ -272,6 +273,7 @@ const { pending } = usePageQuery(load)
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !visitForm.patient_id"
           @click="createVisit"
         >

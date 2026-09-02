@@ -167,6 +167,7 @@ const { pending } = usePageQuery(load)
             item-value="value"
             label="Bulk status"
             placeholder="Change status"
+            :disabled="saving"
             @update:model-value="value => { if (value) applyBulk(value) }"
           />
         </template>

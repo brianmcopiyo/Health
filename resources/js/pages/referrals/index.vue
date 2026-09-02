@@ -206,6 +206,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="selected && isOrigin(selected) && selected.status === 'pending'"
           variant="ghost"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('cancelled')"
         >
@@ -214,6 +215,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="selected && isDestination(selected) && selected.status === 'pending' && ability.can('respond', 'Referral')"
           variant="ghost"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('more_info')"
         >
@@ -222,6 +224,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="selected && isDestination(selected) && ['pending', 'more_info'].includes(selected.status) && ability.can('respond', 'Referral')"
           variant="danger"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('declined')"
         >
@@ -230,6 +233,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="selected && isDestination(selected) && ['pending', 'more_info'].includes(selected.status) && ability.can('respond', 'Referral')"
           variant="ok"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('accepted')"
         >
@@ -237,6 +241,7 @@ const { pending } = usePageQuery(load)
         </HButton>
         <HButton
           v-if="selected && selected.status === 'accepted'"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('in_transit')"
         >
@@ -245,6 +250,7 @@ const { pending } = usePageQuery(load)
         <HButton
           v-if="selected && ['accepted', 'in_transit'].includes(selected.status)"
           variant="ok"
+          :loading="saving"
           :disabled="saving"
           @click="updateStatus('completed')"
         >

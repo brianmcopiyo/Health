@@ -60,6 +60,9 @@ const loadTable = async page => {
 }
 
 const exportReport = async format => {
+  if (exporting.value)
+    return
+
   exporting.value = format
   try {
     await downloadReport(section.value, filters.value, format)
@@ -88,6 +91,7 @@ watch(filters, () => {
     >
       <HButton
         variant="ghost"
+        :loading="exporting === 'pdf'"
         :disabled="!!exporting || pending"
         @click="exportReport('pdf')"
       >
@@ -96,6 +100,7 @@ watch(filters, () => {
       </HButton>
       <HButton
         variant="ghost"
+        :loading="exporting === 'xlsx'"
         :disabled="!!exporting || pending"
         @click="exportReport('xlsx')"
       >

@@ -176,6 +176,7 @@ onBeforeUnmount(() => {
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving || !form.patient_id"
           @click="startVisit"
         >

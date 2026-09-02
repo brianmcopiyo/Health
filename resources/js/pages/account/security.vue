@@ -239,6 +239,7 @@ onMounted(() => {
       v-model="passwordOpen"
       title="Change password"
       :error="formError"
+      :persistent="saving"
     >
       <form
         class="h-form"
@@ -267,11 +268,13 @@ onMounted(() => {
       <template #actions>
         <HButton
           variant="ghost"
+          :disabled="saving"
           @click="passwordOpen = false"
         >
           Cancel
         </HButton>
         <HButton
+          :loading="saving"
           :disabled="saving"
           @click="changePassword"
         >
@@ -284,17 +287,20 @@ onMounted(() => {
       v-model="revokeOpen"
       title="Revoke session"
       :error="formError"
+      :persistent="saving"
     >
       <p>This device will need to sign in again.</p>
       <template #actions>
         <HButton
           variant="ghost"
+          :disabled="saving"
           @click="revokeOpen = false"
         >
           Keep session
         </HButton>
         <HButton
           variant="danger"
+          :loading="saving"
           :disabled="saving"
           @click="revokeSession"
         >
@@ -307,17 +313,20 @@ onMounted(() => {
       v-model="revokeOthersOpen"
       title="Sign out other sessions"
       :error="formError"
+      :persistent="saving"
     >
       <p>Your current session stays active. Other devices will need to sign in again.</p>
       <template #actions>
         <HButton
           variant="ghost"
+          :disabled="saving"
           @click="revokeOthersOpen = false"
         >
           Cancel
         </HButton>
         <HButton
           variant="danger"
+          :loading="saving"
           :disabled="saving"
           @click="revokeOthers"
         >

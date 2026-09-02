@@ -831,6 +831,12 @@ img { max-width: 100%; }
   transition: background-color var(--motion-fast) var(--motion-ease), color var(--motion-fast) var(--motion-ease);
 }
 
+.hms-avail button:disabled {
+  opacity: 1;
+  cursor: progress;
+  pointer-events: none;
+}
+
 .hms-menu-sep {
   height: 1px;
   margin: 4px 8px;
@@ -1137,6 +1143,27 @@ img { max-width: 100%; }
 .h-btn:hover:not(:disabled) { transform: translateY(-1px); }
 .h-btn:active:not(:disabled) { transform: translateY(0) scale(0.98); }
 .h-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.h-btn.is-loading,
+.h-btn.is-loading:disabled {
+  opacity: 1;
+  cursor: progress;
+  pointer-events: none;
+}
+.h-btn.is-loading .h-loader {
+  gap: 4px;
+  flex-shrink: 0;
+}
+.h-btn.is-loading .h-loader span {
+  width: 6px;
+  height: 6px;
+  background: currentColor;
+}
+.h-btn.is-loading .h-loader span:nth-child(2),
+.h-btn.is-loading .h-loader span:nth-child(3) {
+  background: currentColor;
+}
+.h-btn.is-loading .h-loader span:nth-child(2) { opacity: 0.7; }
+.h-btn.is-loading .h-loader span:nth-child(3) { opacity: 0.45; }
 .h-btn.is-ghost {
   background: var(--surface-2);
   color: var(--ink);

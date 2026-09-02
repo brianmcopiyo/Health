@@ -143,6 +143,7 @@ watch(() => route.params.id, () => run())
         />
         <HButton
           size="sm"
+          :loading="saving"
           :disabled="saving || !staffForm.user_id"
           @click="addStaff"
         >
