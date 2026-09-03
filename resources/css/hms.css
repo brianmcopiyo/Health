@@ -546,24 +546,40 @@ img { max-width: 100%; }
 .hms-header {
   min-height: var(--header);
   display: flex;
-  align-items: center;
-  padding: 0 var(--page-pad-x);
-  border-bottom: 1px solid var(--edge);
-  background: var(--header-bg);
-  backdrop-filter: blur(12px);
+  align-items: flex-start;
+  padding: 0 0 28px;
+  border-bottom: 0;
+  background: transparent;
   position: sticky;
   top: 0;
   z-index: 20;
+  pointer-events: none;
+}
+
+.hms-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    var(--paper) 0%,
+    color-mix(in srgb, var(--paper) 72%, transparent) 58%,
+    transparent 100%
+  );
 }
 
 .hms-header-inner {
+  position: relative;
   width: min(100%, var(--page-max));
   margin: 0 auto;
   min-height: var(--header);
+  padding: 0 var(--page-pad-x);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  pointer-events: auto;
 }
 
 .hms-context-wrap {
