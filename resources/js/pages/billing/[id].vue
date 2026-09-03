@@ -76,11 +76,12 @@ const saveRefund = async () => {
 }
 
 const recordActions = computed(() => {
-  if (!record.value || !ability.can('update', 'Invoice')) return []
+  if (!record.value) return []
   return [
-    { label: 'Issue', icon: 'send', if: record.value.status === 'draft', onSelect: () => updateStatus('issued') },
-    { label: 'Record payment', icon: 'wallet', if: record.value.status !== 'paid' && record.value.status !== 'cancelled', onSelect: openPay },
-    { label: 'Cancel invoice', icon: 'ban', danger: true, if: ['draft', 'issued'].includes(record.value.status), onSelect: () => updateStatus('cancelled') },
+    { label: 'Issue', icon: 'send', if: ability.can('update', 'Invoice') && record.value.status === 'draft', onSelect: () => updateStatus('issued') },
+    { label: 'Record payment', icon: 'wallet', if: ability.can('update', 'Invoice') && record.value.status !== 'paid' && record.value.status !== 'cancelled', onSelect: openPay },
+    { label: 'Record refund', icon: 'wallet', if: ability.can('refund', 'Invoice') && (record.value.paid_amount || 0) > 0, onSelect: openRefund },
+    { label: 'Cancel invoice', icon: 'ban', danger: true, if: ability.can('update', 'Invoice') && ['draft', 'issued'].includes(record.value.status), onSelect: () => updateStatus('cancelled') },
   ]
 })
 
@@ -174,17 +175,6 @@ watch(() => route.params.id, () => run())
       title="Refunds"
       flush
     >
-      <template
-        v-if="ability.can('refund', 'Invoice') && (record.paid_amount || 0) > 0"
-        #actions
-      >
-        <HButton
-          size="sm"
-          @click="openRefund"
-        >
-          Record refund
-        </HButton>
-      </template>
       <HTable
         :headers="[
           { title: 'Amount', key: 'amount' },

@@ -16,6 +16,7 @@ const tab = ref('overview')
 const directory = ref([])
 const saving = ref(false)
 const formError = ref('')
+const assignOpen = ref(false)
 const staffForm = ref({ user_id: null, assignment_role: 'staff', shift: 'day' })
 
 const tabs = [
@@ -46,6 +47,12 @@ const load = async () => {
     directory.value = asList(await $api('/users/directory').catch(() => []))
 }
 
+const openAssign = () => {
+  formError.value = ''
+  staffForm.value = { user_id: null, assignment_role: 'staff', shift: 'day' }
+  assignOpen.value = true
+}
+
 const addStaff = async () => {
   await wrapSave(saving, formError, async () => {
     await $api('/staff-assignments', {
@@ -53,9 +60,17 @@ const addStaff = async () => {
       body: { ...staffForm.value, department_id: record.value.id },
     })
     staffForm.value = { user_id: null, assignment_role: 'staff', shift: 'day' }
+    assignOpen.value = false
     await load()
   })
 }
+
+const recordActions = computed(() => {
+  if (!record.value) return []
+  return [
+    { label: 'Assign staff', icon: 'users', if: ability.can('update', 'User') || ability.can('manage', 'User'), onSelect: openAssign },
+  ]
+})
 
 const { pending, run } = usePageQuery(load)
 watch(() => route.params.id, () => run())
@@ -68,6 +83,7 @@ watch(() => route.params.id, () => run())
     :status="record?.is_active ? 'active' : 'inactive'"
     :back="{ name: 'admin-departments' }"
     back-label="Departments"
+    :actions="recordActions"
     :tabs="tabs"
     :tab="tab"
     :loading="pending"
@@ -75,7 +91,7 @@ watch(() => route.params.id, () => run())
     @update:tab="tab = $event"
   >
     <div
-      v-if="formError"
+      v-if="formError && !assignOpen"
       class="h-alert"
     >
       {{ formError }}
@@ -126,28 +142,6 @@ watch(() => route.params.id, () => run())
           </HCell>
         </template>
       </HTable>
-      <fieldset
-        v-if="ability.can('update', 'User') || ability.can('manage', 'User')"
-        class="h-form"
-        style="padding: 1rem"
-      >
-        <HSelect
-          v-model="staffForm.user_id"
-          :items="directory"
-          item-title="name"
-          item-value="id"
-          label="Assign staff"
-          placeholder="Select a staff member"
-        />
-        <HButton
-          size="sm"
-          :loading="saving"
-          :disabled="saving || !staffForm.user_id"
-          @click="addStaff"
-        >
-          Assign
-        </HButton>
-      </fieldset>
     </HCard>
 
     <HCard
@@ -227,5 +221,38 @@ watch(() => route.params.id, () => run())
         </template>
       </HTable>
     </HCard>
+
+    <HModal
+      v-model="assignOpen"
+      title="Assign staff"
+      :error="formError"
+      :persistent="saving"
+    >
+      <HSelect
+        v-model="staffForm.user_id"
+        :items="directory"
+        item-title="name"
+        item-value="id"
+        label="Staff member"
+        placeholder="Select a staff member"
+        required
+      />
+      <template #actions>
+        <HButton
+          variant="ghost"
+          :disabled="saving"
+          @click="assignOpen = false"
+        >
+          Cancel
+        </HButton>
+        <HButton
+          :loading="saving"
+          :disabled="saving || !staffForm.user_id"
+          @click="addStaff"
+        >
+          Assign
+        </HButton>
+      </template>
+    </HModal>
   </HRecord>
 </template>

@@ -181,6 +181,8 @@ const tabs = [
 const recordActions = computed(() => {
   if (!chart.value) return []
   return [
+    { label: 'Open visit', icon: 'stethoscope', if: ability.can('create', 'Opd') || ability.can('create', 'Reception') || ability.can('create', 'Emergency'), onSelect: openVisit },
+    { label: 'Upload', icon: 'upload', if: ability.can('update', 'Patient'), onSelect: openUpload },
     { label: 'Edit', icon: 'edit', if: ability.can('update', 'Patient'), onSelect: openEdit },
     { label: 'Update status', icon: 'wrench', if: ability.can('update', 'Patient'), onSelect: openStatus },
     { label: 'Export record', icon: 'download', if: ability.can('manage', 'Patient'), onSelect: exportRecord },
@@ -253,17 +255,6 @@ const today = new Date().toISOString().slice(0, 10)
         </HCard>
 
         <HCard title="Current care">
-          <template
-            v-if="ability.can('create', 'Opd') || ability.can('create', 'Reception') || ability.can('create', 'Emergency')"
-            #actions
-          >
-            <HButton
-              size="sm"
-              @click="openVisit"
-            >
-              Open visit
-            </HButton>
-          </template>
           <div
             v-if="chart.active_bed"
             class="h-metric"
@@ -481,18 +472,6 @@ const today = new Date().toISOString().slice(0, 10)
         title="Documents"
         flush
       >
-        <template
-          v-if="ability.can('update', 'Patient')"
-          #actions
-        >
-          <HButton
-            size="sm"
-            @click="openUpload"
-          >
-            <HIcon name="upload" />
-            Upload
-          </HButton>
-        </template>
         <HTable
           :headers="[
             { title: 'File', key: 'original_name', fill: true },

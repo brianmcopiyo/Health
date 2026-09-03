@@ -244,7 +244,14 @@ const recordActions = computed(() => {
   const canUpdate = ability.can('update', 'Facility')
     || (isWard.value && ability.can('update', 'Ward'))
     || (isBed.value && ability.can('update', 'Bed'))
+  const assignment = record.value.assignment
   return [
+    { label: 'Add bed', icon: 'plus', if: isWard.value && ability.can('create', 'Facility'), onSelect: openAddBed },
+    { label: 'Assign bed', icon: 'bed', if: isWard.value && ability.can('create', 'Bed'), onSelect: openAssign },
+    { label: 'Assign patient', icon: 'users', if: isBed.value && ability.can('create', 'Bed') && !assignment, onSelect: openAssign },
+    { label: 'Open chart', icon: 'stethoscope', if: Boolean(assignment && (assignment.encounter_id || assignment.encounter)), onSelect: () => openChart(assignment) },
+    { label: 'Transfer', icon: 'transfer', if: Boolean(assignment) && ability.can('update', 'Bed'), onSelect: () => openTransfer(assignment) },
+    { label: 'Discharge', icon: 'door', if: Boolean(assignment) && ability.can('update', 'Bed'), onSelect: () => discharge(assignment) },
     { label: 'Update status', icon: 'wrench', if: canUpdate, onSelect: openStatus },
     { label: 'Edit', icon: 'edit', if: ability.can('update', 'Facility'), onSelect: openEdit },
     { label: 'Move ward', icon: 'transfer', if: isBed.value && ability.can('update', 'Facility'), onSelect: openMove },
@@ -347,17 +354,6 @@ watch(() => route.params.id, () => run())
       title="Beds"
       flush
     >
-      <template
-        v-if="ability.can('create', 'Facility')"
-        #actions
-      >
-        <HButton
-          size="sm"
-          @click="openAddBed"
-        >
-          Add bed
-        </HButton>
-      </template>
       <HTable
         :headers="[
           { title: 'Bed', key: 'name', fill: true },
@@ -395,17 +391,6 @@ watch(() => route.params.id, () => run())
       title="Current occupants"
       flush
     >
-      <template
-        v-if="isWard && ability.can('create', 'Bed')"
-        #actions
-      >
-        <HButton
-          size="sm"
-          @click="openAssign"
-        >
-          Assign bed
-        </HButton>
-      </template>
       <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name', fill: true },
@@ -444,17 +429,6 @@ watch(() => route.params.id, () => run())
       v-if="record && tab === 'patient'"
       title="Current patient"
     >
-      <template
-        v-if="isBed && ability.can('create', 'Bed') && !record.assignment"
-        #actions
-      >
-        <HButton
-          size="sm"
-          @click="openAssign"
-        >
-          Assign patient
-        </HButton>
-      </template>
       <template v-if="record.assignment">
         <div class="h-metric">
           <span>Patient</span>
@@ -470,17 +444,6 @@ watch(() => route.params.id, () => run())
         <div class="h-metric">
           <span>Nurse</span>
           <strong>{{ record.assignment.nurse?.name || '—' }}</strong>
-        </div>
-        <div class="h-actions">
-          <HActionMenu
-            :compact="false"
-            label="More"
-            :actions="[
-              { label: 'Open chart', icon: 'stethoscope', if: Boolean(record.assignment.encounter_id || record.assignment.encounter), onSelect: () => openChart(record.assignment) },
-              { label: 'Transfer', icon: 'transfer', if: ability.can('update', 'Bed'), onSelect: () => openTransfer(record.assignment) },
-              { label: 'Discharge', icon: 'door', if: ability.can('update', 'Bed'), onSelect: () => discharge(record.assignment) },
-            ]"
-          />
         </div>
       </template>
       <HEmpty
