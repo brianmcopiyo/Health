@@ -34,6 +34,13 @@ const saveItem = async () => {
   })
 }
 
+const recordActions = computed(() => {
+  if (!record.value) return []
+  return [
+    { label: 'Add price', icon: 'plus', if: ability.can('update', 'PriceList'), onSelect: openItem },
+  ]
+})
+
 const { pending, run } = usePageQuery(load)
 watch(() => route.params.id, () => run())
 </script>
@@ -44,6 +51,7 @@ watch(() => route.params.id, () => run())
     :subtitle="record?.kind"
     :back="{ name: 'pricing' }"
     back-label="Pricing"
+    :actions="recordActions"
     :loading="pending"
     :missing="!pending && !record"
   >
@@ -52,17 +60,6 @@ watch(() => route.params.id, () => run())
       title="Prices"
       flush
     >
-      <template
-        v-if="ability.can('update', 'PriceList')"
-        #actions
-      >
-        <HButton
-          size="sm"
-          @click="openItem"
-        >
-          Add price
-        </HButton>
-      </template>
       <HTable
         :headers="[
           { title: 'Type', key: 'billable_type', fill: true },

@@ -8,6 +8,7 @@ const props = defineProps({
   statuses: { type: Array, default: () => [] },
   back: [String, Object],
   backLabel: { type: String, default: 'Back' },
+  actions: { type: Array, default: () => [] },
   tabs: { type: Array, default: () => [] },
   tab: String,
   loading: Boolean,
@@ -16,6 +17,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:tab'])
+const slots = useSlots()
 const showSkel = useDelayedVisible(() => props.loading)
 const fieldRows = [1, 2, 3, 4]
 const skelHeaders = [
@@ -42,16 +44,20 @@ const statusItems = computed(() => {
   }
   return items
 })
+
+const hasNavActions = computed(() => (props.actions || []).some(action => action && action.if !== false) || Boolean(slots.actions))
+const showNav = computed(() => Boolean(props.back) || hasNavActions.value)
 </script>
 
 <template>
   <div class="h-record">
     <div class="h-record-head">
       <div
-        v-if="back"
+        v-if="showNav"
         class="h-record-nav"
       >
         <HButton
+          v-if="back"
           class="h-record-back"
           variant="ghost"
           size="sm"
@@ -63,6 +69,20 @@ const statusItems = computed(() => {
           />
           {{ backLabel }}
         </HButton>
+        <span
+          v-else
+          class="h-record-nav-spacer"
+        />
+        <div
+          v-if="hasNavActions"
+          class="h-record-nav-actions"
+        >
+          <HActionMenu
+            v-if="(actions || []).length"
+            :actions="actions"
+          />
+          <slot name="actions" />
+        </div>
       </div>
       <div class="hms-page-copy">
         <h1>{{ title || 'Record' }}</h1>

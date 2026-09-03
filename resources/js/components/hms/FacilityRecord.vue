@@ -239,6 +239,20 @@ const openChart = item => {
     chartOpen.value = true
 }
 
+const recordActions = computed(() => {
+  if (!record.value) return []
+  const canUpdate = ability.can('update', 'Facility')
+    || (isWard.value && ability.can('update', 'Ward'))
+    || (isBed.value && ability.can('update', 'Bed'))
+  return [
+    { label: 'Update status', icon: 'wrench', if: canUpdate, onSelect: openStatus },
+    { label: 'Edit', icon: 'edit', if: ability.can('update', 'Facility'), onSelect: openEdit },
+    { label: 'Move ward', icon: 'transfer', if: isBed.value && ability.can('update', 'Facility'), onSelect: openMove },
+    { label: 'Unassign ward', icon: 'ban', if: isBed.value && record.value.parent_id && ability.can('update', 'Facility'), onSelect: unassignWard },
+    { label: 'Remove', icon: 'trash', danger: true, if: ability.can('manage', 'Facility'), onSelect: () => { formError.value = ''; removing.value = true } },
+  ]
+})
+
 const { pending, run } = usePageQuery(load)
 watch(() => route.params.id, () => run())
 </script>
@@ -250,6 +264,7 @@ watch(() => route.params.id, () => run())
     :status="record?.status"
     :back="{ name: listTo }"
     :back-label="listLabel"
+    :actions="recordActions"
     :tabs="tabs"
     :tab="tab"
     :loading="pending"
@@ -288,22 +303,6 @@ watch(() => route.params.id, () => run())
       </HGrid>
       <div class="h-detail">
         <HCard title="Unit">
-          <template
-            v-if="ability.can('update', 'Facility') || (isWard && ability.can('update', 'Ward')) || (isBed && ability.can('update', 'Bed')) || ability.can('manage', 'Facility')"
-            #actions
-          >
-            <HActionMenu
-              :compact="false"
-              label="More"
-              :actions="[
-                { label: 'Update status', icon: 'wrench', if: ability.can('update', 'Facility') || (isWard && ability.can('update', 'Ward')) || (isBed && ability.can('update', 'Bed')), onSelect: openStatus },
-                { label: 'Edit', icon: 'edit', if: ability.can('update', 'Facility'), onSelect: openEdit },
-                { label: 'Move ward', icon: 'transfer', if: isBed && ability.can('update', 'Facility'), onSelect: openMove },
-                { label: 'Unassign ward', icon: 'ban', if: isBed && record.parent_id && ability.can('update', 'Facility'), onSelect: unassignWard },
-                { label: 'Remove', icon: 'trash', danger: true, if: ability.can('manage', 'Facility'), onSelect: () => { formError = ''; removing = true } },
-              ]"
-            />
-          </template>
           <p>{{ record.resource_notes || 'No resource notes yet.' }}</p>
           <p
             v-if="record.notes"

@@ -75,6 +75,15 @@ const saveRefund = async () => {
   })
 }
 
+const recordActions = computed(() => {
+  if (!record.value || !ability.can('update', 'Invoice')) return []
+  return [
+    { label: 'Issue', icon: 'send', if: record.value.status === 'draft', onSelect: () => updateStatus('issued') },
+    { label: 'Record payment', icon: 'wallet', if: record.value.status !== 'paid' && record.value.status !== 'cancelled', onSelect: openPay },
+    { label: 'Cancel invoice', icon: 'ban', danger: true, if: ['draft', 'issued'].includes(record.value.status), onSelect: () => updateStatus('cancelled') },
+  ]
+})
+
 const { pending, run } = usePageQuery(load)
 watch(() => route.params.id, () => run())
 </script>
@@ -86,6 +95,7 @@ watch(() => route.params.id, () => run())
     :status="record?.status"
     :back="{ name: 'billing' }"
     back-label="Billing"
+    :actions="recordActions"
     :tabs="tabs"
     :tab="tab"
     :loading="pending"
@@ -104,20 +114,6 @@ watch(() => route.params.id, () => run())
       class="h-detail"
     >
       <HCard title="Invoice">
-        <template
-          v-if="ability.can('update', 'Invoice')"
-          #actions
-        >
-          <HActionMenu
-            :compact="false"
-            label="More"
-            :actions="[
-              { label: 'Issue', icon: 'send', if: record.status === 'draft', onSelect: () => updateStatus('issued') },
-              { label: 'Record payment', icon: 'wallet', if: record.status !== 'paid' && record.status !== 'cancelled', onSelect: openPay },
-              { label: 'Cancel invoice', icon: 'ban', danger: true, if: ['draft', 'issued'].includes(record.status), onSelect: () => updateStatus('cancelled') },
-            ]"
-          />
-        </template>
         <div class="h-metric">
           <span>Patient</span>
           <strong>
@@ -205,17 +201,6 @@ watch(() => route.params.id, () => run())
       title="Payments"
       flush
     >
-      <template
-        v-if="ability.can('update', 'Invoice') && record.status !== 'paid' && record.status !== 'cancelled'"
-        #actions
-      >
-        <HButton
-          size="sm"
-          @click="openPay"
-        >
-          Record payment
-        </HButton>
-      </template>
       <HTable
         :headers="[
           { title: 'Amount', key: 'amount' },

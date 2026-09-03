@@ -60,6 +60,13 @@ const updateStatus = async nextStatus => {
   })
 }
 
+const recordActions = computed(() => {
+  if (!referral.value) return []
+  return [
+    { label: 'Manage', icon: 'wrench', onSelect: openManage },
+  ]
+})
+
 const { pending } = usePageQuery(load)
 </script>
 
@@ -70,6 +77,7 @@ const { pending } = usePageQuery(load)
     :status="referral?.status"
     :back="{ name: 'referrals' }"
     back-label="Referrals"
+    :actions="recordActions"
     :tabs="tabs"
     :tab="tab"
     :loading="pending"
@@ -82,14 +90,6 @@ const { pending } = usePageQuery(load)
         class="h-detail"
       >
         <HCard title="Transfer">
-          <template #actions>
-            <HButton
-              size="sm"
-              @click="openManage"
-            >
-              Manage
-            </HButton>
-          </template>
           <div class="h-metric">
             <span>Need</span>
             <strong>{{ referral.required_facility_type?.name || '—' }} · {{ referral.required_capacity }}</strong>

@@ -50,6 +50,13 @@ const updateStatus = async status => {
   })
 }
 
+const recordActions = computed(() => {
+  if (!request.value) return []
+  return [
+    { label: 'Manage', icon: 'wrench', onSelect: openManage },
+  ]
+})
+
 const { pending } = usePageQuery(load)
 </script>
 
@@ -60,6 +67,7 @@ const { pending } = usePageQuery(load)
     :status="request?.status"
     :back="{ name: 'assistance' }"
     back-label="Assistance"
+    :actions="recordActions"
     :tabs="tabs"
     :tab="tab"
     :loading="pending"
@@ -72,14 +80,6 @@ const { pending } = usePageQuery(load)
         class="h-detail"
       >
         <HCard title="Request">
-          <template #actions>
-            <HButton
-              size="sm"
-              @click="openManage"
-            >
-              Manage
-            </HButton>
-          </template>
           <div class="h-metric">
             <span>Type</span>
             <strong>{{ labelize(request.type) }} · {{ request.quantity || 1 }}</strong>

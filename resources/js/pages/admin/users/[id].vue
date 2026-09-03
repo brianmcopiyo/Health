@@ -14,6 +14,7 @@ const ability = useAbility()
 const hospitals = ref([])
 const route = useRoute()
 const record = ref(null)
+const profile = ref(null)
 const tab = ref('overview')
 
 const tabs = [
@@ -29,6 +30,14 @@ const load = async () => {
     hospitals.value = asList(await $api('/hospitals'))
 }
 
+const recordActions = computed(() => {
+  if (!record.value)
+    return []
+  return [
+    { label: 'Edit', icon: 'edit', if: ability.can('update', 'User'), onSelect: () => { profile.value?.openEdit() } },
+  ]
+})
+
 const { pending, run } = usePageQuery(load)
 watch(() => route.params.id, () => run())
 </script>
@@ -40,6 +49,7 @@ watch(() => route.params.id, () => run())
     :status="record?.status"
     :back="{ name: 'admin-users' }"
     back-label="Users"
+    :actions="recordActions"
     :tabs="tabs"
     :tab="tab"
     :loading="pending"
@@ -47,7 +57,9 @@ watch(() => route.params.id, () => run())
     @update:tab="tab = $event"
   >
     <AccessUserProfile
-      v-if="record && tab === 'overview'"
+      v-show="record && tab === 'overview'"
+      v-if="record"
+      ref="profile"
       :record="record"
       @saved="run"
     >

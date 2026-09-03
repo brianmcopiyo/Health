@@ -193,6 +193,15 @@ const removeVehicle = async () => {
   })
 }
 
+const recordActions = computed(() => {
+  if (!ambulance.value) return []
+  return [
+    { label: 'Dispatch', icon: 'send', if: ability.can('dispatch', 'Ambulance') && ambulance.value.status === 'available', onSelect: openDispatch },
+    { label: 'Edit', icon: 'edit', if: ability.can('update', 'Ambulance'), onSelect: openEdit },
+    { label: 'Remove', icon: 'trash', danger: true, if: ability.can('manage', 'Ambulance'), onSelect: () => { formError.value = ''; removing.value = true } },
+  ]
+})
+
 const { pending } = usePageQuery(load)
 </script>
 
@@ -203,6 +212,7 @@ const { pending } = usePageQuery(load)
     :status="ambulance?.status"
     :back="{ name: 'ambulances' }"
     back-label="Fleet"
+    :actions="recordActions"
     :tabs="tabs"
     :tab="tab"
     :loading="pending"
@@ -221,20 +231,6 @@ const { pending } = usePageQuery(load)
       class="h-detail"
     >
       <HCard title="Vehicle">
-        <template
-          v-if="ability.can('update', 'Ambulance') || ability.can('dispatch', 'Ambulance') || ability.can('manage', 'Ambulance')"
-          #actions
-        >
-          <HActionMenu
-            :compact="false"
-            label="More"
-            :actions="[
-              { label: 'Dispatch', icon: 'send', if: ability.can('dispatch', 'Ambulance') && ambulance.status === 'available', onSelect: openDispatch },
-              { label: 'Edit', icon: 'edit', if: ability.can('update', 'Ambulance'), onSelect: openEdit },
-              { label: 'Remove', icon: 'trash', danger: true, if: ability.can('manage', 'Ambulance'), onSelect: () => { formError = ''; removing = true } },
-            ]"
-          />
-        </template>
         <div class="h-stack">
           <div class="h-metric">
             <span>Capacity</span>

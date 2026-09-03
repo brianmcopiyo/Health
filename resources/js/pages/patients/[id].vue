@@ -178,6 +178,16 @@ const tabs = [
   { title: 'History', value: 'history' },
 ]
 
+const recordActions = computed(() => {
+  if (!chart.value) return []
+  return [
+    { label: 'Edit', icon: 'edit', if: ability.can('update', 'Patient'), onSelect: openEdit },
+    { label: 'Update status', icon: 'wrench', if: ability.can('update', 'Patient'), onSelect: openStatus },
+    { label: 'Export record', icon: 'download', if: ability.can('manage', 'Patient'), onSelect: exportRecord },
+    { label: 'Archive', icon: 'ban', danger: true, if: ability.can('update', 'Patient') && !chart.value.archived_at, onSelect: archivePatient },
+  ]
+})
+
 const { pending, run } = usePageQuery(load)
 watch(() => route.params.id, () => run())
 
@@ -192,6 +202,7 @@ const today = new Date().toISOString().slice(0, 10)
     :statuses="chart?.archived_at && chart?.status !== 'archived' ? ['archived'] : []"
     :back="{ name: 'patients' }"
     back-label="Patients"
+    :actions="recordActions"
     :tabs="tabs"
     :tab="tab"
     :loading="pending"
@@ -211,21 +222,6 @@ const today = new Date().toISOString().slice(0, 10)
         class="h-detail"
       >
         <HCard title="Identity">
-          <template
-            v-if="ability.can('update', 'Patient') || ability.can('manage', 'Patient')"
-            #actions
-          >
-            <HActionMenu
-              :compact="false"
-              label="More"
-              :actions="[
-                { label: 'Edit', icon: 'edit', if: ability.can('update', 'Patient'), onSelect: openEdit },
-                { label: 'Update status', icon: 'wrench', if: ability.can('update', 'Patient'), onSelect: openStatus },
-                { label: 'Export record', icon: 'download', if: ability.can('manage', 'Patient'), onSelect: exportRecord },
-                { label: 'Archive', icon: 'ban', danger: true, if: ability.can('update', 'Patient') && !chart.archived_at, onSelect: archivePatient },
-              ]"
-            />
-          </template>
           <div class="h-metric">
             <span>Sex</span>
             <strong>{{ labelize(chart.sex) || '—' }}</strong>

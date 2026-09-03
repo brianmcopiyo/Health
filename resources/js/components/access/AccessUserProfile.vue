@@ -26,6 +26,8 @@ const openEdit = async () => {
   formOpen.value = true
 }
 
+defineExpose({ openEdit })
+
 watch(() => props.record?.id, () => {
   formOpen.value = false
 })
@@ -37,19 +39,6 @@ watch(() => props.record?.id, () => {
     class="h-detail"
   >
     <HCard title="Profile">
-      <template
-        v-if="ability.can('update', 'User')"
-        #actions
-      >
-        <HButton
-          variant="ghost"
-          size="sm"
-          @click="openEdit"
-        >
-          <HIcon name="edit" />
-          Edit
-        </HButton>
-      </template>
       <div class="h-metric">
         <span>Name</span>
         <strong>{{ record.name }}</strong>

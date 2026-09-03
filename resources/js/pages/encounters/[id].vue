@@ -26,6 +26,13 @@ const load = async () => {
   record.value = await $api(`/encounters/${route.params.id}`)
 }
 
+const recordActions = computed(() => {
+  if (!record.value) return []
+  return [
+    { label: 'Open chart', icon: 'stethoscope', onSelect: () => { chartOpen.value = true } },
+  ]
+})
+
 const { pending, run } = usePageQuery(load)
 watch(() => route.params.id, () => run())
 </script>
@@ -37,6 +44,7 @@ watch(() => route.params.id, () => run())
     :status="record?.status"
     :back="{ name: 'encounters' }"
     back-label="Encounters"
+    :actions="recordActions"
     :tabs="tabs"
     :tab="tab"
     :loading="pending"
@@ -48,15 +56,6 @@ watch(() => route.params.id, () => run())
       class="h-detail"
     >
       <HCard title="Visit">
-        <template #actions>
-          <HActionMenu
-            :compact="false"
-            label="More"
-            :actions="[
-              { label: 'Open chart', icon: 'stethoscope', onSelect: () => { chartOpen = true } },
-            ]"
-          />
-        </template>
         <div class="h-metric">
           <span>Patient</span>
           <strong>
