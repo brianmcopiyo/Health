@@ -29,6 +29,27 @@ const subtitle = computed(() => {
   return range ? `${name} · ${range.from} to ${range.to}` : name
 })
 
+const pageActions = computed(() => [
+  {
+    label: exporting.value === 'pdf' ? 'Exporting PDF…' : 'Export PDF',
+    icon: 'receipt',
+    if: !exporting.value,
+    onSelect: () => exportReport('pdf'),
+  },
+  {
+    label: exporting.value === 'xlsx' ? 'Exporting Excel…' : 'Export Excel',
+    icon: 'download',
+    if: !exporting.value,
+    onSelect: () => exportReport('xlsx'),
+  },
+  {
+    label: 'Refresh',
+    icon: 'refresh',
+    if: !pending.value && !exporting.value,
+    onSelect: () => run(),
+  },
+])
+
 const queryParams = (extra = {}) => reportQuery(section.value, filters.value, extra)
 
 const load = async () => {
@@ -89,32 +110,7 @@ watch(filters, () => {
       title="Reports"
       :subtitle="subtitle"
     >
-      <HButton
-        variant="ghost"
-        :loading="exporting === 'pdf'"
-        :disabled="!!exporting || pending"
-        @click="exportReport('pdf')"
-      >
-        <HIcon name="receipt" />
-        Export PDF
-      </HButton>
-      <HButton
-        variant="ghost"
-        :loading="exporting === 'xlsx'"
-        :disabled="!!exporting || pending"
-        @click="exportReport('xlsx')"
-      >
-        <HIcon name="download" />
-        Export Excel
-      </HButton>
-      <HButton
-        variant="ghost"
-        :disabled="pending"
-        @click="run()"
-      >
-        <HIcon name="refresh" />
-        Refresh
-      </HButton>
+      <HActionMenu :actions="pageActions" />
     </HPage>
 
     <nav
@@ -143,7 +139,7 @@ watch(filters, () => {
       </template>
     </nav>
 
-    <HCard title="Filters">
+    <HCard>
       <HReportFilters
         v-model="filters"
         :schema="schema"

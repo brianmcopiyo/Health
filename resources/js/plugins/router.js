@@ -66,12 +66,16 @@ const fillNamedPath = (recordPath, params = {}) => {
   if (!recordPath)
     return null
 
-  const filled = String(recordPath).replace(/:([^/?]+)\??/g, (_, key) => {
+  // Strip unplugin-vue-router param extras like `:id()` / `:id(.*)` down to the key.
+  const filled = String(recordPath).replace(/:([^/?+()]+)(?:\([^)]*\))?\??\+?/g, (_, key) => {
     const value = params[key]
     return value == null || value === '' ? '' : encodeURIComponent(String(value))
   }).replace(/\/{2,}/g, '/').replace(/\/$/, '')
 
-  return filled || '/'
+  if (!filled)
+    return '/'
+
+  return filled.startsWith('/') ? filled : `/${filled}`
 }
 
 export const router = createRouter({
@@ -90,13 +94,25 @@ router.resolve = (to, current) => {
   try {
     return resolveLocation(to, current)
   } catch (error) {
-    if (!to || typeof to !== 'object' || !to.name)
+    if (to && typeof to === 'object' && to.name) {
+      const record = router.getRoutes().find(route => route.name === to.name)
+      const path = fillNamedPath(record?.path, to.params)
+      if (path) {
+        try {
+          return resolveLocation({ path, query: to.query, hash: to.hash }, current)
+        } catch {
+          // Fall through to soft failure below.
+        }
+      }
+    }
+
+    // RouterLink resolves reactively; throwing here floods the console.
+    // Prefer a safe location over a hard failure for unknown/bad targets.
+    try {
+      return resolveLocation({ path: '/' }, current)
+    } catch {
       throw error
-    const record = router.getRoutes().find(route => route.name === to.name)
-    const path = fillNamedPath(record?.path, to.params)
-    if (path)
-      return resolveLocation({ path, query: to.query, hash: to.hash }, current)
-    throw error
+    }
   }
 }
 

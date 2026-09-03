@@ -1928,8 +1928,8 @@ fieldset.h-form-grid {
 .h-grid.is-stats > *,
 .h-stat-row > * {
   flex: 1 1 calc((100% - (var(--stat-cols) - 1) * var(--grid-gap)) / var(--stat-cols));
-  min-width: min(100%, calc((100% - (var(--stat-cols) - 1) * var(--grid-gap)) / var(--stat-cols)));
-  max-width: 100%;
+  min-width: 0;
+  max-width: calc((100% - (var(--stat-cols) - 1) * var(--grid-gap)) / var(--stat-cols));
 }
 
 .h-stat-icon {
