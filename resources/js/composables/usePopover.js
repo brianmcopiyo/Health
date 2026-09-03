@@ -1,6 +1,6 @@
 import { sameValue } from '@/utils/formOptions'
 
-let activeClose = null
+const popovers = new Set()
 
 export const popoverStyle = coords => {
   const style = {
@@ -16,6 +16,26 @@ export const popoverStyle = coords => {
   return style
 }
 
+const ownsNode = (inst, node, seen = new Set()) => {
+  if (!node || !inst || seen.has(inst))
+    return false
+  seen.add(inst)
+  if (inst.trigger.value?.contains(node) || inst.panel.value?.contains(node))
+    return true
+  for (const other of popovers) {
+    if (other === inst || !other.open.value)
+      continue
+    const nestedTrigger = other.trigger.value
+    if (!nestedTrigger)
+      continue
+    if (inst.panel.value?.contains(nestedTrigger) || inst.trigger.value?.contains(nestedTrigger)) {
+      if (ownsNode(other, node, seen))
+        return true
+    }
+  }
+  return false
+}
+
 export const usePopover = (options = {}) => {
   const open = ref(false)
   const triggerRef = ref(null)
@@ -26,6 +46,7 @@ export const usePopover = (options = {}) => {
     width: 0,
     maxHeight: 280,
   })
+  const inst = { open, trigger: triggerRef, panel: panelRef, close: null }
   const viewport = () => {
     const view = window.visualViewport
     return {
@@ -116,15 +137,23 @@ export const usePopover = (options = {}) => {
 
   const close = () => {
     open.value = false
-    if (activeClose === close)
-      activeClose = null
+    popovers.delete(inst)
   }
+  inst.close = close
 
   const setOpen = value => {
     if (value) {
-      if (activeClose && activeClose !== close)
-        activeClose()
-      activeClose = close
+      const trigger = triggerRef.value
+      for (const other of [...popovers]) {
+        if (other === inst || !other.open.value)
+          continue
+        const nested = Boolean(trigger && (
+          other.panel.value?.contains(trigger) || other.trigger.value?.contains(trigger)
+        ))
+        if (!nested)
+          other.close()
+      }
+      popovers.add(inst)
       open.value = true
       nextTick(place)
       return
@@ -137,14 +166,19 @@ export const usePopover = (options = {}) => {
   const onDoc = event => {
     if (!open.value)
       return
-    const node = event.target
-    if (triggerRef.value?.contains(node) || panelRef.value?.contains(node))
+    const node = event.target instanceof Node
+      ? event.target
+      : (typeof event.composedPath === 'function' ? event.composedPath().find(item => item instanceof Node) : null)
+    if (ownsNode(inst, node))
       return
     close()
   }
 
   const onKey = event => {
     if (!open.value || event.key !== 'Escape')
+      return
+    const stack = [...popovers].filter(item => item.open.value)
+    if (stack.at(-1) !== inst)
       return
     event.stopImmediatePropagation()
     close()
@@ -182,8 +216,7 @@ export const usePopover = (options = {}) => {
     document.removeEventListener('mousedown', onDoc, true)
     window.removeEventListener('keydown', onKey, true)
     unlisten()
-    if (activeClose === close)
-      activeClose = null
+    popovers.delete(inst)
   })
 
   return { open, triggerRef, panelRef, coords, place, bindPanel, setOpen, toggle, close }

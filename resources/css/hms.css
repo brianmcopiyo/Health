@@ -2333,11 +2333,21 @@ a.h-card.h-stat:hover {
 .h-toolbar .h-control {
   min-height: var(--control-h);
 }
-.h-toolbar-filters > .h-btn {
+.h-toolbar-filters > .h-btn,
+.h-toolbar-filters > .h-filter-more {
+  align-self: flex-end;
   min-height: var(--control-h);
   height: var(--control-h);
 }
-.h-filter-more { position: relative; display: inline-flex; }
+.h-filter-more {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.h-filter-more > .h-btn {
+  min-height: var(--control-h);
+  height: var(--control-h);
+}
 .h-filter-chips {
   display: flex;
   flex-wrap: wrap;
@@ -2368,7 +2378,8 @@ a.h-card.h-stat:hover {
   border-radius: var(--radius-sm);
 }
 .h-popover.is-filters .h-field { width: 100%; }
-.h-toolbar-filters > .h-field > .h-field-meta:not(:has(*)) {
+.h-toolbar-filters > .h-field > .h-field-meta:not(:has(*)),
+.h-toolbar-filters > .h-field > .h-field-meta:empty {
   display: none;
 }
 
