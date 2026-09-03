@@ -36,7 +36,7 @@ const filtered = computed(() => {
 
   return options.value.filter(item => item.title.toLowerCase().includes(term))
 })
-const { move, current, isActive } = useListHighlight(filtered, open)
+const { move, current, isActive, activate } = useListHighlight(filtered, open, () => props.modelValue)
 const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'combo'))
 const message = computed(() => errorText(props.error))
 const selected = computed(() => options.value.find(item => sameValue(item.value, props.modelValue) || sameValue(item.title, props.modelValue)))
@@ -153,6 +153,7 @@ const onKey = event => {
           class="h-list-item"
           :class="{ 'is-on': sameValue(option.value, modelValue), 'is-active': isActive(option) }"
           role="option"
+          @mouseenter="activate(option)"
           @mousedown.prevent="choose(option)"
         >
           {{ option.title }}

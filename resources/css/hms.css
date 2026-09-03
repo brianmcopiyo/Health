@@ -1422,7 +1422,9 @@ img { max-width: 100%; }
 }
 .h-list-item:hover,
 .h-list-item.is-active { background: var(--surface-2); }
-.h-list-item.is-on { background: var(--teal-mist); color: var(--teal-deep); font-weight: 650; }
+.h-list-item.is-on,
+.h-list-item.is-on:hover,
+.h-list-item.is-on.is-active { background: var(--teal-mist); color: var(--teal-deep); font-weight: 650; }
 .h-list-empty, .h-list-action {
   padding: 10px 12px;
   color: var(--muted);

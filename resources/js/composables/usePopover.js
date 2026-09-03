@@ -189,34 +189,71 @@ export const usePopover = (options = {}) => {
   return { open, triggerRef, panelRef, coords, place, bindPanel, setOpen, toggle, close }
 }
 
-export const useListHighlight = (filtered, isOpen) => {
+export const useListHighlight = (filtered, isOpen, selected = null) => {
   const highlighted = ref(-1)
 
+  const selectedValue = () => (typeof selected === 'function' ? selected() : unref(selected))
+
+  const selectedIndex = () => {
+    const items = filtered.value || []
+    if (!items.length)
+      return -1
+
+    const value = selectedValue()
+    if (value == null || value === '')
+      return -1
+
+    const values = Array.isArray(value) ? value : [value]
+    if (!values.length)
+      return -1
+
+    return items.findIndex(item => values.some(itemValue => sameValue(item.value, itemValue)))
+  }
+
   const sync = () => {
-    highlighted.value = filtered.value.length ? 0 : -1
+    const index = selectedIndex()
+    highlighted.value = index >= 0 ? index : -1
   }
 
   watch(filtered, () => {
-    if (isOpen.value)
-      sync()
+    if (!isOpen.value)
+      return
+
+    const index = selectedIndex()
+    if (index >= 0) {
+      highlighted.value = index
+      return
+    }
+
+    if (highlighted.value >= filtered.value.length)
+      highlighted.value = filtered.value.length ? 0 : -1
   })
 
   watch(isOpen, value => {
     if (value)
       sync()
+    else
+      highlighted.value = -1
   })
 
   const move = delta => {
     const total = filtered.value.length
     if (!total)
       return
-    const next = highlighted.value + delta
-    highlighted.value = (next + total) % total
+    if (highlighted.value < 0)
+      highlighted.value = delta > 0 ? 0 : total - 1
+    else
+      highlighted.value = (highlighted.value + delta + total) % total
+  }
+
+  const activate = option => {
+    const index = filtered.value.findIndex(item => sameValue(item.value, option?.value))
+    highlighted.value = index
   }
 
   const current = () => filtered.value[highlighted.value] || null
 
   const isActive = option => highlighted.value >= 0 && sameValue(filtered.value[highlighted.value]?.value, option.value)
 
-  return { highlighted, move, current, isActive }
+  return { highlighted, move, current, isActive, activate }
 }

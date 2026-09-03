@@ -38,7 +38,7 @@ const filtered = computed(() => {
 
   return options.value.filter(item => item.title.toLowerCase().includes(term))
 })
-const { move, current, isActive } = useListHighlight(filtered, open)
+const { move, current, isActive, activate } = useListHighlight(filtered, open, () => props.modelValue)
 const selected = computed(() => options.value.find(item => sameValue(item.value, props.modelValue)) || null)
 const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'select'))
 const searchPlaceholder = computed(() => fieldPlaceholder(null, props.label, 'search'))
@@ -167,6 +167,7 @@ const onSearchKey = event => {
           :class="{ 'is-on': sameValue(option.value, modelValue), 'is-active': isActive(option) }"
           role="option"
           :aria-selected="sameValue(option.value, modelValue)"
+          @mouseenter="activate(option)"
           @mousedown.prevent="choose(option)"
         >
           <span>{{ option.title }}</span>

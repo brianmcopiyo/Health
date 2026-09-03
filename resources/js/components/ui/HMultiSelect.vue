@@ -38,7 +38,7 @@ const filtered = computed(() => {
 
   return options.value.filter(item => item.title.toLowerCase().includes(term))
 })
-const { move, current, isActive } = useListHighlight(filtered, open)
+const { move, current, isActive, activate } = useListHighlight(filtered, open, () => props.modelValue)
 const resolvedPlaceholder = computed(() => fieldPlaceholder(props.placeholder, props.label, 'multi'))
 const searchPlaceholder = computed(() => fieldPlaceholder(null, props.label, 'search'))
 const message = computed(() => errorText(props.error))
@@ -202,6 +202,7 @@ const onSearchKey = event => {
           :class="{ 'is-on': isChecked(option), 'is-active': isActive(option) }"
           role="option"
           :aria-selected="isChecked(option)"
+          @mouseenter="activate(option)"
           @mousedown.prevent="toggleValue(option)"
         >
           <span
