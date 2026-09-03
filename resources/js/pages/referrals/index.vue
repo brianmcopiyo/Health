@@ -12,9 +12,10 @@ const ability = useAbility()
 const userData = useCookie('userData')
 const referrals = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
-const status = ref(null)
-const direction = ref('all')
+const list = useListQuery(['direction', 'status'])
+const { page, q, filterValues } = list
+if (!list.values.direction)
+  list.values.direction = 'all'
 const selected = ref(null)
 const saving = ref(false)
 const formError = ref('')
@@ -29,14 +30,15 @@ const headers = [
   { title: 'Actions', key: 'actions' },
 ]
 
-const load = async () => {
-  const query = { page: page.value }
-  if (status.value)
-    query.status = status.value
-  if (direction.value !== 'all')
-    query.direction = direction.value
+const referralQuery = extra => {
+  const query = list.apiQuery(extra)
+  if (query.direction === 'all')
+    delete query.direction
+  return query
+}
 
-  const payload = await $api('/referrals', { query })
+const load = async () => {
+  const payload = await $api('/referrals', { query: referralQuery() })
   referrals.value = asList(payload)
   meta.value = asPageMeta(payload)
 }
@@ -72,14 +74,7 @@ const updateStatus = async nextStatus => {
   })
 }
 
-const filterValues = computed({
-  get: () => ({ direction: direction.value, status: status.value }),
-  set: next => {
-    direction.value = next.direction
-    status.value = next.status
-  },
-})
-
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -91,7 +86,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="referrals"
-        :query="{ status: status || undefined, direction: direction !== 'all' ? direction : undefined }"
+        :query="referralQuery()"
         :disabled="pending"
       />
       <HButton
@@ -105,16 +100,21 @@ const { pending } = usePageQuery(load)
 
     <HCard flush>
       <HListToolbar
+        v-model:search="q"
         v-model:values="filterValues"
+        search-placeholder="Search patient or reason"
+        search-button
+        :result-count="list.resultCount(meta)"
         :filters="[
           { key: 'direction', type: 'segmented', empty: 'all', options: [
             { value: 'all', title: 'All' },
             { value: 'incoming', title: 'Incoming' },
             { value: 'outgoing', title: 'Outgoing' },
           ] },
-          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', items: referralStatuses },
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: referralStatuses.map(value => ({ title: labelize(value), value })) },
         ]"
-        @change="load"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       />
       <HTable
         :loading="pending"
@@ -146,7 +146,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
 

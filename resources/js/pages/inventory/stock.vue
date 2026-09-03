@@ -9,22 +9,17 @@ definePage({
 const balances = ref([])
 const stores = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
-const q = ref('')
-const storeId = ref(null)
+const list = useListQuery(['store_id', 'low_stock'])
+const { page, q, filterValues } = list
 
 const load = async () => {
   stores.value = asList(await $api('/inventory/stores'))
-  const payload = await $api('/inventory/stock', { query: { page: page.value, q: q.value || undefined, store_id: storeId.value || undefined } })
+  const payload = await $api('/inventory/stock', { query: list.apiQuery() })
   balances.value = asList(payload)
   meta.value = asPageMeta(payload)
 }
 
-const filterValues = computed({
-  get: () => ({ store_id: storeId.value }),
-  set: next => { storeId.value = next.store_id },
-})
-
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -36,7 +31,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="inventory-stock"
-        :query="{ q: q || undefined, store_id: storeId || undefined }"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -52,9 +47,15 @@ const { pending } = usePageQuery(load)
         v-model:values="filterValues"
         search-placeholder="Search items"
         search-button
-        :filters="[{ key: 'store_id', type: 'select', label: 'Store', placeholder: 'All stores', items: stores, itemTitle: 'name', itemValue: 'id' }]"
-        @search="page = 1; load()"
-        @change="page = 1; load()"
+        :result-count="list.resultCount(meta)"
+        :filters="[
+          { key: 'store_id', type: 'select', label: 'Store', placeholder: 'All stores', items: stores, itemTitle: 'name', itemValue: 'id', optional: true, empty: null },
+          { key: 'low_stock', type: 'select', label: 'Stock', placeholder: 'All stock', optional: true, empty: null, items: [
+            { title: 'Low stock', value: '1' },
+          ] },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       />
       <HTable
         :loading="pending"
@@ -86,7 +87,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
   </div>

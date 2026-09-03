@@ -76,6 +76,8 @@ class InventoryController extends Controller
         if ($request->filled('kind')) {
             $query->where('kind', $request->string('kind'));
         }
+        QueryList::equals($query, $request, 'category_id');
+        QueryList::boolean($query, $request, 'is_active');
         $paginator = QueryList::paginate($query, $request);
         $paginator->getCollection()->transform(fn (InventoryItem $item) => $this->serializeItem($item));
 
@@ -126,11 +128,19 @@ class InventoryController extends Controller
         return response()->json($this->serializeItem($item->load(['category', 'unit'])), 201);
     }
 
-    public function categories()
+    public function categories(Request $request)
     {
-        $this->authorizeInventory(request(), 'read');
+        $this->authorizeInventory($request, 'read');
+        $query = InventoryCategory::query()->withCount('items')->orderBy('sort_order')->orderBy('name');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('name', 'like', $term);
+            }
+        }
+        QueryList::boolean($query, $request, 'is_active');
 
-        return InventoryCategory::query()->withCount('items')->orderBy('sort_order')->orderBy('name')->get();
+        return $query->get();
     }
 
     public function storeCategory(Request $request)
@@ -157,11 +167,19 @@ class InventoryController extends Controller
         return response()->json($category, 201);
     }
 
-    public function units()
+    public function units(Request $request)
     {
-        $this->authorizeInventory(request(), 'read');
+        $this->authorizeInventory($request, 'read');
+        $query = InventoryUnit::query()->with(['conversionsFrom.toUnit'])->orderBy('name');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(fn ($builder) => $builder->where('name', 'like', $term)->orWhere('symbol', 'like', $term));
+            }
+        }
+        QueryList::boolean($query, $request, 'is_active');
 
-        return InventoryUnit::query()->with(['conversionsFrom.toUnit'])->orderBy('name')->get();
+        return $query->get();
     }
 
     public function storeUnit(Request $request)
@@ -194,11 +212,22 @@ class InventoryController extends Controller
         return response()->json($conversion->load(['fromUnit', 'toUnit']), 201);
     }
 
-    public function suppliers()
+    public function suppliers(Request $request)
     {
-        $this->authorizeInventory(request(), 'read');
+        $this->authorizeInventory($request, 'read');
+        $query = InventorySupplier::query()->orderBy('name');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(fn ($builder) => $builder
+                    ->where('name', 'like', $term)
+                    ->orWhere('phone', 'like', $term)
+                    ->orWhere('email', 'like', $term));
+            }
+        }
+        QueryList::boolean($query, $request, 'is_active');
 
-        return InventorySupplier::query()->orderBy('name')->get();
+        return $query->get();
     }
 
     public function storeSupplier(Request $request)
@@ -217,11 +246,20 @@ class InventoryController extends Controller
         return response()->json($supplier, 201);
     }
 
-    public function stores()
+    public function stores(Request $request)
     {
-        $this->authorizeInventory(request(), 'read');
+        $this->authorizeInventory($request, 'read');
+        $query = InventoryStore::query()->with(['department', 'facility'])->orderBy('name');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('name', 'like', $term);
+            }
+        }
+        QueryList::equals($query, $request, 'type');
+        QueryList::boolean($query, $request, 'is_active');
 
-        return InventoryStore::query()->with(['department', 'facility'])->orderBy('name')->get();
+        return $query->get();
     }
 
     public function showStore(InventoryStore $store)
@@ -265,9 +303,16 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
         $query = InventoryLocation::query()->with('store')->orderBy('name');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('name', 'like', $term);
+            }
+        }
         if ($request->filled('store_id')) {
             $query->where('store_id', $request->string('store_id'));
         }
+        QueryList::boolean($query, $request, 'is_active');
 
         return QueryList::paginate($query, $request);
     }
@@ -317,6 +362,16 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
         $query = InventoryBatch::query()->with(['item', 'store'])->orderBy('expiry_date');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(fn ($builder) => $builder
+                    ->where('batch_number', 'like', $term)
+                    ->orWhereHas('item', fn ($item) => $item->where('name', 'like', $term)->orWhere('sku', 'like', $term)));
+            }
+        }
+        QueryList::equals($query, $request, 'item_id');
+        QueryList::equals($query, $request, 'store_id');
         if ($request->boolean('expiring')) {
             $query->whereNotNull('expiry_date')->whereDate('expiry_date', '<=', now()->addDays(90))->where('quantity', '>', 0);
         }
@@ -351,12 +406,19 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
         $query = InventoryMovement::query()->with(['item', 'store', 'batch'])->latest('occurred_at');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->whereHas('item', fn ($item) => $item->where('name', 'like', $term)->orWhere('sku', 'like', $term));
+            }
+        }
         if ($request->filled('type')) {
             $query->where('type', $request->string('type'));
         }
         if ($request->filled('store_id')) {
             $query->where('store_id', $request->string('store_id'));
         }
+        QueryList::dateRange($query, $request, 'occurred_at');
 
         return QueryList::paginate($query, $request);
     }
@@ -365,7 +427,20 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
 
-        return QueryList::paginate(InventoryReceipt::query()->with(['store', 'supplier'])->latest('received_at'), $request);
+        $query = InventoryReceipt::query()->with(['store', 'supplier'])->latest('received_at');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(fn ($builder) => $builder
+                    ->where('reference', 'like', $term)
+                    ->orWhereHas('supplier', fn ($supplier) => $supplier->where('name', 'like', $term)));
+            }
+        }
+        QueryList::equals($query, $request, 'store_id');
+        QueryList::equals($query, $request, 'supplier_id');
+        QueryList::dateRange($query, $request, 'received_at');
+
+        return QueryList::paginate($query, $request);
     }
 
     public function showReceipt(InventoryReceipt $receipt)
@@ -400,7 +475,19 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
 
-        return QueryList::paginate(InventoryTransfer::query()->with(['fromStore', 'toStore'])->latest('occurred_at'), $request);
+        $query = InventoryTransfer::query()->with(['fromStore', 'toStore'])->latest('occurred_at');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('reference', 'like', $term);
+            }
+        }
+        QueryList::equals($query, $request, 'status');
+        QueryList::equals($query, $request, 'from_store_id');
+        QueryList::equals($query, $request, 'to_store_id');
+        QueryList::dateRange($query, $request, 'occurred_at');
+
+        return QueryList::paginate($query, $request);
     }
 
     public function showTransfer(InventoryTransfer $transfer)
@@ -432,7 +519,19 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
 
-        return QueryList::paginate(InventoryRequest::query()->with(['toStore', 'department'])->latest('requested_at'), $request);
+        $query = InventoryRequest::query()->with(['toStore', 'department'])->latest('requested_at');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('reference', 'like', $term);
+            }
+        }
+        QueryList::equals($query, $request, 'status');
+        QueryList::equals($query, $request, 'to_store_id');
+        QueryList::equals($query, $request, 'department_id');
+        QueryList::dateRange($query, $request, 'requested_at');
+
+        return QueryList::paginate($query, $request);
     }
 
     public function showRequest(InventoryRequest $inventoryRequest)
@@ -463,7 +562,24 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
 
-        return QueryList::paginate(InventoryIssue::query()->with(['store', 'department', 'patient'])->latest('occurred_at'), $request);
+        $query = InventoryIssue::query()->with(['store', 'department', 'patient'])->latest('occurred_at');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(fn ($builder) => $builder
+                    ->where('reference', 'like', $term)
+                    ->orWhereHas('patient', fn ($patient) => $patient
+                        ->where('first_name', 'like', $term)
+                        ->orWhere('last_name', 'like', $term)
+                        ->orWhere('mrn', 'like', $term)));
+            }
+        }
+        QueryList::equals($query, $request, 'store_id');
+        QueryList::equals($query, $request, 'department_id');
+        QueryList::equals($query, $request, 'kind');
+        QueryList::dateRange($query, $request, 'occurred_at');
+
+        return QueryList::paginate($query, $request);
     }
 
     public function showIssue(InventoryIssue $issue)
@@ -501,7 +617,18 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
 
-        return QueryList::paginate(InventoryReturn::query()->with(['fromStore', 'toStore'])->latest('occurred_at'), $request);
+        $query = InventoryReturn::query()->with(['fromStore', 'toStore'])->latest('occurred_at');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('reference', 'like', $term);
+            }
+        }
+        QueryList::equals($query, $request, 'from_store_id');
+        QueryList::equals($query, $request, 'to_store_id');
+        QueryList::dateRange($query, $request, 'occurred_at');
+
+        return QueryList::paginate($query, $request);
     }
 
     public function showReturn(InventoryReturn $return)
@@ -534,7 +661,18 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
 
-        return QueryList::paginate(InventoryAdjustment::query()->with('store')->latest('occurred_at'), $request);
+        $query = InventoryAdjustment::query()->with('store')->latest('occurred_at');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(fn ($builder) => $builder->where('reference', 'like', $term)->orWhere('reason', 'like', $term));
+            }
+        }
+        QueryList::equals($query, $request, 'store_id');
+        QueryList::equals($query, $request, 'reason');
+        QueryList::dateRange($query, $request, 'occurred_at');
+
+        return QueryList::paginate($query, $request);
     }
 
     public function showAdjustment(InventoryAdjustment $adjustment)
@@ -567,7 +705,18 @@ class InventoryController extends Controller
     {
         $this->authorizeInventory($request, 'read');
 
-        return QueryList::paginate(InventoryCount::query()->with('store')->latest('counted_at'), $request);
+        $query = InventoryCount::query()->with('store')->latest('counted_at');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('reference', 'like', $term);
+            }
+        }
+        QueryList::equals($query, $request, 'store_id');
+        QueryList::equals($query, $request, 'status');
+        QueryList::dateRange($query, $request, 'counted_at');
+
+        return QueryList::paginate($query, $request);
     }
 
     public function showCount(InventoryCount $count)

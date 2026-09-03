@@ -88,6 +88,21 @@ class ReferralController extends Controller
             }
         }
 
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(function ($builder) use ($term) {
+                    $builder->where('reason', 'like', $term)
+                        ->orWhere('patient_name', 'like', $term)
+                        ->orWhere('patient_reference', 'like', $term)
+                        ->orWhereHas('patient', fn ($patient) => $patient
+                            ->where('first_name', 'like', $term)
+                            ->orWhere('last_name', 'like', $term)
+                            ->orWhere('mrn', 'like', $term));
+                });
+            }
+        }
+
         return QueryList::paginate($query, $request);
     }
 

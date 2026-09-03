@@ -12,13 +12,32 @@ definePage({
 const ability = useAbility()
 const prescriptions = ref([])
 const medications = ref([])
+const rxMeta = ref(asPageMeta())
+const list = useListQuery(['queue', 'status'])
+const { filterValues } = list
+if (!list.values.queue)
+  list.values.queue = '1'
 const saving = ref(false)
 const formError = ref('')
 const stockOpen = ref(false)
 const stockForm = ref({ id: null, stock_qty: 0, reorder_level: 0 })
 
+const rxQuery = extra => {
+  const query = list.apiQuery(extra)
+  if (query.queue === '1' || query.queue === true || query.queue === 'true') {
+    query.queue = true
+    delete query.status
+  }
+  else {
+    delete query.queue
+  }
+  return query
+}
+
 const load = async () => {
-  prescriptions.value = asList(await $api('/prescriptions', { query: { queue: true, per_page: 50 } }))
+  const payload = await $api('/prescriptions', { query: rxQuery({ per_page: 50 }) })
+  prescriptions.value = asList(payload)
+  rxMeta.value = asPageMeta(payload)
   medications.value = asList(await $api('/medications'))
 }
 
@@ -46,6 +65,7 @@ const updateRx = async (item, status) => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 const rxHeaders = [
   { title: 'Patient', key: 'patient.first_name', fill: true },
@@ -82,10 +102,27 @@ const stockHeaders = [
       <template #actions>
         <HExportActions
           dataset="pharmacy"
-          :query="{ queue: true }"
+          :query="rxQuery()"
           :disabled="pending"
         />
       </template>
+      <HListToolbar
+        v-model:values="filterValues"
+        :result-count="list.resultCount(rxMeta)"
+        :filters="[
+          { key: 'queue', type: 'segmented', empty: '1', options: [
+            { value: '1', title: 'Open queue' },
+            { value: 'all', title: 'All' },
+          ] },
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, more: true, items: [
+            { title: 'Pending', value: 'pending' },
+            { title: 'Verified', value: 'verified' },
+            { title: 'Dispensed', value: 'dispensed' },
+            { title: 'Cancelled', value: 'cancelled' },
+          ] },
+        ]"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="rxHeaders"
@@ -115,6 +152,10 @@ const stockHeaders = [
           />
         </template>
       </HTable>
+      <HPager
+        :meta="rxMeta"
+        @update:page="value => list.onPage(value, load)"
+      />
     </HCard>
 
     <HCard

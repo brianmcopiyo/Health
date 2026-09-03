@@ -8,9 +8,8 @@ definePage({
 const ability = useAbility()
 const items = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
-const q = ref('')
-const kind = ref(null)
+const list = useListQuery(['kind', 'category_id', 'is_active'])
+const { page, q, filterValues } = list
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
@@ -19,7 +18,8 @@ const units = ref([])
 const form = ref({ name: '', sku: '', kind: 'medicine', category_id: null, unit_id: null, reorder_level: 10, tracks_batch: true, tracks_expiry: true, is_controlled: false })
 
 const load = async () => {
-  const payload = await $api('/inventory/items', { query: { page: page.value, q: q.value || undefined, kind: kind.value || undefined } })
+  categories.value = asList(await $api('/inventory/categories'))
+  const payload = await $api('/inventory/items', { query: list.apiQuery() })
   items.value = asList(payload)
   meta.value = asPageMeta(payload)
 }
@@ -40,11 +40,7 @@ const save = async () => {
   })
 }
 
-const filterValues = computed({
-  get: () => ({ kind: kind.value }),
-  set: next => { kind.value = next.kind },
-})
-
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -56,7 +52,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="inventory-items"
-        :query="{ q: q || undefined, kind: kind || undefined }"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -79,16 +75,22 @@ const { pending } = usePageQuery(load)
         v-model:values="filterValues"
         search-placeholder="Search items"
         search-button
+        :result-count="list.resultCount(meta)"
         :filters="[
-          { key: 'kind', type: 'select', label: 'Type', placeholder: 'All types', items: [
-            { id: 'medicine', name: 'Medicine' },
-            { id: 'supply', name: 'Supply' },
-            { id: 'consumable', name: 'Consumable' },
-            { id: 'equipment', name: 'Equipment' },
-          ], itemTitle: 'name', itemValue: 'id' },
+          { key: 'kind', type: 'select', label: 'Type', placeholder: 'All types', optional: true, empty: null, items: [
+            { title: 'Medicine', value: 'medicine' },
+            { title: 'Supply', value: 'supply' },
+            { title: 'Consumable', value: 'consumable' },
+            { title: 'Equipment', value: 'equipment' },
+          ] },
+          { key: 'category_id', type: 'select', label: 'Category', placeholder: 'All categories', items: categories, itemTitle: 'name', itemValue: 'id', optional: true, empty: null, more: true },
+          { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, more: true, items: [
+            { title: 'Active', value: '1' },
+            { title: 'Inactive', value: '0' },
+          ] },
         ]"
-        @search="page = 1; load()"
-        @change="page = 1; load()"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       />
       <HTable
         :loading="pending"
@@ -117,7 +119,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
     <HOffcanvas

@@ -6,9 +6,9 @@ definePage({
 const ability = useAbility()
 const rows = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
 const stores = ref([])
-const storeId = ref(null)
+const list = useListQuery(['store_id', 'is_active'])
+const { page, q, filterValues } = list
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
@@ -16,14 +16,14 @@ const form = ref({ store_id: null, name: '' })
 
 const load = async () => {
   stores.value = asList(await $api('/inventory/stores'))
-  const payload = await $api('/inventory/locations', { query: { page: page.value, store_id: storeId.value || undefined } })
+  const payload = await $api('/inventory/locations', { query: list.apiQuery() })
   rows.value = asList(payload)
   meta.value = asPageMeta(payload)
 }
 
 const openCreate = () => {
   formError.value = ''
-  form.value = { store_id: storeId.value || stores.value[0]?.id || null, name: '' }
+  form.value = { store_id: list.values.store_id || stores.value[0]?.id || null, name: '' }
   formOpen.value = true
 }
 
@@ -35,11 +35,7 @@ const save = async () => {
   })
 }
 
-const filterValues = computed({
-  get: () => ({ store_id: storeId.value }),
-  set: next => { storeId.value = next.store_id },
-})
-
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -51,7 +47,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="inventory-locations"
-        :query="{ store_id: storeId || undefined }"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -64,9 +60,20 @@ const { pending } = usePageQuery(load)
     </HPage>
     <HCard flush>
       <HListToolbar
+        v-model:search="q"
         v-model:values="filterValues"
-        :filters="[{ key: 'store_id', type: 'select', label: 'Store', placeholder: 'All stores', items: stores, itemTitle: 'name', itemValue: 'id' }]"
-        @change="page = 1; load()"
+        search-placeholder="Search locations"
+        search-button
+        :result-count="list.resultCount(meta)"
+        :filters="[
+          { key: 'store_id', type: 'select', label: 'Store', placeholder: 'All stores', items: stores, itemTitle: 'name', itemValue: 'id', optional: true, empty: null },
+          { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, more: true, items: [
+            { title: 'Active', value: '1' },
+            { title: 'Inactive', value: '0' },
+          ] },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       />
       <HTable
         :loading="pending"
@@ -82,7 +89,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
     <HModal

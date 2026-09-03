@@ -9,15 +9,12 @@ definePage({
   },
 })
 
-const route = useRoute()
 const ability = useAbility()
 const facilities = ref([])
 const types = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
-const search = ref('')
-const status = ref(null)
-const typeId = ref(null)
+const list = useListQuery(['status', 'facility_type_id', 'department_id'])
+const { page, q, filterValues } = list
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
@@ -46,26 +43,16 @@ const headers = [
 ]
 
 const load = async () => {
-  const query = { page: page.value }
-  if (search.value)
-    query.q = search.value
-  if (status.value)
-    query.status = status.value
-  if (typeId.value)
-    query.facility_type_id = typeId.value
-  if (route.query.department_id)
-    query.department_id = route.query.department_id
-
-  const [items, facilityTypes] = await Promise.all([
-    $api('/facilities', { query }),
+  const [items, facilityTypes, departmentRows] = await Promise.all([
+    $api('/facilities', { query: list.apiQuery() }),
     $api('/facility-types'),
+    $api('/departments').catch(() => []),
   ])
 
   facilities.value = asList(items)
   meta.value = asPageMeta(items)
   types.value = asList(facilityTypes)
-  if (ability.can('update', 'Facility') || ability.can('create', 'Facility'))
-    departments.value = asList(await $api('/departments').catch(() => []))
+  departments.value = asList(departmentRows)
 }
 
 const openCreate = () => {
@@ -123,14 +110,7 @@ const removeFacility = async () => {
   })
 }
 
-const filterValues = computed({
-  get: () => ({ typeId: typeId.value, status: status.value }),
-  set: next => {
-    typeId.value = next.typeId
-    status.value = next.status
-  },
-})
-
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -142,7 +122,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="facilities"
-        :query="{ q: search || undefined, status: status || undefined, facility_type_id: typeId || undefined, department_id: route.query.department_id || undefined }"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -156,15 +136,18 @@ const { pending } = usePageQuery(load)
 
     <HCard flush>
       <HListToolbar
-        v-model:search="search"
+        v-model:search="q"
         v-model:values="filterValues"
         search-placeholder="Search facilities"
-        search-mode="live"
+        search-button
+        :result-count="list.resultCount(meta)"
         :filters="[
-          { key: 'typeId', type: 'select', label: 'Type', placeholder: 'All types', items: types, itemTitle: 'name', itemValue: 'id' },
-          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', items: facilityStatuses },
+          { key: 'facility_type_id', type: 'select', label: 'Type', placeholder: 'All types', items: types, itemTitle: 'name', itemValue: 'id', optional: true, empty: null },
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: facilityStatuses.map(value => ({ title: labelize(value), value })) },
+          { key: 'department_id', type: 'select', label: 'Department', placeholder: 'All departments', items: departments, itemTitle: 'name', itemValue: 'id', optional: true, empty: null, more: true },
         ]"
-        @change="load"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       />
       <HTable
         :loading="pending"
@@ -197,7 +180,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
 

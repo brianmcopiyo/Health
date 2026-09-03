@@ -70,6 +70,22 @@ class EncounterController extends Controller
             });
         }
 
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(function ($builder) use ($term) {
+                    $builder->where('chief_complaint', 'like', $term)
+                        ->orWhereHas('patient', fn ($patient) => $patient
+                            ->where('first_name', 'like', $term)
+                            ->orWhere('last_name', 'like', $term)
+                            ->orWhere('mrn', 'like', $term));
+                });
+            }
+        }
+
+        QueryList::equals($query, $request, 'department_id');
+        QueryList::dateRange($query, $request, 'created_at');
+
         if ($patientId = $request->input('patient_id')) {
             $query->where('patient_id', $patientId);
         }

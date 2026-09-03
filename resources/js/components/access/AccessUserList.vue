@@ -31,20 +31,18 @@ const userData = useCookie('userData')
 const users = ref([])
 const roles = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
-const search = ref('')
+const list = useListQuery(['status', 'role_id', 'sort', 'sort_dir'])
+const { page, q, filterValues } = list
+if (!list.values.sort)
+  list.values.sort = 'name'
+if (!list.values.sort_dir)
+  list.values.sort_dir = 'asc'
 const selected = ref([])
 const formOpen = ref(false)
 const editing = ref(null)
 const removing = ref(null)
 const saving = ref(false)
 const formError = ref('')
-const filterValues = ref({
-  status: null,
-  role_id: null,
-  sort: 'name',
-  sort_dir: 'asc',
-})
 
 const headers = computed(() => [
   ...(ability.can('update', 'User') ? [{ title: '', key: 'select', fit: true }] : []),
@@ -59,8 +57,8 @@ const headers = computed(() => [
 const filters = computed(() => [
   { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: accountStatusItems },
   { key: 'role_id', type: 'select', label: 'Role', placeholder: 'All roles', optional: true, empty: null, items: roles.value, itemTitle: 'name', itemValue: 'id' },
-  { key: 'sort', type: 'select', label: 'Sort', items: userSortItems, clearable: false, empty: 'name' },
-  { key: 'sort_dir', type: 'select', label: 'Order', items: sortDirItems, clearable: false, empty: 'asc' },
+  { key: 'sort', type: 'select', label: 'Sort', items: userSortItems, clearable: false, empty: 'name', more: true },
+  { key: 'sort_dir', type: 'select', label: 'Order', items: sortDirItems, clearable: false, empty: 'asc', more: true },
 ])
 
 const pageIds = computed(() => users.value.map(item => item.id))
@@ -73,7 +71,7 @@ const toggleAll = () => {
 }
 
 const load = async () => {
-  const payload = await $api('/users', { query: userListQuery(page.value, search.value, filterValues.value) })
+  const payload = await $api('/users', { query: userListQuery(page.value, q.value, filterValues.value) })
   users.value = asList(payload)
   meta.value = asPageMeta(payload)
   if (canWriteUser(ability) || ability.can('read', 'Role'))
@@ -110,11 +108,7 @@ const applyBulk = async status => {
   }, 'Users updated')
 }
 
-const onSearch = () => {
-  page.value = 1
-  load()
-}
-
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -126,14 +120,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="users"
-        :query="{
-          q: search || undefined,
-          status: filterValues.status || undefined,
-          role_id: filterValues.role_id || undefined,
-          sort: filterValues.sort || undefined,
-          sort_dir: filterValues.sort_dir || undefined,
-          ids: selected.length ? selected.join(',') : undefined,
-        }"
+        :query="list.apiQuery({ ids: selected.length ? selected.join(',') : undefined })"
         :disabled="pending"
       />
       <HButton
@@ -147,13 +134,14 @@ const { pending } = usePageQuery(load)
 
     <HCard flush>
       <HListToolbar
-        v-model:search="search"
+        v-model:search="q"
         v-model:values="filterValues"
         search-placeholder="Search name, email or phone"
         search-button
+        :result-count="list.resultCount(meta)"
         :filters="filters"
-        @search="onSearch"
-        @change="onSearch"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       >
         <template
           v-if="ability.can('update', 'User') && selected.length"
@@ -234,7 +222,7 @@ const { pending } = usePageQuery(load)
       </div>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
 

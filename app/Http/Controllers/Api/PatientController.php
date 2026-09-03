@@ -35,6 +35,8 @@ class PatientController extends Controller
             $query->where('status', $status);
         }
 
+        QueryList::equals($query, $request, 'sex');
+
         if ($request->boolean('under_care')) {
             $userId = $request->user()->id;
             $query->whereIn('id', function ($builder) use ($userId, $request) {

@@ -1,5 +1,5 @@
 <script setup>
-import { assistanceTypes, labelize, statusColor } from '@/utils/status'
+import { assistanceStatuses, assistanceTypes, labelize, statusColor } from '@/utils/status'
 
 definePage({
   meta: {
@@ -11,11 +11,15 @@ definePage({
 const ability = useAbility()
 const userData = useCookie('userData')
 const items = ref([])
+const meta = ref(asPageMeta())
 const hospitals = ref([])
 const patients = ref([])
 const encounters = ref([])
 const types = ref([])
-const direction = ref('all')
+const list = useListQuery(['direction', 'status', 'type'])
+const { page, q, filterValues } = list
+if (!list.values.direction)
+  list.values.direction = 'all'
 const isCreateVisible = ref(false)
 const selected = ref(null)
 const saving = ref(false)
@@ -44,9 +48,17 @@ const headers = [
   { title: 'Actions', key: 'actions' },
 ]
 
+const assistanceQuery = extra => {
+  const query = list.apiQuery(extra)
+  if (query.direction === 'all')
+    delete query.direction
+  return query
+}
+
 const load = async () => {
-  const query = direction.value === 'all' ? {} : { direction: direction.value }
-  items.value = asList(await $api('/assistance-requests', { query }))
+  const payload = await $api('/assistance-requests', { query: assistanceQuery() })
+  items.value = asList(payload)
+  meta.value = asPageMeta(payload)
 }
 
 const openCreate = async () => {
@@ -99,13 +111,7 @@ const updateStatus = async status => {
   })
 }
 
-const filterValues = computed({
-  get: () => ({ direction: direction.value }),
-  set: next => {
-    direction.value = next.direction
-  },
-})
-
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -117,7 +123,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="assistance"
-        :query="{ direction: direction !== 'all' ? direction : undefined }"
+        :query="assistanceQuery()"
       />
       <HButton
         v-if="ability.can('create', 'AssistanceRequest')"
@@ -130,15 +136,22 @@ const { pending } = usePageQuery(load)
 
     <HCard flush>
       <HListToolbar
+        v-model:search="q"
         v-model:values="filterValues"
+        search-placeholder="Search requests"
+        search-button
+        :result-count="list.resultCount(meta)"
         :filters="[
           { key: 'direction', type: 'segmented', empty: 'all', options: [
             { value: 'all', title: 'All' },
             { value: 'incoming', title: 'Incoming' },
             { value: 'outgoing', title: 'Outgoing' },
           ] },
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: assistanceStatuses.map(value => ({ title: labelize(value), value })) },
+          { key: 'type', type: 'select', label: 'Type', placeholder: 'All types', optional: true, empty: null, more: true, items: assistanceTypes.map(value => ({ title: labelize(value), value })) },
         ]"
-        @change="load"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       />
       <HTable
         :loading="pending"
@@ -171,6 +184,10 @@ const { pending } = usePageQuery(load)
           />
         </template>
       </HTable>
+      <HPager
+        :meta="meta"
+        @update:page="value => list.onPage(value, load)"
+      />
     </HCard>
 
     <HModal

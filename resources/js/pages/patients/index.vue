@@ -12,8 +12,8 @@ definePage({
 const ability = useAbility()
 const patients = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
-const search = ref('')
+const list = useListQuery(['status', 'sex'])
+const { page, q, filterValues } = list
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
@@ -34,7 +34,7 @@ const form = ref({
 })
 
 const load = async () => {
-  const payload = await $api('/patients', { query: { page: page.value, q: search.value || undefined } })
+  const payload = await $api('/patients', { query: list.apiQuery() })
   patients.value = asList(payload)
   meta.value = asPageMeta(payload)
 }
@@ -91,6 +91,7 @@ const save = async () => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 
 const today = new Date().toISOString().slice(0, 10)
@@ -104,7 +105,7 @@ const today = new Date().toISOString().slice(0, 10)
     >
       <HExportActions
         dataset="patients"
-        :query="{ q: search || undefined }"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -118,10 +119,23 @@ const today = new Date().toISOString().slice(0, 10)
 
     <HCard flush>
       <HListToolbar
-        v-model:search="search"
+        v-model:search="q"
+        v-model:values="filterValues"
         search-placeholder="Search MRN, name or phone"
         search-button
-        @search="page = 1; load()"
+        :result-count="list.resultCount(meta)"
+        :filters="[
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: [
+            { title: 'Active', value: 'active' },
+            { title: 'Admitted', value: 'admitted' },
+            { title: 'Discharged', value: 'discharged' },
+            { title: 'Deceased', value: 'deceased' },
+            { title: 'Transferred', value: 'transferred' },
+          ] },
+          { key: 'sex', type: 'select', label: 'Sex', placeholder: 'All', optional: true, empty: null, items: sexOptions, more: true },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       />
       <HTable
         :loading="pending"
@@ -159,7 +173,7 @@ const today = new Date().toISOString().slice(0, 10)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
 

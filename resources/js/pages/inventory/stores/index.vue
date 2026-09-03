@@ -4,14 +4,33 @@ definePage({
 })
 
 const ability = useAbility()
-const stores = ref([])
+const all = ref([])
+const list = useListQuery(['type', 'is_active'])
+const { q, filterValues } = list
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
 const form = ref({ name: '', type: 'warehouse', is_default: false })
 
+const stores = computed(() => {
+  const term = String(q.value || '').trim().toLowerCase()
+  const active = list.values.is_active
+  const type = list.values.type
+  return all.value.filter(item => {
+    if (term && !String(item.name || '').toLowerCase().includes(term))
+      return false
+    if (type && item.type !== type)
+      return false
+    if (active === '1')
+      return Boolean(item.is_active)
+    if (active === '0')
+      return !item.is_active
+    return true
+  })
+})
+
 const load = async () => {
-  stores.value = asList(await $api('/inventory/stores'))
+  all.value = asList(await $api('/inventory/stores'))
 }
 
 const save = async () => {
@@ -22,6 +41,7 @@ const save = async () => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -33,6 +53,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="inventory-stores"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -44,6 +65,27 @@ const { pending } = usePageQuery(load)
       </HButton>
     </HPage>
     <HCard flush>
+      <HListToolbar
+        v-model:search="q"
+        v-model:values="filterValues"
+        search-placeholder="Search stores"
+        search-button
+        :result-count="list.resultCount({ total: stores.length })"
+        :filters="[
+          { key: 'type', type: 'select', label: 'Type', placeholder: 'All types', optional: true, empty: null, items: [
+            { title: 'Warehouse', value: 'warehouse' },
+            { title: 'Pharmacy', value: 'pharmacy' },
+            { title: 'Department', value: 'department' },
+            { title: 'Ward', value: 'ward' },
+          ] },
+          { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: [
+            { title: 'Active', value: '1' },
+            { title: 'Inactive', value: '0' },
+          ] },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="[{ title: 'Store', key: 'name', fill: true }]"

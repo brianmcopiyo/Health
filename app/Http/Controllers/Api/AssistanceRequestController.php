@@ -32,6 +32,22 @@ class AssistanceRequestController extends Controller
             }
         }
 
+        QueryList::equals($query, $request, 'type');
+
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(function ($builder) use ($term) {
+                    $builder->where('title', 'like', $term)
+                        ->orWhere('description', 'like', $term)
+                        ->orWhereHas('patient', fn ($patient) => $patient
+                            ->where('first_name', 'like', $term)
+                            ->orWhere('last_name', 'like', $term)
+                            ->orWhere('mrn', 'like', $term));
+                });
+            }
+        }
+
         return QueryList::paginate($query, $request);
     }
 

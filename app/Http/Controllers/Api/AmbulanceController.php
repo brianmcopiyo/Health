@@ -29,6 +29,19 @@ class AmbulanceController extends Controller
             $query->where('status', $status);
         }
 
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(function ($builder) use ($term) {
+                    $builder->where('vehicle_code', 'like', $term)
+                        ->orWhere('vehicle_type', 'like', $term)
+                        ->orWhere('notes', 'like', $term);
+                });
+            }
+        }
+
+        QueryList::equals($query, $request, 'vehicle_type');
+
         $paginator = QueryList::paginate($query, $request);
         $paginator->getCollection()->transform(fn (Ambulance $ambulance) => $this->serialize($ambulance));
 

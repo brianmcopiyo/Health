@@ -7,17 +7,14 @@ definePage({
 })
 
 const report = ref(null)
-const filters = ref({ from: '', to: '' })
+const list = useListQuery(['from', 'to'])
+const { filterValues } = list
 
 const load = async () => {
-  report.value = await $api('/invoices/reports', {
-    query: {
-      from: filters.value.from || undefined,
-      to: filters.value.to || undefined,
-    },
-  })
+  report.value = await $api('/invoices/reports', { query: list.apiQuery() })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 
 const sections = computed(() => ([
@@ -41,7 +38,7 @@ const sections = computed(() => ([
     >
       <HExportActions
         dataset="invoice-reports"
-        :query="filters"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
     </HPage>
@@ -50,11 +47,11 @@ const sections = computed(() => ([
       <HListToolbar
         :show-search="false"
         :filters="[
-          { key: 'from', type: 'date', label: 'From' },
-          { key: 'to', type: 'date', label: 'To' },
+          { key: 'from', type: 'date', label: 'From', optional: true, empty: null },
+          { key: 'to', type: 'date', label: 'To', optional: true, empty: null },
         ]"
-        :values="filters"
-        @update:values="value => { filters = value; load() }"
+        v-model:values="filterValues"
+        @change="list.onChange(load)"
       />
     </HCard>
 

@@ -62,6 +62,8 @@ class PricingController extends Controller
         if ($search = $request->string('q')->toString()) {
             $query->where('name', 'like', '%'.addcslashes($search, '%_').'%');
         }
+        QueryList::equals($query, $request, 'kind');
+        QueryList::boolean($query, $request, 'is_active');
 
         return QueryList::paginate($query, $request);
     }
@@ -105,7 +107,17 @@ class PricingController extends Controller
 
     public function rules(Request $request)
     {
-        return QueryList::paginate(PricingRule::query()->orderBy('priority')->orderBy('name'), $request);
+        $query = PricingRule::query()->orderBy('priority')->orderBy('name');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('name', 'like', $term);
+            }
+        }
+        QueryList::equals($query, $request, 'type');
+        QueryList::boolean($query, $request, 'is_active');
+
+        return QueryList::paginate($query, $request);
     }
 
     public function storeRule(Request $request)
@@ -158,7 +170,16 @@ class PricingController extends Controller
 
     public function packages(Request $request)
     {
-        return QueryList::paginate(ServicePackage::query()->with('items.service')->withCount('items')->orderBy('name'), $request);
+        $query = ServicePackage::query()->with('items.service')->withCount('items')->orderBy('name');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('name', 'like', $term);
+            }
+        }
+        QueryList::boolean($query, $request, 'is_active');
+
+        return QueryList::paginate($query, $request);
     }
 
     public function storePackage(Request $request)

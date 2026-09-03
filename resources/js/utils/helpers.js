@@ -66,3 +66,13 @@ export const formatDate = value => {
 }
 
 export const formatQty = value => Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 3 })
+
+export const queryParam = (query, key) => {
+  const value = query?.[key]
+  if (Array.isArray(value))
+    return value[0] ? String(value[0]) : null
+  if (value === undefined || value === null || value === '')
+    return null
+
+  return String(value)
+}

@@ -51,6 +51,7 @@ declare global {
   const forceFinishPageNav: typeof import('./resources/js/composables/useRouteLoad.js')['forceFinishPageNav']
   const formatDate: typeof import('./resources/js/utils/helpers.js')['formatDate']
   const formatQty: typeof import('./resources/js/utils/helpers.js')['formatQty']
+  const formatResultCount: typeof import('./resources/js/composables/useListQuery.js')['formatResultCount']
   const formatWhen: typeof import('./resources/js/utils/helpers.js')['formatWhen']
   const getByPath: typeof import('./resources/js/utils/helpers.js')['getByPath']
   const getCurrentInstance: typeof import('vue')['getCurrentInstance']
@@ -95,6 +96,7 @@ declare global {
   const popoverStyle: typeof import('./resources/js/composables/usePopover.js')['popoverStyle']
   const prefersReducedMotion: typeof import('./resources/js/composables/useMotion.js')['prefersReducedMotion']
   const provide: typeof import('vue')['provide']
+  const queryParam: typeof import('./resources/js/utils/helpers.js')['queryParam']
   const reactive: typeof import('vue')['reactive']
   const readonly: typeof import('vue')['readonly']
   const ref: typeof import('vue')['ref']
@@ -132,6 +134,7 @@ declare global {
   const useExport: typeof import('./resources/js/composables/useExport.js')['useExport']
   const useFieldId: typeof import('./resources/js/utils/formOptions.js')['useFieldId']
   const useListHighlight: typeof import('./resources/js/composables/usePopover.js')['useListHighlight']
+  const useListQuery: typeof import('./resources/js/composables/useListQuery.js')['useListQuery']
   const useOverlay: typeof import('./resources/js/composables/useOverlay.js')['useOverlay']
   const usePageQuery: typeof import('./resources/js/composables/usePageLoad.js')['usePageQuery']
   const usePopover: typeof import('./resources/js/composables/usePopover.js')['usePopover']
@@ -212,6 +215,7 @@ declare module 'vue' {
     readonly forceFinishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['forceFinishPageNav']>
     readonly formatDate: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatDate']>
     readonly formatQty: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatQty']>
+    readonly formatResultCount: UnwrapRef<typeof import('./resources/js/composables/useListQuery.js')['formatResultCount']>
     readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
@@ -255,6 +259,7 @@ declare module 'vue' {
     readonly popoverStyle: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['popoverStyle']>
     readonly prefersReducedMotion: UnwrapRef<typeof import('./resources/js/composables/useMotion.js')['prefersReducedMotion']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
+    readonly queryParam: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['queryParam']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
@@ -292,6 +297,7 @@ declare module 'vue' {
     readonly useExport: UnwrapRef<typeof import('./resources/js/composables/useExport.js')['useExport']>
     readonly useFieldId: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['useFieldId']>
     readonly useListHighlight: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['useListHighlight']>
+    readonly useListQuery: UnwrapRef<typeof import('./resources/js/composables/useListQuery.js')['useListQuery']>
     readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
     readonly usePageQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['usePageQuery']>
     readonly usePopover: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['usePopover']>
@@ -364,6 +370,7 @@ declare module '@vue/runtime-core' {
     readonly forceFinishPageNav: UnwrapRef<typeof import('./resources/js/composables/useRouteLoad.js')['forceFinishPageNav']>
     readonly formatDate: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatDate']>
     readonly formatQty: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatQty']>
+    readonly formatResultCount: UnwrapRef<typeof import('./resources/js/composables/useListQuery.js')['formatResultCount']>
     readonly formatWhen: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['formatWhen']>
     readonly getByPath: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['getByPath']>
     readonly getCurrentInstance: UnwrapRef<typeof import('vue')['getCurrentInstance']>
@@ -407,6 +414,7 @@ declare module '@vue/runtime-core' {
     readonly popoverStyle: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['popoverStyle']>
     readonly prefersReducedMotion: UnwrapRef<typeof import('./resources/js/composables/useMotion.js')['prefersReducedMotion']>
     readonly provide: UnwrapRef<typeof import('vue')['provide']>
+    readonly queryParam: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['queryParam']>
     readonly reactive: UnwrapRef<typeof import('vue')['reactive']>
     readonly readonly: UnwrapRef<typeof import('vue')['readonly']>
     readonly ref: UnwrapRef<typeof import('vue')['ref']>
@@ -444,6 +452,7 @@ declare module '@vue/runtime-core' {
     readonly useExport: UnwrapRef<typeof import('./resources/js/composables/useExport.js')['useExport']>
     readonly useFieldId: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['useFieldId']>
     readonly useListHighlight: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['useListHighlight']>
+    readonly useListQuery: UnwrapRef<typeof import('./resources/js/composables/useListQuery.js')['useListQuery']>
     readonly useOverlay: UnwrapRef<typeof import('./resources/js/composables/useOverlay.js')['useOverlay']>
     readonly usePageQuery: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['usePageQuery']>
     readonly usePopover: UnwrapRef<typeof import('./resources/js/composables/usePopover.js')['usePopover']>

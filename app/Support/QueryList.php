@@ -14,4 +14,50 @@ class QueryList
 
         return $query->paginate($perPage);
     }
+
+    public static function term(?string $value): ?string
+    {
+        $value = trim((string) $value);
+        if ($value === '') {
+            return null;
+        }
+
+        return '%'.addcslashes($value, '%_').'%';
+    }
+
+    public static function equals(Builder $query, Request $request, string $column, ?string $key = null): void
+    {
+        $key ??= $column;
+        if ($request->filled($key)) {
+            $query->where($column, $request->string($key)->toString());
+        }
+    }
+
+    public static function boolean(Builder $query, Request $request, string $column, ?string $key = null): void
+    {
+        $key ??= $column;
+        if ($request->filled($key)) {
+            $query->where($column, $request->boolean($key));
+        }
+    }
+
+    public static function dateRange(Builder $query, Request $request, string $column, string $from = 'from', string $to = 'to'): void
+    {
+        if ($request->filled($from)) {
+            $query->whereDate($column, '>=', $request->string($from)->toString());
+        }
+        if ($request->filled($to)) {
+            $query->whereDate($column, '<=', $request->string($to)->toString());
+        }
+    }
+
+    public static function numberRange(Builder $query, Request $request, string $column, string $min, string $max): void
+    {
+        if ($request->filled($min) && is_numeric($request->input($min))) {
+            $query->where($column, '>=', $request->input($min));
+        }
+        if ($request->filled($max) && is_numeric($request->input($max))) {
+            $query->where($column, '<=', $request->input($max));
+        }
+    }
 }

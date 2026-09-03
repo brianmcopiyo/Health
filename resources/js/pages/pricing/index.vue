@@ -9,14 +9,14 @@ definePage({
 })
 
 const ability = useAbility()
-const tab = ref('lists')
-const filterValues = ref({ tab: 'lists' })
+const list = useListQuery(['tab', 'kind', 'type', 'is_active'])
+const { page, q, filterValues } = list
+if (!list.values.tab)
+  list.values.tab = 'lists'
 const lists = ref([])
 const rules = ref([])
 const packages = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
-const q = ref('')
 const listOpen = ref(false)
 const ruleOpen = ref(false)
 const packageOpen = ref(false)
@@ -25,29 +25,75 @@ const formError = ref('')
 const listForm = ref({ name: '', kind: 'self_pay', tax_inclusive: false, is_default: false })
 const ruleForm = ref({ name: '', type: 'discount_percent', scope: 'service', value: 0, is_active: true })
 const packageForm = ref({ name: '', unit_price: 0 })
+const tab = computed(() => list.values.tab || 'lists')
 
-const filters = [
-  { key: 'tab', type: 'segmented', options: [
-    { title: 'Lists', value: 'lists' },
-    { title: 'Rules', value: 'rules' },
-    { title: 'Packages', value: 'packages' },
-  ] },
-]
+const filters = computed(() => {
+  const items = [
+    { key: 'tab', type: 'segmented', empty: 'lists', clearable: false, options: [
+      { title: 'Lists', value: 'lists' },
+      { title: 'Rules', value: 'rules' },
+      { title: 'Packages', value: 'packages' },
+    ] },
+  ]
+  if (tab.value === 'lists') {
+    items.push(
+      { key: 'kind', type: 'select', label: 'Kind', placeholder: 'All kinds', optional: true, empty: null, items: [
+        { title: 'Self pay', value: 'self_pay' },
+        { title: 'Insurance', value: 'insurance' },
+        { title: 'Patient', value: 'customer' },
+        { title: 'Promotional', value: 'promotional' },
+        { title: 'Department', value: 'department' },
+      ] },
+      { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, more: true, items: [
+        { title: 'Active', value: '1' },
+        { title: 'Inactive', value: '0' },
+      ] },
+    )
+  }
+  else if (tab.value === 'rules') {
+    items.push(
+      { key: 'type', type: 'select', label: 'Type', placeholder: 'All types', optional: true, empty: null, items: [
+        { title: 'Percent discount', value: 'discount_percent' },
+        { title: 'Fixed discount', value: 'discount_fixed' },
+        { title: 'Override', value: 'override' },
+        { title: 'Promotional', value: 'promotional' },
+      ] },
+      { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, more: true, items: [
+        { title: 'Active', value: '1' },
+        { title: 'Inactive', value: '0' },
+      ] },
+    )
+  }
+  else {
+    items.push(
+      { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: [
+        { title: 'Active', value: '1' },
+        { title: 'Inactive', value: '0' },
+      ] },
+    )
+  }
+  return items
+})
+
+const pricingQuery = extra => {
+  const query = list.apiQuery(extra)
+  delete query.tab
+  return query
+}
 
 const load = async () => {
-  tab.value = filterValues.value.tab
   if (tab.value === 'lists') {
-    const payload = await $api('/price-lists', { query: { page: page.value, q: q.value || undefined } })
+    const payload = await $api('/price-lists', { query: pricingQuery() })
     lists.value = asList(payload)
     meta.value = asPageMeta(payload)
   }
   else if (tab.value === 'rules') {
-    const payload = await $api('/pricing-rules', { query: { page: page.value } })
+    const payload = await $api('/pricing-rules', { query: pricingQuery() })
     rules.value = asList(payload)
     meta.value = asPageMeta(payload)
   }
   else {
-    const payload = await $api('/service-packages', { query: { page: page.value } })
+    const payload = await $api('/service-packages', { query: pricingQuery() })
     packages.value = asList(payload)
     meta.value = asPageMeta(payload)
   }
@@ -77,7 +123,7 @@ const savePackage = async () => {
   })
 }
 
-watch(() => filterValues.value.tab, () => { page.value = 1; load() })
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -117,7 +163,9 @@ const { pending } = usePageQuery(load)
         :filters="filters"
         search-placeholder="Search pricing"
         search-button
-        @search="page = 1; load()"
+        :result-count="list.resultCount(meta)"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       />
       <HTable
         v-if="tab === 'lists'"
@@ -172,7 +220,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
 

@@ -12,7 +12,8 @@ definePage({
 const ability = useAbility()
 const invoices = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
+const list = useListQuery(['status', 'payer_type', 'from', 'to', 'min_total', 'max_total'])
+const { page, q, filterValues } = list
 const patients = ref([])
 const encounters = ref([])
 const formOpen = ref(false)
@@ -101,7 +102,7 @@ const encounterOptions = computed(() => encounters.value.map(item => ({
 })))
 
 const load = async () => {
-  const payload = await $api('/invoices', { query: { page: page.value } })
+  const payload = await $api('/invoices', { query: list.apiQuery() })
   invoices.value = asList(payload)
   meta.value = asPageMeta(payload)
   if (ability.can('create', 'Invoice') || ability.can('update', 'Invoice'))
@@ -260,6 +261,7 @@ const savePayment = async () => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -271,6 +273,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="invoices"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -290,6 +293,31 @@ const { pending } = usePageQuery(load)
     </div>
 
     <HCard flush>
+      <HListToolbar
+        v-model:search="q"
+        v-model:values="filterValues"
+        search-placeholder="Search invoice number or patient"
+        search-button
+        :result-count="list.resultCount(meta)"
+        :filters="[
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: [
+            { title: 'Draft', value: 'draft' },
+            { title: 'Issued', value: 'issued' },
+            { title: 'Paid', value: 'paid' },
+            { title: 'Cancelled', value: 'cancelled' },
+          ] },
+          { key: 'payer_type', type: 'select', label: 'Payer', placeholder: 'All payers', optional: true, empty: null, more: true, items: [
+            { title: 'Self-pay', value: 'self_pay' },
+            { title: 'Insurance', value: 'insurance' },
+          ] },
+          { key: 'from', type: 'date', label: 'Issued from', optional: true, empty: null, more: true },
+          { key: 'to', type: 'date', label: 'Issued to', optional: true, empty: null, more: true },
+          { key: 'min_total', type: 'number', label: 'Min total', optional: true, empty: null, more: true },
+          { key: 'max_total', type: 'number', label: 'Max total', optional: true, empty: null, more: true },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="[
@@ -330,7 +358,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
 

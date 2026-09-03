@@ -8,16 +8,18 @@ definePage({
 const ability = useAbility()
 const rows = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
+const stores = ref([])
+const list = useListQuery(['from_store_id', 'to_store_id', 'from', 'to'])
+const { page, q, filterValues } = list
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
-const stores = ref([])
 const catalog = ref([])
 const form = ref({ from_store_id: null, to_store_id: null, items: [{ item_id: null, quantity: 1 }] })
 
 const load = async () => {
-  const payload = await $api('/inventory/returns', { query: { page: page.value } })
+  stores.value = asList(await $api('/inventory/stores'))
+  const payload = await $api('/inventory/returns', { query: list.apiQuery() })
   rows.value = asList(payload)
   meta.value = asPageMeta(payload)
 }
@@ -38,6 +40,7 @@ const save = async () => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -46,6 +49,7 @@ const { pending } = usePageQuery(load)
     <HPage title="Stock returns" subtitle="Return unused stock to pharmacy or store">
       <HExportActions
         dataset="inventory-returns"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -57,6 +61,21 @@ const { pending } = usePageQuery(load)
       </HButton>
     </HPage>
     <HCard flush>
+      <HListToolbar
+        v-model:search="q"
+        v-model:values="filterValues"
+        search-placeholder="Search returns"
+        search-button
+        :result-count="list.resultCount(meta)"
+        :filters="[
+          { key: 'from_store_id', type: 'select', label: 'From store', placeholder: 'All stores', items: stores, itemTitle: 'name', itemValue: 'id', optional: true, empty: null },
+          { key: 'to_store_id', type: 'select', label: 'To store', placeholder: 'All stores', items: stores, itemTitle: 'name', itemValue: 'id', optional: true, empty: null },
+          { key: 'from', type: 'date', label: 'From', optional: true, empty: null, more: true },
+          { key: 'to', type: 'date', label: 'To', optional: true, empty: null, more: true },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="[{ title: 'Return', key: 'reference', fill: true }, { title: 'When', key: 'occurred_at' }]"
@@ -77,7 +96,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
     <HOffcanvas

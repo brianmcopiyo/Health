@@ -7,15 +7,19 @@ definePage({
 })
 
 const batches = ref([])
+const stores = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
+const list = useListQuery(['status', 'store_id', 'expiring'])
+const { page, q, filterValues } = list
 
 const load = async () => {
-  const payload = await $api('/inventory/batches', { query: { page: page.value } })
+  stores.value = asList(await $api('/inventory/stores'))
+  const payload = await $api('/inventory/batches', { query: list.apiQuery() })
   batches.value = asList(payload)
   meta.value = asPageMeta(payload)
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -27,10 +31,33 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="inventory-batches"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
     </HPage>
     <HCard flush>
+      <HListToolbar
+        v-model:search="q"
+        v-model:values="filterValues"
+        search-placeholder="Search batch or item"
+        search-button
+        :result-count="list.resultCount(meta)"
+        :filters="[
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: [
+            { title: 'Available', value: 'available' },
+            { title: 'Reserved', value: 'reserved' },
+            { title: 'Expired', value: 'expired' },
+            { title: 'Depleted', value: 'depleted' },
+            { title: 'Quarantined', value: 'quarantined' },
+          ] },
+          { key: 'expiring', type: 'select', label: 'Expiry', placeholder: 'Any expiry', optional: true, empty: null, items: [
+            { title: 'Expiring within 90 days', value: '1' },
+          ] },
+          { key: 'store_id', type: 'select', label: 'Store', placeholder: 'All stores', items: stores, itemTitle: 'name', itemValue: 'id', optional: true, empty: null, more: true },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="[
@@ -64,7 +91,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
   </div>

@@ -1,5 +1,5 @@
 <script setup>
-import { ambulanceStatuses, labelize, statusColor } from '@/utils/status'
+import { ambulanceStatuses, labelize, statusColor, tripStatuses } from '@/utils/status'
 import { vehicleTypes } from '@/utils/clinicalOptions'
 
 definePage({
@@ -12,6 +12,13 @@ definePage({
 const ability = useAbility()
 const ambulances = ref([])
 const trips = ref([])
+const meta = ref(asPageMeta())
+const list = useListQuery(['status', 'vehicle_type', 'trip_status'])
+const { page, q, filterValues } = list
+const tripFilters = computed({
+  get: () => ({ status: list.values.trip_status }),
+  set: next => { list.values.trip_status = next.status },
+})
 const hospitals = ref([])
 const patients = ref([])
 const referrals = ref([])
@@ -70,11 +77,15 @@ const referralOptions = computed(() => referrals.value.map(item => ({
 })))
 
 const load = async () => {
+  const query = list.apiQuery()
+  const tripStatus = query.trip_status
+  delete query.trip_status
   const [fleet, history] = await Promise.all([
-    $api('/ambulances'),
-    $api('/ambulance-trips'),
+    $api('/ambulances', { query }),
+    $api('/ambulance-trips', { query: { status: tripStatus || undefined } }),
   ])
   ambulances.value = asList(fleet)
+  meta.value = asPageMeta(fleet)
   trips.value = asList(history)
 }
 
@@ -226,6 +237,7 @@ const completeTrip = async () => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -235,7 +247,11 @@ const { pending } = usePageQuery(load)
       title="Ambulance fleet"
       subtitle="Vehicles, dispatch, and trip status"
     >
-      <HExportActions dataset="ambulances" />
+      <HExportActions
+        dataset="ambulances"
+        :query="list.apiQuery()"
+        :disabled="pending"
+      />
       <HButton
         v-if="ability.can('create', 'Ambulance')"
         @click="openCreate"
@@ -249,6 +265,19 @@ const { pending } = usePageQuery(load)
       title="Vehicles"
       flush
     >
+      <HListToolbar
+        v-model:search="q"
+        v-model:values="filterValues"
+        search-placeholder="Search vehicles"
+        search-button
+        :result-count="list.resultCount(meta)"
+        :filters="[
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: ambulanceStatuses.map(value => ({ title: labelize(value), value })) },
+          { key: 'vehicle_type', type: 'select', label: 'Type', placeholder: 'All types', optional: true, empty: null, more: true, items: vehicleTypes },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="headers"
@@ -279,12 +308,24 @@ const { pending } = usePageQuery(load)
           />
         </template>
       </HTable>
+      <HPager
+        :meta="meta"
+        @update:page="value => list.onPage(value, load)"
+      />
     </HCard>
 
     <HCard
       title="Trips"
       flush
     >
+      <HListToolbar
+        v-model:values="tripFilters"
+        :result-count="list.resultCount({ total: trips.length })"
+        :filters="[
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: tripStatuses.map(value => ({ title: labelize(value), value })) },
+        ]"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="tripHeaders"

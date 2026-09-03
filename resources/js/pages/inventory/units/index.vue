@@ -4,7 +4,9 @@ definePage({
 })
 
 const ability = useAbility()
-const rows = ref([])
+const all = ref([])
+const list = useListQuery(['is_active'])
+const { q, filterValues } = list
 const formOpen = ref(false)
 const convertOpen = ref(false)
 const saving = ref(false)
@@ -12,8 +14,22 @@ const formError = ref('')
 const form = ref({ name: '', symbol: '' })
 const conversion = ref({ from_unit_id: null, to_unit_id: null, factor: 1 })
 
+const rows = computed(() => {
+  const term = String(q.value || '').trim().toLowerCase()
+  const active = list.values.is_active
+  return all.value.filter(item => {
+    if (term && !`${item.name || ''} ${item.symbol || ''}`.toLowerCase().includes(term))
+      return false
+    if (active === '1')
+      return Boolean(item.is_active)
+    if (active === '0')
+      return !item.is_active
+    return true
+  })
+})
+
 const load = async () => {
-  rows.value = asList(await $api('/inventory/units'))
+  all.value = asList(await $api('/inventory/units'))
 }
 
 const save = async () => {
@@ -34,6 +50,7 @@ const saveConversion = async () => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -45,6 +62,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="inventory-units"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -63,6 +81,21 @@ const { pending } = usePageQuery(load)
       </HButton>
     </HPage>
     <HCard flush>
+      <HListToolbar
+        v-model:search="q"
+        v-model:values="filterValues"
+        search-placeholder="Search units"
+        search-button
+        :result-count="list.resultCount({ total: rows.length })"
+        :filters="[
+          { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: [
+            { title: 'Active', value: '1' },
+            { title: 'Inactive', value: '0' },
+          ] },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="[{ title: 'Unit', key: 'name', fill: true }]"
@@ -119,14 +152,14 @@ const { pending } = usePageQuery(load)
       <HFormGrid>
         <HSelect
           v-model="conversion.from_unit_id"
-          :items="rows"
+          :items="all"
           item-title="name"
           item-value="id"
           label="From"
         />
         <HSelect
           v-model="conversion.to_unit_id"
-          :items="rows"
+          :items="all"
           item-title="name"
           item-value="id"
           label="To"

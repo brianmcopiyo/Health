@@ -1,5 +1,6 @@
 <script setup>
 import EncounterChart from '@/components/hms/EncounterChart.vue'
+import { formatResultCount } from '@/composables/useListQuery'
 import { facilityRecordTo } from '@/utils/helpers'
 import { facilityStatuses, labelize, statusColor } from '@/utils/status'
 
@@ -304,6 +305,66 @@ const headers = computed(() => {
   return cols
 })
 
+const boardQ = ref('')
+const boardFilters = ref({ status: null, department_id: null })
+const orderQ = ref('')
+const orderFilters = ref({ status: null })
+const assignmentQ = ref('')
+const assignmentFilters = ref({ status: null })
+const orderStatuses = ['requested', 'collected', 'scheduled', 'processing', 'completed', 'cancelled']
+const assignmentStatuses = ['active', 'discharged', 'transferred']
+const boardFilterDefs = computed(() => [
+  { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: facilityStatuses.map(value => ({ title: labelize(value), value })) },
+  ...(board.value.departments?.length
+    ? [{ key: 'department_id', type: 'select', label: 'Department', placeholder: 'All departments', items: board.value.departments, itemTitle: 'name', itemValue: 'id', optional: true, empty: null, more: true }]
+    : []),
+])
+
+const visibleFacilities = computed(() => {
+  const term = String(boardQ.value || '').trim().toLowerCase()
+  const status = boardFilters.value.status
+  const dept = boardFilters.value.department_id
+  return (board.value.facilities || []).filter(item => {
+    if (term && !String(item.name || '').toLowerCase().includes(term))
+      return false
+    if (status && item.status !== status)
+      return false
+    if (dept && String(item.department_id ?? item.department?.id) !== String(dept))
+      return false
+    return true
+  })
+})
+
+const visibleOrders = computed(() => {
+  if (!board.value.orders)
+    return null
+  const term = String(orderQ.value || '').trim().toLowerCase()
+  const status = orderFilters.value.status
+  return board.value.orders.filter(item => {
+    if (status && item.status !== status)
+      return false
+    if (!term)
+      return true
+    const name = `${item.patient?.full_name || ''} ${item.patient?.first_name || ''} ${item.patient?.last_name || ''} ${item.item_name || ''}`
+    return name.toLowerCase().includes(term)
+  })
+})
+
+const visibleAssignments = computed(() => {
+  if (!board.value.assignments)
+    return null
+  const term = String(assignmentQ.value || '').trim().toLowerCase()
+  const status = assignmentFilters.value.status
+  return board.value.assignments.filter(item => {
+    if (status && item.status !== status)
+      return false
+    if (!term)
+      return true
+    const name = `${item.patient?.full_name || ''} ${item.patient?.first_name || ''} ${item.patient?.last_name || ''} ${item.facility?.name || ''}`
+    return name.toLowerCase().includes(term)
+  })
+})
+
 </script>
 
 <template>
@@ -375,10 +436,18 @@ const headers = computed(() => {
       title="Operational units"
       flush
     >
+      <HListToolbar
+        v-model:search="boardQ"
+        v-model:values="boardFilters"
+        search-placeholder="Search units"
+        search-mode="live"
+        :result-count="formatResultCount({ total: visibleFacilities.length })"
+        :filters="boardFilterDefs"
+      />
       <HTable
         :loading="pending"
         :headers="headers"
-        :items="board.facilities"
+        :items="visibleFacilities"
         empty="No operational units in this module"
       >
         <template #cell-name="{ item }">
@@ -429,6 +498,16 @@ const headers = computed(() => {
           Add order
         </HButton>
       </template>
+      <HListToolbar
+        v-model:search="orderQ"
+        v-model:values="orderFilters"
+        search-placeholder="Search orders"
+        search-mode="live"
+        :result-count="formatResultCount({ total: visibleOrders?.length || 0 })"
+        :filters="[
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: orderStatuses.map(value => ({ title: labelize(value), value })) },
+        ]"
+      />
       <HTable
         :loading="pending"
         :headers="[
@@ -436,7 +515,7 @@ const headers = computed(() => {
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
         ]"
-        :items="board.orders"
+        :items="visibleOrders"
         empty="No orders yet"
       >
         <template #cell-patient.first_name="{ item }">
@@ -483,6 +562,16 @@ const headers = computed(() => {
           Assign bed
         </HButton>
       </template>
+      <HListToolbar
+        v-model:search="assignmentQ"
+        v-model:values="assignmentFilters"
+        search-placeholder="Search assignments"
+        search-mode="live"
+        :result-count="formatResultCount({ total: visibleAssignments?.length || 0 })"
+        :filters="[
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: assignmentStatuses.map(value => ({ title: labelize(value), value })) },
+        ]"
+      />
       <HTable
         :loading="pending"
         :headers="[
@@ -490,7 +579,7 @@ const headers = computed(() => {
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
         ]"
-        :items="board.assignments"
+        :items="visibleAssignments"
         empty="No bed assignments"
       >
         <template #cell-patient.first_name="{ item }">

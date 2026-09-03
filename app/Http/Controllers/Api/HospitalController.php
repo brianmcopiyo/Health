@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Hospital;
 use App\Models\Patient;
 use App\Support\HospitalProvisioner;
+use App\Support\QueryList;
 use Illuminate\Http\Request;
 
 class HospitalController extends Controller
@@ -14,7 +15,20 @@ class HospitalController extends Controller
     {
         abort_unless($request->user()->isPlatformAdmin(), 403, 'This action is unauthorized.');
 
-        return Hospital::query()->orderBy('name')->get();
+        $query = Hospital::query()->orderBy('name');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(fn ($builder) => $builder
+                    ->where('name', 'like', $term)
+                    ->orWhere('city', 'like', $term)
+                    ->orWhere('region', 'like', $term)
+                    ->orWhere('phone', 'like', $term));
+            }
+        }
+        QueryList::boolean($query, $request, 'is_active');
+
+        return $query->get();
     }
 
     public function network(Request $request)

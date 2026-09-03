@@ -6,15 +6,26 @@ use App\Http\Controllers\Controller;
 use App\Models\Department;
 use App\Support\HospitalProvisioner;
 use App\Support\ModuleCatalog;
+use App\Support\QueryList;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class DepartmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Department::query()->withCount(['facilities', 'users', 'staffAssignments'])->orderBy('name')->get();
+        $query = Department::query()->withCount(['facilities', 'users', 'staffAssignments'])->orderBy('name');
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where('name', 'like', $term);
+            }
+        }
+        QueryList::equals($query, $request, 'module_key');
+        QueryList::boolean($query, $request, 'is_active');
+
+        return $query->get();
     }
 
     public function show(Department $department)

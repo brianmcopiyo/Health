@@ -37,6 +37,23 @@ class InvoiceController extends Controller
             $query->where('patient_id', $patientId);
         }
 
+        if ($search = $request->string('q')->toString()) {
+            $term = QueryList::term($search);
+            if ($term) {
+                $query->where(function ($builder) use ($term) {
+                    $builder->where('number', 'like', $term)
+                        ->orWhereHas('patient', fn ($patient) => $patient
+                            ->where('first_name', 'like', $term)
+                            ->orWhere('last_name', 'like', $term)
+                            ->orWhere('mrn', 'like', $term));
+                });
+            }
+        }
+
+        QueryList::equals($query, $request, 'payer_type');
+        QueryList::dateRange($query, $request, 'issued_at');
+        QueryList::numberRange($query, $request, 'total', 'min_total', 'max_total');
+
         $paginator = QueryList::paginate($query, $request);
         $paginator->getCollection()->transform(fn (Invoice $invoice) => $this->serialize($invoice));
 

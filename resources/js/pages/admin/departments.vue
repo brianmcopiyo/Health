@@ -9,8 +9,10 @@ definePage({
 })
 
 const ability = useAbility()
-const departments = ref([])
+const all = ref([])
 const catalog = ref([])
+const list = useListQuery(['is_active', 'module_key'])
+const { q, filterValues } = list
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
@@ -23,8 +25,25 @@ const form = ref({
   is_active: true,
 })
 
+const departments = computed(() => {
+  const term = String(q.value || '').trim().toLowerCase()
+  const active = list.values.is_active
+  const moduleKey = list.values.module_key
+  return all.value.filter(item => {
+    if (term && !String(item.name || '').toLowerCase().includes(term))
+      return false
+    if (moduleKey && item.module_key !== moduleKey)
+      return false
+    if (active === '1')
+      return Boolean(item.is_active)
+    if (active === '0')
+      return !item.is_active
+    return true
+  })
+})
+
 const load = async () => {
-  departments.value = asList(await $api('/departments'))
+  all.value = asList(await $api('/departments'))
   catalog.value = asList(await $api('/modules/catalog'))
 }
 
@@ -70,6 +89,7 @@ const restoreDefaults = async () => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -100,6 +120,22 @@ const { pending } = usePageQuery(load)
     </HPage>
 
     <HCard flush>
+      <HListToolbar
+        v-model:search="q"
+        v-model:values="filterValues"
+        search-placeholder="Search departments"
+        search-button
+        :result-count="list.resultCount({ total: departments.length })"
+        :filters="[
+          { key: 'module_key', type: 'select', label: 'Module', placeholder: 'All modules', items: catalog, itemTitle: 'title', itemValue: 'key', optional: true, empty: null },
+          { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: [
+            { title: 'Active', value: '1' },
+            { title: 'Inactive', value: '0' },
+          ] },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="[

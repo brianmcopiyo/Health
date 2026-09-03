@@ -5,13 +5,15 @@ definePage({
 
 const ability = useAbility()
 const rows = ref([])
+const list = useListQuery(['is_active'])
+const { q, filterValues } = list
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
 const form = ref({ name: '', phone: '', email: '' })
 
 const load = async () => {
-  rows.value = asList(await $api('/inventory/suppliers'))
+  rows.value = asList(await $api('/inventory/suppliers', { query: list.apiQuery() }))
 }
 
 const save = async () => {
@@ -23,6 +25,7 @@ const save = async () => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -34,6 +37,7 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="inventory-suppliers"
+        :query="list.apiQuery()"
         :disabled="pending"
       />
       <HButton
@@ -45,6 +49,21 @@ const { pending } = usePageQuery(load)
       </HButton>
     </HPage>
     <HCard flush>
+      <HListToolbar
+        v-model:search="q"
+        v-model:values="filterValues"
+        search-placeholder="Search suppliers"
+        search-button
+        :result-count="list.resultCount({ total: rows.length })"
+        :filters="[
+          { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: [
+            { title: 'Active', value: '1' },
+            { title: 'Inactive', value: '0' },
+          ] },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="[{ title: 'Supplier', key: 'name', fill: true }]"

@@ -7,7 +7,9 @@ definePage({
 })
 
 const userData = useCookie('userData')
-const hospitals = ref([])
+const all = ref([])
+const list = useListQuery(['is_active'])
+const { q, filterValues } = list
 const formOpen = ref(false)
 const saving = ref(false)
 const formError = ref('')
@@ -29,8 +31,22 @@ const headers = [
   { title: 'Actions', key: 'actions' },
 ]
 
+const hospitals = computed(() => {
+  const term = String(q.value || '').trim().toLowerCase()
+  const active = list.values.is_active
+  return all.value.filter(item => {
+    if (term && !`${item.name || ''} ${item.city || ''} ${item.region || ''}`.toLowerCase().includes(term))
+      return false
+    if (active === '1')
+      return Boolean(item.is_active)
+    if (active === '0')
+      return !item.is_active
+    return true
+  })
+})
+
 const load = async () => {
-  hospitals.value = asList(await $api('/hospitals'))
+  all.value = asList(await $api('/hospitals'))
 }
 
 const openCreate = () => {
@@ -75,6 +91,7 @@ const removeHospital = async () => {
   })
 }
 
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -95,6 +112,21 @@ const { pending } = usePageQuery(load)
     </HPage>
 
     <HCard flush>
+      <HListToolbar
+        v-model:search="q"
+        v-model:values="filterValues"
+        search-placeholder="Search hospitals"
+        search-button
+        :result-count="list.resultCount({ total: hospitals.length })"
+        :filters="[
+          { key: 'is_active', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: [
+            { title: 'Active', value: '1' },
+            { title: 'Inactive', value: '0' },
+          ] },
+        ]"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
+      />
       <HTable
         :loading="pending"
         :headers="headers"

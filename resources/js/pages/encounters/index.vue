@@ -7,33 +7,29 @@ definePage({
 })
 
 const encounters = ref([])
+const departments = ref([])
 const meta = ref(asPageMeta())
-const page = ref(1)
-const scope = ref('open')
+const list = useListQuery(['scope', 'type', 'status', 'department_id', 'from', 'to'])
+const { page, q, filterValues } = list
+if (!list.values.scope)
+  list.values.scope = 'open'
+
+const encounterQuery = extra => {
+  const query = list.apiQuery(extra)
+  if (query.scope === 'open' || !query.scope)
+    query.open = 1
+  delete query.scope
+  return query
+}
 
 const load = async () => {
-  const payload = await $api('/encounters', {
-    query: {
-      page: page.value,
-      open: scope.value === 'open' || undefined,
-    },
-  })
+  departments.value = asList(await $api('/departments').catch(() => []))
+  const payload = await $api('/encounters', { query: encounterQuery() })
   encounters.value = asList(payload)
   meta.value = asPageMeta(payload)
 }
 
-const filterValues = computed({
-  get: () => ({ scope: scope.value }),
-  set: next => {
-    scope.value = next.scope
-  },
-})
-
-const applyFilters = () => {
-  page.value = 1
-  load()
-}
-
+list.sync(load)
 const { pending } = usePageQuery(load)
 </script>
 
@@ -45,21 +41,45 @@ const { pending } = usePageQuery(load)
     >
       <HExportActions
         dataset="encounters"
-        :query="{ open: scope === 'open' || undefined }"
+        :query="encounterQuery()"
         :disabled="pending"
       />
     </HPage>
 
     <HCard flush>
       <HListToolbar
+        v-model:search="q"
         v-model:values="filterValues"
+        search-placeholder="Search patient or complaint"
+        search-button
+        :result-count="list.resultCount(meta)"
         :filters="[
           { key: 'scope', type: 'segmented', empty: 'open', options: [
             { value: 'open', title: 'Open' },
             { value: 'all', title: 'All' },
           ] },
+          { key: 'type', type: 'select', label: 'Type', placeholder: 'All types', optional: true, empty: null, items: [
+            { title: 'Reception', value: 'reception' },
+            { title: 'OPD', value: 'opd' },
+            { title: 'Emergency', value: 'emergency' },
+            { title: 'Admission', value: 'admission' },
+            { title: 'Procedure', value: 'procedure' },
+            { title: 'Follow-up', value: 'follow_up' },
+            { title: 'Referral', value: 'referral' },
+          ] },
+          { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, more: true, items: [
+            { title: 'Waiting', value: 'waiting' },
+            { title: 'In progress', value: 'in_progress' },
+            { title: 'Completed', value: 'completed' },
+            { title: 'Cancelled', value: 'cancelled' },
+            { title: 'Transferred', value: 'transferred' },
+          ] },
+          { key: 'department_id', type: 'select', label: 'Department', placeholder: 'All departments', items: departments, itemTitle: 'name', itemValue: 'id', optional: true, empty: null, more: true },
+          { key: 'from', type: 'date', label: 'From', optional: true, empty: null, more: true },
+          { key: 'to', type: 'date', label: 'To', optional: true, empty: null, more: true },
         ]"
-        @change="applyFilters"
+        @search="list.onSearch(load)"
+        @change="list.onChange(load)"
       />
       <HTable
         :loading="pending"
@@ -90,7 +110,7 @@ const { pending } = usePageQuery(load)
       </HTable>
       <HPager
         :meta="meta"
-        @update:page="value => { page = value; load() }"
+        @update:page="value => list.onPage(value, load)"
       />
     </HCard>
   </div>
