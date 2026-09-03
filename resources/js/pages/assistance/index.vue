@@ -43,7 +43,6 @@ const encounterOptions = computed(() => encounters.value.map(item => ({
 
 const headers = [
   { title: 'Request', key: 'title', fill: true },
-  { title: 'Type', key: 'type' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions' },
 ]
@@ -162,13 +161,10 @@ const { pending } = usePageQuery(load)
         <template #cell-title="{ item }">
           <HCell
             :to="{ name: 'assistance-id', params: { id: item.id } }"
-            :secondary="joinContext(item.patient?.full_name, item.from_hospital?.name, item.to_hospital?.name)"
+            :secondary="joinContext(labelize(item.type), item.patient?.full_name, item.from_hospital?.name, item.to_hospital?.name)"
           >
             {{ item.title }}
           </HCell>
-        </template>
-        <template #cell-type="{ item }">
-          {{ labelize(item.type) }}
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">

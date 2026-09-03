@@ -652,7 +652,7 @@ const refresh = async () => {
           <template #cell-name="{ item }">
             <HCell
               :to="item.to || null"
-              :secondary="item.mrn"
+              :secondary="joinContext(item.mrn, item.item || item.medicines)"
             >
               {{ item.name }}
             </HCell>
@@ -866,16 +866,16 @@ const refresh = async () => {
       >
         <HTable
           :headers="[
-            { title: 'Action', key: 'action' },
-            { title: 'Record', key: 'entity' },
-            { title: 'Hospital', key: 'hospital' },
+            { title: 'Record', key: 'entity', fill: true },
             { title: 'When', key: 'at' },
           ]"
           :items="dash.activity"
           empty="No recent system activity"
         >
-          <template #cell-action="{ item }">
-            {{ labelize(item.action) }}
+          <template #cell-entity="{ item }">
+            <HCell :secondary="joinContext(labelize(item.action), item.hospital)">
+              {{ item.entity || '—' }}
+            </HCell>
           </template>
           <template #cell-at="{ item }">
             {{ when(item.at) }}

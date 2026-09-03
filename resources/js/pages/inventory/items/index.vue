@@ -96,7 +96,6 @@ const { pending } = usePageQuery(load)
         :loading="pending"
         :headers="[
           { title: 'Item', key: 'name', fill: true },
-          { title: 'Type', key: 'kind' },
           { title: 'On hand', key: 'stock_quantity' },
           { title: 'Status', key: 'status' },
         ]"
@@ -106,7 +105,7 @@ const { pending } = usePageQuery(load)
         <template #cell-name="{ item }">
           <HCell
             :to="{ name: 'inventory-items-id', params: { id: item.id } }"
-            :secondary="joinContext(item.sku, item.category?.name)"
+            :secondary="joinContext(labelize(item.kind), item.sku, item.category?.name)"
           >
             {{ item.name }}
           </HCell>

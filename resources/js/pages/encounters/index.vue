@@ -94,7 +94,7 @@ const { pending } = usePageQuery(load)
         <template #cell-patient.first_name="{ item }">
           <HCell
             :to="{ name: 'encounters-id', params: { id: item.id } }"
-            :secondary="joinContext(labelize(item.type), item.chief_complaint)"
+            :secondary="joinContext(item.patient?.mrn, labelize(item.type), item.chief_complaint)"
           >
             {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
           </HCell>

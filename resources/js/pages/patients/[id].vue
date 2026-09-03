@@ -330,7 +330,6 @@ const today = new Date().toISOString().slice(0, 10)
         <HTable
           :headers="[
             { title: 'Encounter', key: 'type', fill: true },
-            { title: 'Clinician', key: 'clinician.name' },
             { title: 'Status', key: 'status' },
             { title: 'Actions', key: 'actions' },
           ]"
@@ -340,7 +339,7 @@ const today = new Date().toISOString().slice(0, 10)
           <template #cell-type="{ item }">
             <HCell
               :to="{ name: 'encounters-id', params: { id: item.id } }"
-              :secondary="item.chief_complaint"
+              :secondary="joinContext(item.clinician?.name, item.chief_complaint)"
             >
               {{ labelize(item.type) }}
             </HCell>
@@ -431,7 +430,10 @@ const today = new Date().toISOString().slice(0, 10)
           empty="No invoices"
         >
           <template #cell-number="{ item }">
-            <HCell :to="{ name: 'billing-id', params: { id: item.id } }">
+            <HCell
+              :to="{ name: 'billing-id', params: { id: item.id } }"
+              :secondary="joinContext(labelize(item.encounter?.type), item.encounter?.number)"
+            >
               {{ item.number }}
             </HCell>
           </template>

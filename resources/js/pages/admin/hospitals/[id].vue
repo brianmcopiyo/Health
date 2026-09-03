@@ -149,7 +149,6 @@ watch(() => route.params.id, () => run())
       <HTable
         :headers="[
           { title: 'Name', key: 'name', fill: true },
-          { title: 'Role', key: 'role.name' },
         ]"
         :items="record.users || []"
         empty="No staff"
@@ -157,7 +156,7 @@ watch(() => route.params.id, () => run())
         <template #cell-name="{ item }">
           <HCell
             :to="{ name: 'admin-users-id', params: { id: item.id } }"
-            :secondary="item.job_title"
+            :secondary="joinContext(item.job_title, item.role?.name)"
           >
             {{ item.name }}
           </HCell>

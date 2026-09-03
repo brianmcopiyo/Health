@@ -85,7 +85,6 @@ watch(() => route.params.id, () => run())
         :headers="[
           { title: 'Name', key: 'name', fill: true },
           { title: 'Status', key: 'status' },
-          { title: 'Department', key: 'department.name' },
         ]"
         :items="record.users || []"
         empty="No users assigned this role"
@@ -93,7 +92,7 @@ watch(() => route.params.id, () => run())
         <template #cell-name="{ item }">
           <HCell
             :to="{ name: 'admin-users-id', params: { id: item.id } }"
-            :secondary="item.email"
+            :secondary="joinContext(item.email, item.department?.name)"
           >
             {{ item.name }}
           </HCell>

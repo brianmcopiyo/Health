@@ -4,7 +4,7 @@ import { useAbility } from '@/composables/useAbility'
 import { useCookie } from '@/composables/useCookie'
 import { asList, asPageMeta, usePageQuery, wrapSave } from '@/composables/usePageLoad'
 import { $api } from '@/utils/api'
-import { formatWhen } from '@/utils/helpers'
+import { formatWhen, joinContext } from '@/utils/helpers'
 import { labelize, statusColor } from '@/utils/status'
 import {
   accountStatusItems,
@@ -22,6 +22,7 @@ const props = defineProps({
   empty: { type: String, default: 'No users match these filters' },
   defaultRoleSlug: { type: String, default: '' },
   extraHeaders: { type: Array, default: () => [] },
+  nameContext: { type: Function, default: null },
   namePlaceholder: String,
   emailPlaceholder: String,
 })
@@ -174,7 +175,7 @@ const { pending } = usePageQuery(load)
         <template #cell-name="{ item }">
           <HCell
             :to="{ name: 'admin-users-id', params: { id: item.id } }"
-            :secondary="item.email"
+            :secondary="joinContext(item.email, props.nameContext?.(item))"
           >
             {{ item.name }}
           </HCell>

@@ -26,7 +26,7 @@ loadHospitals()
     default-role-slug="nurse"
     name-placeholder="e.g. Grace Adeyemi"
     email-placeholder="e.g. nurse@hospital.org"
-    :extra-headers="[{ title: 'Hospital', key: 'hospital.name' }]"
+    :name-context="item => item.hospital?.name"
   >
     <template #form-extra="{ form, ability: can }">
       <HSelect
@@ -37,9 +37,6 @@ loadHospitals()
         item-value="id"
         label="Hospital"
       />
-    </template>
-    <template #cell-hospital.name="{ item }">
-      {{ item.hospital?.name || '—' }}
     </template>
   </AccessUserList>
 </template>

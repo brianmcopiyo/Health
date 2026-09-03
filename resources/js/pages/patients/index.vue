@@ -142,7 +142,6 @@ const today = new Date().toISOString().slice(0, 10)
         :headers="[
           { title: 'Name', key: 'full_name', fill: true },
           { title: 'Sex', key: 'sex' },
-          { title: 'Phone', key: 'phone' },
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
         ]"
@@ -152,7 +151,7 @@ const today = new Date().toISOString().slice(0, 10)
         <template #cell-full_name="{ item }">
           <HCell
             :to="{ name: 'patients-id', params: { id: item.id } }"
-            :secondary="item.mrn"
+            :secondary="joinContext(item.mrn, item.phone)"
           >
             {{ item.full_name }}
           </HCell>

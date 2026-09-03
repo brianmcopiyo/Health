@@ -2224,6 +2224,7 @@ a.h-card.h-stat:hover {
 .h-cell-stack .h-muted {
   font-size: 0.8rem;
   line-height: 1.3;
+  white-space: normal;
 }
 .h-action-menu { position: relative; display: inline-flex; }
 .h-table td.is-end .h-action-menu { margin-inline-start: auto; }

@@ -181,7 +181,7 @@ const stockHeaders = [
         empty="No formulary items"
       >
         <template #cell-name="{ item }">
-          <HCell :secondary="item.strength">
+          <HCell :secondary="joinContext(item.strength, item.form)">
             {{ item.name }}
           </HCell>
         </template>

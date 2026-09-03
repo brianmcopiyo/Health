@@ -35,7 +35,6 @@ const mineHeaders = [
 ]
 const queueHeaders = [
   { title: 'Patient', key: 'patient.first_name', fill: true },
-  { title: 'Clinician', key: 'clinician.name' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions' },
 ]
@@ -104,7 +103,7 @@ onBeforeUnmount(() => {
         <template #cell-patient.first_name="{ item }">
           <HCell
             :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
-            :secondary="item.chief_complaint"
+            :secondary="joinContext(item.clinician?.name, item.chief_complaint)"
           >
             {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
           </HCell>

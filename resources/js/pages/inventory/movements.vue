@@ -67,10 +67,10 @@ const { pending } = usePageQuery(load)
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'When', key: 'occurred_at' },
           { title: 'Item', key: 'item.name', fill: true },
           { title: 'Type', key: 'type' },
           { title: 'Qty', key: 'quantity' },
+          { title: 'When', key: 'occurred_at' },
         ]"
         :items="movements"
         empty="No movements"
@@ -79,7 +79,7 @@ const { pending } = usePageQuery(load)
           {{ formatWhen(item.occurred_at) }}
         </template>
         <template #cell-item.name="{ item }">
-          <HCell :secondary="item.store?.name">
+          <HCell :secondary="joinContext(item.item?.sku, item.store?.name)">
             {{ item.item?.name }}
           </HCell>
         </template>

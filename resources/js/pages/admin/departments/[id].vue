@@ -113,7 +113,6 @@ watch(() => route.params.id, () => run())
       <HTable
         :headers="[
           { title: 'Name', key: 'name', fill: true },
-          { title: 'Role', key: 'role.name' },
         ]"
         :items="staffRows"
         empty="No staff assigned to this department"
@@ -121,7 +120,7 @@ watch(() => route.params.id, () => run())
         <template #cell-name="{ item }">
           <HCell
             :to="{ name: 'admin-users-id', params: { id: item.id } }"
-            :secondary="item.job_title"
+            :secondary="joinContext(item.job_title, item.role?.name)"
           >
             {{ item.name }}
           </HCell>
@@ -208,7 +207,6 @@ watch(() => route.params.id, () => run())
       <HTable
         :headers="[
           { title: 'Patient', key: 'patient.first_name', fill: true },
-          { title: 'Clinician', key: 'clinician.name' },
           { title: 'Status', key: 'status' },
         ]"
         :items="record.encounters || []"
@@ -217,7 +215,7 @@ watch(() => route.params.id, () => run())
         <template #cell-patient.first_name="{ item }">
           <HCell
             :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : { name: 'encounters-id', params: { id: item.id } }"
-            :secondary="labelize(item.type)"
+            :secondary="joinContext(item.clinician?.name, labelize(item.type))"
           >
             {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
           </HCell>

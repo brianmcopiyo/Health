@@ -25,7 +25,6 @@ const facilities = ref([])
 
 const headers = [
   { title: 'Patient', key: 'patient_name', fill: true },
-  { title: 'Need', key: 'required_facility_type.name' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions' },
 ]
@@ -125,7 +124,7 @@ const { pending } = usePageQuery(load)
         <template #cell-patient_name="{ item }">
           <HCell
             :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
-            :secondary="joinContext(item.from_hospital?.name, item.to_hospital?.name)"
+            :secondary="joinContext(item.from_hospital?.name, item.to_hospital?.name, item.required_facility_type?.name)"
           >
             {{ item.patient?.full_name || item.patient_name || '—' }}
           </HCell>

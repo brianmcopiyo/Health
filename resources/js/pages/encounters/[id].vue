@@ -260,7 +260,10 @@ watch(() => route.params.id, () => run())
         empty="No invoices"
       >
         <template #cell-number="{ item }">
-          <HCell :to="{ name: 'billing-id', params: { id: item.id } }">
+          <HCell
+            :to="{ name: 'billing-id', params: { id: item.id } }"
+            :secondary="joinContext(record.patient?.full_name, labelize(record.type))"
+          >
             {{ item.number }}
           </HCell>
         </template>
