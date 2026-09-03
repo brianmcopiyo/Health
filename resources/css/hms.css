@@ -546,8 +546,9 @@ img { max-width: 100%; }
 .hms-header {
   min-height: var(--header);
   display: flex;
-  align-items: flex-start;
-  padding: 0 0 28px;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 var(--page-pad-x) 28px;
   border-bottom: 0;
   background: transparent;
   position: sticky;
@@ -571,10 +572,9 @@ img { max-width: 100%; }
 
 .hms-header-inner {
   position: relative;
-  width: min(100%, var(--page-max));
-  margin: 0 auto;
+  width: 100%;
+  max-width: var(--page-max);
   min-height: var(--header);
-  padding: 0 var(--page-pad-x);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -991,7 +991,8 @@ img { max-width: 100%; }
 }
 
 .hms-page {
-  width: min(100%, var(--page-max));
+  width: 100%;
+  max-width: var(--page-max);
   display: grid;
   gap: var(--space-5);
   align-items: start;
