@@ -273,22 +273,19 @@ const refresh = async () => {
         </div>
         <HTable
           :headers="[
-            { title: 'Vehicle', key: 'vehicle' },
-            { title: 'Patient', key: 'name' },
+            { title: 'Vehicle', key: 'vehicle', fill: true },
             { title: 'Status', key: 'status' },
           ]"
           :items="dash.ambulances.trips"
           empty="No active trips"
         >
           <template #cell-vehicle="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.name"
             >
               {{ item.vehicle || 'Trip' }}
-            </RouterLink>
-            <span v-else>{{ item.vehicle || '—' }}</span>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -336,8 +333,7 @@ const refresh = async () => {
       >
         <HTable
           :headers="[
-            { title: 'Patient', key: 'name' },
-            { title: 'Type', key: 'type' },
+            { title: 'Patient', key: 'name', fill: true },
             { title: 'Status', key: 'status' },
             { title: 'When', key: 'at' },
           ]"
@@ -345,18 +341,12 @@ const refresh = async () => {
           empty="No open encounters are assigned to you"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="joinContext(item.mrn, labelize(item.type))"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
-            <small class="h-muted"> {{ item.mrn }}</small>
-          </template>
-          <template #cell-type="{ item }">
-            {{ labelize(item.type) }}
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -386,8 +376,7 @@ const refresh = async () => {
         </template>
         <HTable
           :headers="[
-            { title: 'Patient', key: 'name' },
-            { title: 'Type', key: 'type' },
+            { title: 'Patient', key: 'name', fill: true },
             { title: 'Status', key: 'status' },
             { title: 'When', key: 'at' },
           ]"
@@ -395,18 +384,12 @@ const refresh = async () => {
           empty="No encounters recorded yet"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="joinContext(item.mrn, labelize(item.type))"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
-            <small class="h-muted"> {{ item.mrn }}</small>
-          </template>
-          <template #cell-type="{ item }">
-            {{ labelize(item.type) }}
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -436,8 +419,7 @@ const refresh = async () => {
         </template>
         <HTable
           :headers="[
-            { title: 'Patient', key: 'name' },
-            { title: 'MRN', key: 'mrn' },
+            { title: 'Patient', key: 'name', fill: true },
             { title: 'Status', key: 'status' },
             { title: 'Updated', key: 'at' },
           ]"
@@ -445,12 +427,12 @@ const refresh = async () => {
           empty="No patients in this hospital yet"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.mrn"
             >
               {{ item.name }}
-            </RouterLink>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -479,14 +461,12 @@ const refresh = async () => {
           empty="No recent admissions"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.mrn"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -515,14 +495,12 @@ const refresh = async () => {
           empty="No recent discharges"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.mrn"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -543,25 +521,19 @@ const refresh = async () => {
       >
         <HTable
           :headers="[
-            { title: 'Patient', key: 'name' },
-            { title: 'Type', key: 'type' },
+            { title: 'Patient', key: 'name', fill: true },
             { title: 'Status', key: 'status' },
           ]"
           :items="dash.transfers"
           empty="No transfers in progress"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="joinContext(item.mrn, labelize(item.type))"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
-          </template>
-          <template #cell-type="{ item }">
-            {{ labelize(item.type) }}
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -596,14 +568,12 @@ const refresh = async () => {
           empty="No active emergency visits"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.mrn"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -633,22 +603,19 @@ const refresh = async () => {
         </template>
         <HTable
           :headers="[
-            { title: 'Patient', key: 'name' },
-            { title: 'Test', key: 'item' },
+            { title: 'Patient', key: 'name', fill: true },
             { title: 'Status', key: 'status' },
           ]"
           :items="dash.laboratory"
           empty="No laboratory orders are waiting"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.item"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -683,14 +650,12 @@ const refresh = async () => {
           empty="No prescriptions are waiting"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.mrn"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -720,22 +685,19 @@ const refresh = async () => {
         </template>
         <HTable
           :headers="[
-            { title: 'Patient', key: 'name' },
-            { title: 'Study', key: 'item' },
+            { title: 'Patient', key: 'name', fill: true },
             { title: 'Status', key: 'status' },
           ]"
           :items="dash.imaging"
           empty="No imaging studies are waiting"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.item"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -762,22 +724,19 @@ const refresh = async () => {
         </template>
         <HTable
           :headers="[
-            { title: 'Patient', key: 'name' },
-            { title: 'Case', key: 'item' },
+            { title: 'Patient', key: 'name', fill: true },
             { title: 'Status', key: 'status' },
           ]"
           :items="dash.theatre"
           empty="No theatre cases are pending"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              v-if="item.to"
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.item"
             >
               {{ item.name }}
-            </RouterLink>
-            <span v-else>{{ item.name }}</span>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -804,21 +763,19 @@ const refresh = async () => {
         </template>
         <HTable
           :headers="[
-            { title: 'Patient', key: 'name' },
-            { title: 'From', key: 'from' },
-            { title: 'To', key: 'to_hospital' },
+            { title: 'Patient', key: 'name', fill: true },
             { title: 'Status', key: 'status' },
           ]"
           :items="dash.referrals"
           empty="No pending or in-transit referrals"
         >
           <template #cell-name="{ item }">
-            <RouterLink
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="joinContext(item.from, item.to_hospital)"
             >
               {{ item.name }}
-            </RouterLink>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -845,23 +802,19 @@ const refresh = async () => {
         </template>
         <HTable
           :headers="[
-            { title: 'Request', key: 'title' },
-            { title: 'Type', key: 'type' },
+            { title: 'Request', key: 'title', fill: true },
             { title: 'Status', key: 'status' },
           ]"
           :items="dash.assistance"
           empty="No open assistance requests"
         >
           <template #cell-title="{ item }">
-            <RouterLink
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="labelize(item.type)"
             >
               {{ item.title }}
-            </RouterLink>
-          </template>
-          <template #cell-type="{ item }">
-            {{ labelize(item.type) }}
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -879,8 +832,7 @@ const refresh = async () => {
       >
         <HTable
           :headers="[
-            { title: 'Invoice', key: 'number' },
-            { title: 'Patient', key: 'name' },
+            { title: 'Invoice', key: 'number', fill: true },
             { title: 'Status', key: 'status' },
             { title: 'Total', key: 'total' },
           ]"
@@ -888,12 +840,12 @@ const refresh = async () => {
           empty="No draft or issued invoices"
         >
           <template #cell-number="{ item }">
-            <RouterLink
-              class="h-inline-link"
-              :to="item.to"
+            <HCell
+              :to="item.to || null"
+              :secondary="item.name"
             >
               {{ item.number }}
-            </RouterLink>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">

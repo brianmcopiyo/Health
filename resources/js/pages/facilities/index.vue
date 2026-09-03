@@ -37,8 +37,7 @@ const form = ref({
 })
 
 const headers = [
-  { title: 'Facility', key: 'name' },
-  { title: 'Type', key: 'type.name' },
+  { title: 'Facility', key: 'name', fill: true },
   { title: 'Status', key: 'status' },
   { title: 'Capacity', key: 'capacity' },
   { title: 'In use', key: 'current_utilization' },
@@ -174,12 +173,12 @@ const { pending } = usePageQuery(load)
         empty="No facilities match these filters"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="facilityRecordTo(item)"
+            :secondary="joinContext(item.type?.name, item.hospital?.name)"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -187,31 +186,13 @@ const { pending } = usePageQuery(load)
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              variant="ghost"
-              size="icon"
-              :to="facilityRecordTo(item)"
-            >
-              <HIcon name="eye" />
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Facility')"
-              variant="ghost"
-              size="icon"
-              @click="openEdit(item)"
-            >
-              <HIcon name="edit" />
-            </HButton>
-            <HButton
-              v-if="ability.can('manage', 'Facility')"
-              variant="ghost"
-              size="sm"
-              @click="formError = ''; removing = item"
-            >
-              Remove
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'View', icon: 'eye', to: facilityRecordTo(item) },
+              { label: 'Edit', icon: 'edit', if: ability.can('update', 'Facility'), onSelect: () => openEdit(item) },
+              { label: 'Remove', icon: 'trash', danger: true, if: ability.can('manage', 'Facility'), onSelect: () => { formError = ''; removing = item } },
+            ]"
+          />
         </template>
       </HTable>
       <HPager

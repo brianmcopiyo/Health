@@ -42,18 +42,17 @@ watch(() => route.params.id, () => run())
         flush
       >
         <HTable
-          :headers="[{ title: 'Item', key: 'item.name' }, { title: 'Qty', key: 'quantity' }]"
+          :headers="[{ title: 'Item', key: 'item.name', fill: true }, { title: 'Qty', key: 'quantity' }]"
           :items="record.stock || []"
           empty="No stock in this store"
         >
           <template #cell-item.name="{ item }">
-            <RouterLink
-              v-if="item.item_id"
-              class="h-inline-link"
-              :to="{ name: 'inventory-items-id', params: { id: item.item_id } }"
+            <HCell
+              :to="item.item_id ? { name: 'inventory-items-id', params: { id: item.item_id } } : null"
+              :secondary="item.item?.sku"
             >
               {{ item.item?.name }}
-            </RouterLink>
+            </HCell>
           </template>
           <template #cell-quantity="{ item }">
             {{ formatQty(item.quantity) }}
@@ -67,10 +66,16 @@ watch(() => route.params.id, () => run())
         flush
       >
         <HTable
-          :headers="[{ title: 'Location', key: 'name' }]"
+          :headers="[{ title: 'Location', key: 'name', fill: true }]"
           :items="record.locations || []"
           empty="No locations in this store"
-        />
+        >
+          <template #cell-name="{ item }">
+            <HCell>
+              {{ item.name }}
+            </HCell>
+          </template>
+        </HTable>
       </HCard>
     </template>
     <template v-else-if="record && tab === 'batches'">
@@ -79,10 +84,15 @@ watch(() => route.params.id, () => run())
         flush
       >
         <HTable
-          :headers="[{ title: 'Batch', key: 'batch_number' }, { title: 'Item', key: 'item.name' }, { title: 'Expiry', key: 'expiry_date' }, { title: 'Qty', key: 'quantity' }]"
+          :headers="[{ title: 'Batch', key: 'batch_number', fill: true }, { title: 'Expiry', key: 'expiry_date' }, { title: 'Qty', key: 'quantity' }]"
           :items="record.batches || []"
           empty="No open batches"
         >
+          <template #cell-batch_number="{ item }">
+            <HCell :secondary="item.item?.name">
+              {{ item.batch_number }}
+            </HCell>
+          </template>
           <template #cell-expiry_date="{ item }">
             {{ formatDate(item.expiry_date) }}
           </template>
@@ -95,10 +105,15 @@ watch(() => route.params.id, () => run())
         flush
       >
         <HTable
-          :headers="[{ title: 'When', key: 'occurred_at' }, { title: 'Item', key: 'item.name' }, { title: 'Type', key: 'type' }, { title: 'Qty', key: 'quantity' }]"
+          :headers="[{ title: 'When', key: 'occurred_at' }, { title: 'Item', key: 'item.name', fill: true }, { title: 'Type', key: 'type' }, { title: 'Qty', key: 'quantity' }]"
           :items="record.movements || []"
           empty="No movements"
         >
+          <template #cell-item.name="{ item }">
+            <HCell :secondary="item.item?.sku">
+              {{ item.item?.name }}
+            </HCell>
+          </template>
           <template #cell-occurred_at="{ item }">
             {{ formatWhen(item.occurred_at) }}
           </template>

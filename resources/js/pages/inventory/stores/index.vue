@@ -46,17 +46,17 @@ const { pending } = usePageQuery(load)
     <HCard flush>
       <HTable
         :loading="pending"
-        :headers="[{ title: 'Store', key: 'name' }, { title: 'Type', key: 'type' }]"
+        :headers="[{ title: 'Store', key: 'name', fill: true }]"
         :items="stores"
         empty="No stores"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'inventory-stores-id', params: { id: item.id } }"
+            :secondary="item.type"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
       </HTable>
     </HCard>

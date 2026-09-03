@@ -20,7 +20,7 @@ const passwordForm = ref({
   password_confirmation: '',
 })
 const sessionHeaders = [
-  { title: 'Session', key: 'device' },
+  { title: 'Session', key: 'device', fill: true },
   { title: 'Last used', key: 'last_used_at' },
   { title: 'Started', key: 'created_at' },
   { title: '', key: 'actions', fit: true },
@@ -197,21 +197,17 @@ onMounted(() => {
         <template #cell-created_at="{ item }">
           {{ when(item.created_at) }}
         </template>
+        <template #cell-device="{ item }">
+          <HCell :secondary="item.is_current ? 'This session' : ''">
+            {{ item.device }}
+          </HCell>
+        </template>
         <template #cell-actions="{ item }">
-          <HBadge
-            v-if="item.is_current"
-            tone="success"
-          >
-            This session
-          </HBadge>
-          <HButton
-            v-else
-            variant="ghost"
-            size="sm"
-            @click="askRevoke(item)"
-          >
-            Revoke
-          </HButton>
+          <HActionMenu
+            :actions="[
+              { label: 'Revoke', icon: 'ban', danger: true, if: !item.is_current, onSelect: () => askRevoke(item) },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>

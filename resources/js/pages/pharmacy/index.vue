@@ -48,14 +48,12 @@ const updateRx = async (item, status) => {
 
 const { pending } = usePageQuery(load)
 const rxHeaders = [
-  { title: 'Patient', key: 'patient.first_name' },
-  { title: 'Medicines', key: 'items' },
+  { title: 'Patient', key: 'patient.first_name', fill: true },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions' },
 ]
 const stockHeaders = [
-  { title: 'Medicine', key: 'name' },
-  { title: 'Strength', key: 'strength' },
+  { title: 'Medicine', key: 'name', fill: true },
   { title: 'Stock', key: 'stock_qty' },
   { title: 'Reorder at', key: 'reorder_level' },
   { title: 'Actions', key: 'actions' },
@@ -95,17 +93,12 @@ const stockHeaders = [
         empty="No prescriptions in the pharmacy queue"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+            :secondary="(item.items || []).map(row => row.medication?.name).filter(Boolean).join(', ')"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
-        </template>
-        <template #cell-items="{ item }">
-          {{ (item.items || []).map(row => row.medication?.name).join(', ') }}
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -113,37 +106,13 @@ const stockHeaders = [
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              v-if="ability.can('update', 'Pharmacy') && item.status === 'pending'"
-              size="sm"
-              variant="ghost"
-              :loading="saving"
-              :disabled="saving"
-              @click="updateRx(item, 'verified')"
-            >
-              Verify
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Pharmacy') && item.status !== 'dispensed' && item.status !== 'cancelled'"
-              size="sm"
-              :loading="saving"
-              :disabled="saving"
-              @click="updateRx(item, 'dispensed')"
-            >
-              Dispense
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Pharmacy') && !['dispensed', 'cancelled'].includes(item.status)"
-              variant="ghost"
-              size="sm"
-              :loading="saving"
-              :disabled="saving"
-              @click="updateRx(item, 'cancelled')"
-            >
-              Cancel
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'Verify', icon: 'check', if: ability.can('update', 'Pharmacy') && item.status === 'pending', onSelect: () => updateRx(item, 'verified') },
+              { label: 'Dispense', icon: 'send', if: ability.can('update', 'Pharmacy') && item.status !== 'dispensed' && item.status !== 'cancelled', onSelect: () => updateRx(item, 'dispensed') },
+              { label: 'Cancel', icon: 'ban', danger: true, if: ability.can('update', 'Pharmacy') && !['dispensed', 'cancelled'].includes(item.status), onSelect: () => updateRx(item, 'cancelled') },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>
@@ -170,15 +139,17 @@ const stockHeaders = [
         :items="medications"
         empty="No formulary items"
       >
+        <template #cell-name="{ item }">
+          <HCell :secondary="item.strength">
+            {{ item.name }}
+          </HCell>
+        </template>
         <template #cell-actions="{ item }">
-          <HButton
-            v-if="ability.can('update', 'Pharmacy')"
-            variant="ghost"
-            size="sm"
-            @click="openStock(item)"
-          >
-            Adjust
-          </HButton>
+          <HActionMenu
+            :actions="[
+              { label: 'Adjust', icon: 'edit', if: ability.can('update', 'Pharmacy'), onSelect: () => openStock(item) },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>

@@ -59,17 +59,17 @@ const { pending } = usePageQuery(load)
     <HCard flush>
       <HTable
         :loading="pending"
-        :headers="[{ title: 'Adjustment', key: 'reference' }, { title: 'Store', key: 'store.name' }, { title: 'When', key: 'occurred_at' }]"
+        :headers="[{ title: 'Adjustment', key: 'reference', fill: true }, { title: 'When', key: 'occurred_at' }]"
         :items="rows"
         empty="No adjustments"
       >
         <template #cell-reference="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'inventory-adjustments-id', params: { id: item.id } }"
+            :secondary="item.store?.name"
           >
             {{ item.reference }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-occurred_at="{ item }">
           {{ formatWhen(item.occurred_at) }}

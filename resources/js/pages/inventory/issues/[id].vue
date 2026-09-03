@@ -50,10 +50,15 @@ watch(() => route.params.id, () => run())
         flush
       >
         <HTable
-          :headers="[{ title: 'Item', key: 'item.name' }, { title: 'Batch', key: 'batch.batch_number' }, { title: 'Qty', key: 'quantity' }]"
+          :headers="[{ title: 'Item', key: 'item.name', fill: true }, { title: 'Qty', key: 'quantity' }]"
           :items="record.items || []"
           empty="No lines"
         >
+          <template #cell-item.name="{ item }">
+            <HCell :secondary="item.batch?.batch_number">
+              {{ item.item?.name }}
+            </HCell>
+          </template>
           <template #cell-quantity="{ item }">
             {{ formatQty(item.quantity) }}
           </template>

@@ -167,12 +167,12 @@ const itemsFor = chart => (chart.items || []).filter(item => Number(item.value) 
           :key="header.key"
           #[`cell-${header.key}`]="{ item }"
         >
-          <RouterLink
+          <HCell
             v-if="header.key === table.link_key && item.to"
             :to="item.to"
           >
             {{ reportCell(item, header.key) }}
-          </RouterLink>
+          </HCell>
           <HBadge
             v-else-if="header.key === 'status'"
             :tone="statusColor(item.status)"

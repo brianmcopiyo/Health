@@ -48,8 +48,7 @@ const filterValues = ref({
 
 const headers = computed(() => [
   ...(ability.can('update', 'User') ? [{ title: '', key: 'select', fit: true }] : []),
-  { title: 'Name', key: 'name' },
-  { title: 'Email', key: 'email' },
+  { title: 'Name', key: 'name', fill: true },
   { title: 'Role', key: 'role.name' },
   ...props.extraHeaders,
   { title: 'Status', key: 'status' },
@@ -58,10 +57,10 @@ const headers = computed(() => [
 ])
 
 const filters = computed(() => [
-  { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', items: accountStatusItems },
-  { key: 'role_id', type: 'select', label: 'Role', placeholder: 'All roles', items: roles.value, itemTitle: 'name', itemValue: 'id' },
-  { key: 'sort', type: 'select', label: 'Sort', items: userSortItems, clearable: false },
-  { key: 'sort_dir', type: 'select', label: 'Order', items: sortDirItems, clearable: false },
+  { key: 'status', type: 'select', label: 'Status', placeholder: 'All statuses', optional: true, empty: null, items: accountStatusItems },
+  { key: 'role_id', type: 'select', label: 'Role', placeholder: 'All roles', optional: true, empty: null, items: roles.value, itemTitle: 'name', itemValue: 'id' },
+  { key: 'sort', type: 'select', label: 'Sort', items: userSortItems, clearable: false, empty: 'name' },
+  { key: 'sort_dir', type: 'select', label: 'Order', items: sortDirItems, clearable: false, empty: 'asc' },
 ])
 
 const pageIds = computed(() => users.value.map(item => item.id))
@@ -98,7 +97,7 @@ const removeUser = async () => {
     removing.value = null
     selected.value = selected.value.filter(item => item !== id)
     await load()
-  })
+  }, 'Removed')
 }
 
 const applyBulk = async status => {
@@ -108,7 +107,7 @@ const applyBulk = async status => {
     await $api('/users/bulk-status', { method: 'POST', body: { user_ids: selected.value, status } })
     selected.value = []
     await load()
-  })
+  }, 'Users updated')
 }
 
 const onSearch = () => {
@@ -185,12 +184,12 @@ const { pending } = usePageQuery(load)
           />
         </template>
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'admin-users-id', params: { id: item.id } }"
+            :secondary="item.email"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
         <template
           v-for="header in extraHeaders"
@@ -213,31 +212,13 @@ const { pending } = usePageQuery(load)
           {{ formatWhen(item.last_login_at) }}
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              variant="ghost"
-              size="sm"
-              :to="{ name: 'admin-users-id', params: { id: item.id } }"
-            >
-              View
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'User')"
-              variant="ghost"
-              size="icon"
-              @click="openEdit(item)"
-            >
-              <HIcon name="edit" />
-            </HButton>
-            <HButton
-              v-if="ability.can('delete', 'User') && item.id !== userData?.id"
-              variant="ghost"
-              size="sm"
-              @click="formError = ''; removing = item"
-            >
-              Remove
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'View', icon: 'eye', to: { name: 'admin-users-id', params: { id: item.id } } },
+              { label: 'Edit', icon: 'edit', if: ability.can('update', 'User'), onSelect: () => openEdit(item) },
+              { label: 'Remove', icon: 'trash', danger: true, if: ability.can('delete', 'User') && item.id !== userData?.id, onSelect: () => { formError = ''; removing = item } },
+            ]"
+          />
         </template>
       </HTable>
       <div

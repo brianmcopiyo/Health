@@ -105,15 +105,18 @@ watch(() => route.params.id, () => run())
     >
       <HCard title="Invoice">
         <template
-          v-if="ability.can('update', 'Invoice') && record.status === 'draft'"
+          v-if="ability.can('update', 'Invoice')"
           #actions
         >
-          <HButton
-            size="sm"
-            @click="updateStatus('issued')"
-          >
-            Issue
-          </HButton>
+          <HActionMenu
+            :compact="false"
+            label="More"
+            :actions="[
+              { label: 'Issue', icon: 'send', if: record.status === 'draft', onSelect: () => updateStatus('issued') },
+              { label: 'Record payment', icon: 'wallet', if: record.status !== 'paid' && record.status !== 'cancelled', onSelect: openPay },
+              { label: 'Cancel invoice', icon: 'ban', danger: true, if: ['draft', 'issued'].includes(record.status), onSelect: () => updateStatus('cancelled') },
+            ]"
+          />
         </template>
         <div class="h-metric">
           <span>Patient</span>

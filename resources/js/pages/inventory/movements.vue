@@ -35,8 +35,7 @@ const { pending } = usePageQuery(load)
         :loading="pending"
         :headers="[
           { title: 'When', key: 'occurred_at' },
-          { title: 'Item', key: 'item.name' },
-          { title: 'Store', key: 'store.name' },
+          { title: 'Item', key: 'item.name', fill: true },
           { title: 'Type', key: 'type' },
           { title: 'Qty', key: 'quantity' },
         ]"
@@ -45,6 +44,11 @@ const { pending } = usePageQuery(load)
       >
         <template #cell-occurred_at="{ item }">
           {{ formatWhen(item.occurred_at) }}
+        </template>
+        <template #cell-item.name="{ item }">
+          <HCell :secondary="item.store?.name">
+            {{ item.item?.name }}
+          </HCell>
         </template>
         <template #cell-type="{ item }">
           <HBadge :tone="statusColor(item.type)">

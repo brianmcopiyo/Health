@@ -70,10 +70,16 @@ const { pending } = usePageQuery(load)
       />
       <HTable
         :loading="pending"
-        :headers="[{ title: 'Location', key: 'name' }, { title: 'Store', key: 'store.name' }]"
+        :headers="[{ title: 'Location', key: 'name', fill: true }]"
         :items="rows"
         empty="No locations"
-      />
+      >
+        <template #cell-name="{ item }">
+          <HCell :secondary="item.store?.name">
+            {{ item.name }}
+          </HCell>
+        </template>
+      </HTable>
       <HPager
         :meta="meta"
         @update:page="value => { page = value; load() }"

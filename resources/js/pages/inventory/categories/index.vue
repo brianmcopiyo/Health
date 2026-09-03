@@ -47,10 +47,16 @@ const { pending } = usePageQuery(load)
     <HCard flush>
       <HTable
         :loading="pending"
-        :headers="[{ title: 'Category', key: 'name' }, { title: 'Items', key: 'items_count' }]"
+        :headers="[{ title: 'Category', key: 'name', fill: true }, { title: 'Items', key: 'items_count' }]"
         :items="rows"
         empty="No categories"
-      />
+      >
+        <template #cell-name="{ item }">
+          <HCell :secondary="item.parent?.name">
+            {{ item.name }}
+          </HCell>
+        </template>
+      </HTable>
     </HCard>
     <HModal
       v-model="formOpen"

@@ -225,33 +225,15 @@ const { pending } = usePageQuery(load)
           v-if="ability.can('update', 'Ambulance') || ability.can('dispatch', 'Ambulance') || ability.can('manage', 'Ambulance')"
           #actions
         >
-          <HButton
-            v-if="ability.can('dispatch', 'Ambulance') && ambulance.status === 'available'"
-            size="sm"
-            @click="openDispatch"
-          >
-            Dispatch
-          </HButton>
-          <HButton
-            v-if="ability.can('update', 'Ambulance')"
-            variant="ghost"
-            size="sm"
-            @click="openEdit"
-          >
-            <HIcon name="edit" />
-            Edit
-          </HButton>
-          <HActionMenu v-if="ability.can('manage', 'Ambulance')">
-            <template #default="{ close }">
-              <button
-                type="button"
-                class="h-action-item is-danger"
-                @click="formError = ''; removing = true; close()"
-              >
-                Remove
-              </button>
-            </template>
-          </HActionMenu>
+          <HActionMenu
+            :compact="false"
+            label="More"
+            :actions="[
+              { label: 'Dispatch', icon: 'send', if: ability.can('dispatch', 'Ambulance') && ambulance.status === 'available', onSelect: openDispatch },
+              { label: 'Edit', icon: 'edit', if: ability.can('update', 'Ambulance'), onSelect: openEdit },
+              { label: 'Remove', icon: 'trash', danger: true, if: ability.can('manage', 'Ambulance'), onSelect: () => { formError = ''; removing = true } },
+            ]"
+          />
         </template>
         <div class="h-stack">
           <div class="h-metric">
@@ -299,24 +281,20 @@ const { pending } = usePageQuery(load)
     >
         <HTable
           :headers="[
-            { title: 'Patient', key: 'patient.first_name' },
-            { title: 'Origin', key: 'origin' },
-            { title: 'Destination', key: 'destination' },
+            { title: 'Patient', key: 'patient.first_name', fill: true },
             { title: 'Status', key: 'status' },
-            { title: '', key: 'actions' },
+            { title: 'Actions', key: 'actions' },
           ]"
           :items="asList(ambulance.trips)"
           empty="No trips for this vehicle"
         >
           <template #cell-patient.first_name="{ item }">
-            <RouterLink
-              v-if="item.patient?.id"
-              class="h-inline-link"
-              :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+            <HCell
+              :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+              :secondary="joinContext(item.origin, item.destination)"
             >
-              {{ item.patient.first_name }} {{ item.patient.last_name }}
-            </RouterLink>
-            <span v-else>—</span>
+              {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -324,39 +302,14 @@ const { pending } = usePageQuery(load)
             </HBadge>
           </template>
           <template #cell-actions="{ item }">
-            <div class="h-actions">
-              <HButton
-                v-if="item.status === 'dispatched' && ability.can('dispatch', 'Ambulance')"
-                size="sm"
-                @click="updateTrip(item, 'en_route')"
-              >
-                En route
-              </HButton>
-              <HButton
-                v-if="['dispatched', 'en_route'].includes(item.status) && ability.can('dispatch', 'Ambulance')"
-                variant="ghost"
-                size="sm"
-                @click="updateTrip(item, 'arrived')"
-              >
-                Arrived
-              </HButton>
-              <HButton
-                v-if="['dispatched', 'en_route', 'arrived'].includes(item.status) && ability.can('dispatch', 'Ambulance')"
-                variant="ok"
-                size="sm"
-                @click="updateTrip(item, 'completed')"
-              >
-                Complete
-              </HButton>
-              <HButton
-                v-if="['dispatched', 'en_route', 'arrived'].includes(item.status) && ability.can('dispatch', 'Ambulance')"
-                variant="ghost"
-                size="sm"
-                @click="updateTrip(item, 'cancelled')"
-              >
-                Cancel
-              </HButton>
-            </div>
+            <HActionMenu
+              :actions="[
+                { label: 'En route', icon: 'send', if: item.status === 'dispatched' && ability.can('dispatch', 'Ambulance'), onSelect: () => updateTrip(item, 'en_route') },
+                { label: 'Arrived', icon: 'hospital', if: ['dispatched', 'en_route'].includes(item.status) && ability.can('dispatch', 'Ambulance'), onSelect: () => updateTrip(item, 'arrived') },
+                { label: 'Complete', icon: 'check', if: ['dispatched', 'en_route', 'arrived'].includes(item.status) && ability.can('dispatch', 'Ambulance'), onSelect: () => updateTrip(item, 'completed') },
+                { label: 'Cancel', icon: 'ban', danger: true, if: ['dispatched', 'en_route', 'arrived'].includes(item.status) && ability.can('dispatch', 'Ambulance'), onSelect: () => updateTrip(item, 'cancelled') },
+              ]"
+            />
           </template>
         </HTable>
       </HCard>

@@ -119,9 +119,7 @@ const { pending } = usePageQuery(load)
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Type', key: 'type' },
-          { title: 'Complaint', key: 'chief_complaint' },
+          { title: 'Patient', key: 'patient.first_name', fill: true },
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
         ]"
@@ -129,14 +127,12 @@ const { pending } = usePageQuery(load)
         empty="No visits opened yet"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+            :secondary="joinContext(labelize(item.type), item.chief_complaint)"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -144,13 +140,11 @@ const { pending } = usePageQuery(load)
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <HButton
-            size="sm"
-            variant="ghost"
-            @click="openChart(item.id)"
-          >
-            Open chart
-          </HButton>
+          <HActionMenu
+            :actions="[
+              { label: 'Open chart', icon: 'stethoscope', onSelect: () => openChart(item.id) },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>

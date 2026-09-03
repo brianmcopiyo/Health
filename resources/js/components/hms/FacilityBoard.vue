@@ -289,7 +289,7 @@ onBeforeUnmount(() => {
 
 const headers = computed(() => {
   const cols = [
-    { title: 'Unit', key: 'name' },
+    { title: 'Unit', key: 'name', fill: true },
     { title: 'Status', key: 'status' },
     { title: 'Capacity', key: 'capacity' },
     { title: 'In use', key: 'current_utilization' },
@@ -297,7 +297,7 @@ const headers = computed(() => {
   ]
 
   if (props.moduleKey === 'beds')
-    cols.splice(2, 0, { title: 'Ward', key: 'parent.name' }, { title: 'Patient', key: 'patient' })
+    cols.splice(1, 0, { title: 'Patient', key: 'patient' })
 
   cols.push({ title: 'Actions', key: 'actions' })
 
@@ -382,32 +382,19 @@ const headers = computed(() => {
         empty="No operational units in this module"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="facilityRecordTo({ ...item, type: item.type || { slug: moduleKey === 'wards' ? 'ward' : moduleKey === 'beds' ? 'bed' : item.type?.slug } })"
+            :secondary="joinContext(item.hospital?.name, item.parent?.name, item.type?.name)"
           >
             {{ item.name }}
-          </RouterLink>
-        </template>
-        <template #cell-parent.name="{ item }">
-          <RouterLink
-            v-if="item.parent?.id"
-            class="h-inline-link"
-            :to="facilityRecordTo({ ...item.parent, type: { slug: 'ward' } })"
-          >
-            {{ item.parent.name }}
-          </RouterLink>
-          <span v-else>Unassigned</span>
+          </HCell>
         </template>
         <template #cell-patient="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
+            {{ item.patient ? `${item.patient.first_name} ${item.patient.last_name}` : '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -415,16 +402,12 @@ const headers = computed(() => {
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              v-if="ability.can('update', subject)"
-              variant="ghost"
-              size="icon"
-              @click="openStatus(item)"
-            >
-              <HIcon name="edit" />
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'View', icon: 'eye', to: facilityRecordTo({ ...item, type: item.type || { slug: moduleKey === 'wards' ? 'ward' : moduleKey === 'beds' ? 'bed' : item.type?.slug } }) },
+              { label: 'Edit', icon: 'edit', if: ability.can('update', subject), onSelect: () => openStatus(item) },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>
@@ -449,9 +432,7 @@ const headers = computed(() => {
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Item', key: 'item_name' },
-          { title: 'Encounter', key: 'encounter.type' },
+          { title: 'Patient', key: 'patient.first_name', fill: true },
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
         ]"
@@ -459,14 +440,12 @@ const headers = computed(() => {
         empty="No orders yet"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+            :secondary="joinContext(item.item_name, item.encounter ? labelize(item.encounter.type) : '')"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -474,47 +453,15 @@ const headers = computed(() => {
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              v-if="ability.can('update', subject) && item.status === 'requested' && moduleKey === 'laboratory'"
-              variant="ghost"
-              size="sm"
-              @click="updateOrder(item, 'collected')"
-            >
-              Collect
-            </HButton>
-            <HButton
-              v-if="ability.can('update', subject) && item.status === 'requested' && moduleKey === 'imaging'"
-              variant="ghost"
-              size="sm"
-              @click="updateOrder(item, 'scheduled')"
-            >
-              Schedule
-            </HButton>
-            <HButton
-              v-if="ability.can('update', subject) && ['requested', 'collected', 'scheduled'].includes(item.status)"
-              variant="ghost"
-              size="sm"
-              @click="updateOrder(item, 'processing')"
-            >
-              Process
-            </HButton>
-            <HButton
-              v-if="ability.can('update', subject) && item.status !== 'completed' && item.status !== 'cancelled'"
-              size="sm"
-              @click="openResult(item)"
-            >
-              Complete
-            </HButton>
-            <HButton
-              v-if="ability.can('update', subject) && !['completed', 'cancelled'].includes(item.status)"
-              variant="ghost"
-              size="sm"
-              @click="updateOrder(item, 'cancelled')"
-            >
-              Cancel
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'Collect', icon: 'box', if: ability.can('update', subject) && item.status === 'requested' && moduleKey === 'laboratory', onSelect: () => updateOrder(item, 'collected') },
+              { label: 'Schedule', icon: 'calendar', if: ability.can('update', subject) && item.status === 'requested' && moduleKey === 'imaging', onSelect: () => updateOrder(item, 'scheduled') },
+              { label: 'Process', icon: 'play', if: ability.can('update', subject) && ['requested', 'collected', 'scheduled'].includes(item.status), onSelect: () => updateOrder(item, 'processing') },
+              { label: 'Complete', icon: 'check', if: ability.can('update', subject) && item.status !== 'completed' && item.status !== 'cancelled', onSelect: () => openResult(item) },
+              { label: 'Cancel', icon: 'ban', danger: true, if: ability.can('update', subject) && !['completed', 'cancelled'].includes(item.status), onSelect: () => updateOrder(item, 'cancelled') },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>
@@ -539,9 +486,7 @@ const headers = computed(() => {
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Bed', key: 'facility.name' },
-          { title: 'Ward', key: 'ward.name' },
+          { title: 'Patient', key: 'patient.first_name', fill: true },
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
         ]"
@@ -549,34 +494,12 @@ const headers = computed(() => {
         empty="No bed assignments"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+            :secondary="joinContext(item.facility?.name, item.ward?.name || item.facility?.parent?.name)"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
-        </template>
-        <template #cell-facility.name="{ item }">
-          <RouterLink
-            v-if="item.facility?.id"
-            class="h-inline-link"
-            :to="{ name: 'beds-id', params: { id: item.facility.id } }"
-          >
-            {{ item.facility.name }}
-          </RouterLink>
-          <span v-else>—</span>
-        </template>
-        <template #cell-ward.name="{ item }">
-          <RouterLink
-            v-if="item.ward?.id"
-            class="h-inline-link"
-            :to="{ name: 'wards-id', params: { id: item.ward.id } }"
-          >
-            {{ item.ward.name }}
-          </RouterLink>
-          <span v-else>{{ item.facility?.parent?.name || '—' }}</span>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -584,24 +507,12 @@ const headers = computed(() => {
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              v-if="item.facility?.id"
-              size="sm"
-              variant="ghost"
-              :to="{ name: 'beds-id', params: { id: item.facility.id } }"
-            >
-              Open
-            </HButton>
-            <HButton
-              v-if="item.encounter_id || item.encounter"
-              size="sm"
-              variant="ghost"
-              @click="openChart(item)"
-            >
-              Chart
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'Open', icon: 'eye', if: Boolean(item.facility?.id), to: item.facility?.id ? { name: 'beds-id', params: { id: item.facility.id } } : null },
+              { label: 'Open chart', icon: 'stethoscope', if: Boolean(item.encounter_id || item.encounter), onSelect: () => openChart(item) },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>

@@ -82,7 +82,7 @@ const { pending } = usePageQuery(load)
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'Item', key: 'name' },
+          { title: 'Item', key: 'name', fill: true },
           { title: 'On hand', key: 'stock_quantity' },
           { title: 'Reorder', key: 'reorder_level' },
         ]"
@@ -90,12 +90,12 @@ const { pending } = usePageQuery(load)
         empty="No low-stock items"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'inventory-items-id', params: { id: item.id } }"
+            :secondary="joinContext(item.sku, item.category?.name)"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
       </HTable>
     </HCard>
@@ -108,7 +108,7 @@ const { pending } = usePageQuery(load)
         :loading="pending"
         :headers="[
           { title: 'When', key: 'occurred_at' },
-          { title: 'Item', key: 'item.name' },
+          { title: 'Item', key: 'item.name', fill: true },
           { title: 'Type', key: 'type' },
           { title: 'Qty', key: 'quantity' },
         ]"
@@ -117,6 +117,11 @@ const { pending } = usePageQuery(load)
       >
         <template #cell-occurred_at="{ item }">
           {{ formatWhen(item.occurred_at) }}
+        </template>
+        <template #cell-item.name="{ item }">
+          <HCell :secondary="item.store?.name">
+            {{ item.item?.name }}
+          </HCell>
         </template>
         <template #cell-type="{ item }">
           <HBadge :tone="statusColor(item.type)">
@@ -131,17 +136,17 @@ const { pending } = usePageQuery(load)
       flush
     >
       <HTable
-        :headers="[{ title: 'Receipt', key: 'reference' }, { title: 'Store', key: 'store.name' }, { title: 'When', key: 'received_at' }]"
+        :headers="[{ title: 'Receipt', key: 'reference', fill: true }, { title: 'When', key: 'received_at' }]"
         :items="dash?.recent_receipts || []"
         empty="No receipts yet"
       >
         <template #cell-reference="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'inventory-receipts-id', params: { id: item.id } }"
+            :secondary="joinContext(item.store?.name, item.supplier?.name)"
           >
             {{ item.reference }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-received_at="{ item }">
           {{ formatWhen(item.received_at) }}
@@ -154,17 +159,17 @@ const { pending } = usePageQuery(load)
       flush
     >
       <HTable
-        :headers="[{ title: 'Transfer', key: 'reference' }, { title: 'From', key: 'from_store.name' }, { title: 'To', key: 'to_store.name' }]"
+        :headers="[{ title: 'Transfer', key: 'reference', fill: true }]"
         :items="dash?.recent_transfers || []"
         empty="No transfers yet"
       >
         <template #cell-reference="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'inventory-transfers-id', params: { id: item.id } }"
+            :secondary="joinContext(item.from_store?.name, item.to_store?.name)"
           >
             {{ item.reference }}
-          </RouterLink>
+          </HCell>
         </template>
       </HTable>
     </HCard>

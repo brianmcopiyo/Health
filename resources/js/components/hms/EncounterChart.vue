@@ -314,64 +314,19 @@ const openInvoice = async () => {
       </div>
 
       <div class="h-actions">
-        <HButton
-          v-if="canTreat && chart.status === 'waiting'"
-          size="sm"
-          @click="startConsult"
-        >
-          Start
-        </HButton>
-        <HButton
-          v-if="canTreat && openStatuses && chart.type !== 'admission'"
-          size="sm"
-          variant="ghost"
-          @click="openAdmit"
-        >
-          Admit
-        </HButton>
-        <HButton
-          v-if="canTreat && openStatuses"
-          size="sm"
-          @click="openDischarge"
-        >
-          Discharge
-        </HButton>
-        <HButton
-          v-if="chart.patient"
-          size="sm"
-          variant="ghost"
-          :to="{ name: 'patients-id', params: { id: chart.patient.id } }"
-        >
-          Open record
-        </HButton>
-        <HActionMenu v-if="canTreat || canSeeInvoice">
-          <template #default="{ close }">
-            <button
-              v-if="canTreat && openStatuses"
-              type="button"
-              class="h-action-item"
-              @click="openEdit(); close()"
-            >
-              Edit visit
-            </button>
-            <button
-              v-if="canSeeInvoice"
-              type="button"
-              class="h-action-item"
-              @click="openInvoice(); close()"
-            >
-              Charge sheet
-            </button>
-            <button
-              v-if="canTreat && openStatuses"
-              type="button"
-              class="h-action-item is-danger"
-              @click="cancelEncounter(); close()"
-            >
-              Cancel encounter
-            </button>
-          </template>
-        </HActionMenu>
+        <HActionMenu
+          :compact="false"
+          label="More"
+          :actions="[
+            { label: 'Start', icon: 'play', if: canTreat && chart.status === 'waiting', onSelect: startConsult },
+            { label: 'Admit', icon: 'bed', if: canTreat && openStatuses && chart.type !== 'admission', onSelect: openAdmit },
+            { label: 'Discharge', icon: 'door', if: canTreat && openStatuses, onSelect: openDischarge },
+            { label: 'Open record', icon: 'eye', if: Boolean(chart.patient), to: chart.patient ? { name: 'patients-id', params: { id: chart.patient.id } } : null },
+            { label: 'Edit visit', icon: 'edit', if: canTreat && openStatuses, onSelect: openEdit },
+            { label: 'Charge sheet', icon: 'receipt', if: canSeeInvoice, onSelect: openInvoice },
+            { label: 'Cancel encounter', icon: 'ban', danger: true, if: canTreat && openStatuses, onSelect: cancelEncounter },
+          ]"
+        />
       </div>
 
       <h4>Vitals</h4>

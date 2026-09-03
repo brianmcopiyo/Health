@@ -61,20 +61,31 @@ watch(() => route.params.id, () => run())
         flush
       >
         <HTable
-          :headers="[{ title: 'Store', key: 'store.name' }, { title: 'Qty', key: 'quantity' }]"
+          :headers="[{ title: 'Store', key: 'store.name', fill: true }, { title: 'Qty', key: 'quantity' }]"
           :items="record.balances || []"
           empty="No balances"
-        />
+        >
+          <template #cell-store.name="{ item }">
+            <HCell :secondary="item.location?.name">
+              {{ item.store?.name }}
+            </HCell>
+          </template>
+        </HTable>
       </HCard>
       <HCard
         title="Open batches"
         flush
       >
         <HTable
-          :headers="[{ title: 'Batch', key: 'batch_number' }, { title: 'Expiry', key: 'expiry_date' }, { title: 'Qty', key: 'quantity' }, { title: 'Status', key: 'status' }]"
+          :headers="[{ title: 'Batch', key: 'batch_number', fill: true }, { title: 'Expiry', key: 'expiry_date' }, { title: 'Qty', key: 'quantity' }, { title: 'Status', key: 'status' }]"
           :items="record.batches || []"
           empty="No open batches"
         >
+          <template #cell-batch_number="{ item }">
+            <HCell :secondary="item.store?.name">
+              {{ item.batch_number }}
+            </HCell>
+          </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
               {{ labelize(item.status) }}
@@ -95,6 +106,11 @@ watch(() => route.params.id, () => run())
         >
           <template #cell-occurred_at="{ item }">
             {{ formatWhen(item.occurred_at) }}
+          </template>
+          <template #cell-type="{ item }">
+            <HBadge :tone="statusColor(item.type)">
+              {{ labelize(item.type) }}
+            </HBadge>
           </template>
         </HTable>
       </HCard>

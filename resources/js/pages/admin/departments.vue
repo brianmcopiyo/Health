@@ -1,4 +1,6 @@
 <script setup>
+import { labelize } from '@/utils/status'
+
 definePage({
   meta: {
     action: 'read',
@@ -101,8 +103,7 @@ const { pending } = usePageQuery(load)
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'Name', key: 'name' },
-          { title: 'Module', key: 'module_key' },
+          { title: 'Name', key: 'name', fill: true },
           { title: 'Active', key: 'is_active' },
           { title: 'Facilities', key: 'facilities_count' },
           { title: 'Staff', key: 'users_count' },
@@ -112,50 +113,29 @@ const { pending } = usePageQuery(load)
         empty="No departments configured"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'admin-departments-id', params: { id: item.id } }"
+            :secondary="joinContext(item.hospital?.name, labelize(item.module_key))"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-is_active="{ item }">
           {{ item.is_active ? 'Yes' : 'No' }}
         </template>
         <template #cell-facilities_count="{ item }">
-          <RouterLink
-            class="h-inline-link"
-            :to="{ name: 'facilities', query: { department_id: item.id } }"
-          >
+          <HCell :to="{ name: 'facilities', query: { department_id: item.id } }">
             {{ item.facilities_count }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              variant="ghost"
-              size="sm"
-              :to="{ name: 'admin-departments-id', params: { id: item.id } }"
-            >
-              View
-            </HButton>
-            <HButton
-              v-if="ability.can('manage', 'Department')"
-              variant="ghost"
-              size="icon"
-              @click="openEdit(item)"
-            >
-              <HIcon name="edit" />
-            </HButton>
-            <HButton
-              v-if="ability.can('manage', 'Department')"
-              variant="ghost"
-              size="sm"
-              @click="formError = ''; removing = item"
-            >
-              Remove
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'View', icon: 'eye', to: { name: 'admin-departments-id', params: { id: item.id } } },
+              { label: 'Edit', icon: 'edit', if: ability.can('manage', 'Department'), onSelect: () => openEdit(item) },
+              { label: 'Remove', icon: 'trash', danger: true, if: ability.can('manage', 'Department'), onSelect: () => { formError = ''; removing = item } },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>

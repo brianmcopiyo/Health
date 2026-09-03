@@ -64,9 +64,7 @@ const { pending } = usePageQuery(load)
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Type', key: 'type' },
-          { title: 'Complaint', key: 'chief_complaint' },
+          { title: 'Patient', key: 'patient.first_name', fill: true },
           { title: 'Status', key: 'status' },
           { title: 'When', key: 'created_at' },
         ]"
@@ -74,22 +72,12 @@ const { pending } = usePageQuery(load)
         empty="No encounters in this view"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
-          >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
-        </template>
-        <template #cell-type="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'encounters-id', params: { id: item.id } }"
+            :secondary="joinContext(labelize(item.type), item.chief_complaint)"
           >
-            {{ labelize(item.type) }}
-          </RouterLink>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">

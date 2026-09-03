@@ -47,10 +47,16 @@ const { pending } = usePageQuery(load)
     <HCard flush>
       <HTable
         :loading="pending"
-        :headers="[{ title: 'Supplier', key: 'name' }, { title: 'Phone', key: 'phone' }]"
+        :headers="[{ title: 'Supplier', key: 'name', fill: true }]"
         :items="rows"
         empty="No suppliers"
-      />
+      >
+        <template #cell-name="{ item }">
+          <HCell :secondary="joinContext(item.phone, item.email)">
+            {{ item.name }}
+          </HCell>
+        </template>
+      </HTable>
     </HCard>
     <HModal
       v-model="formOpen"

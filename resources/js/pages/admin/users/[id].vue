@@ -1,6 +1,6 @@
 <script setup>
 import AccessUserProfile from '@/components/access/AccessUserProfile.vue'
-import { facilityRecordTo, formatWhen } from '@/utils/helpers'
+import { formatWhen } from '@/utils/helpers'
 import { labelize, statusColor } from '@/utils/status'
 
 definePage({
@@ -98,32 +98,15 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Assignment', key: 'assignment_role' },
-          { title: 'Department', key: 'department.name' },
-          { title: 'Unit', key: 'facility.name' },
+          { title: 'Assignment', key: 'assignment_role', fill: true },
         ]"
         :items="record.staff_assignments || []"
         empty="No ward or unit assignments"
       >
-        <template #cell-department.name="{ item }">
-          <RouterLink
-            v-if="item.department?.id"
-            class="h-inline-link"
-            :to="{ name: 'admin-departments-id', params: { id: item.department.id } }"
-          >
-            {{ item.department.name }}
-          </RouterLink>
-          <span v-else>—</span>
-        </template>
-        <template #cell-facility.name="{ item }">
-          <RouterLink
-            v-if="item.facility?.id"
-            class="h-inline-link"
-            :to="facilityRecordTo(item.facility)"
-          >
-            {{ item.facility.name }}
-          </RouterLink>
-          <span v-else>—</span>
+        <template #cell-assignment_role="{ item }">
+          <HCell :secondary="joinContext(item.department?.name, item.facility?.name)">
+            {{ item.assignment_role }}
+          </HCell>
         </template>
       </HTable>
     </HCard>
@@ -135,29 +118,19 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Type', key: 'type' },
+          { title: 'Patient', key: 'patient.first_name', fill: true },
           { title: 'Status', key: 'status' },
         ]"
         :items="record.encounters || []"
         empty="No encounters assigned to this clinician"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : { name: 'encounters-id', params: { id: item.id } }"
+            :secondary="labelize(item.type)"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-        </template>
-        <template #cell-type="{ item }">
-          <RouterLink
-            class="h-inline-link"
-            :to="{ name: 'encounters-id', params: { id: item.id } }"
-          >
-            {{ labelize(item.type) }}
-          </RouterLink>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -174,13 +147,17 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Action', key: 'action' },
-          { title: 'Record', key: 'auditable_type' },
+          { title: 'Action', key: 'action', fill: true },
           { title: 'When', key: 'created_at' },
         ]"
         :items="record.activity || []"
         empty="No recent activity"
       >
+        <template #cell-action="{ item }">
+          <HCell :secondary="item.auditable_type">
+            {{ item.action }}
+          </HCell>
+        </template>
         <template #cell-created_at="{ item }">
           {{ formatWhen(item.created_at) }}
         </template>

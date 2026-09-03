@@ -83,8 +83,7 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Name', key: 'name' },
-          { title: 'Email', key: 'email' },
+          { title: 'Name', key: 'name', fill: true },
           { title: 'Status', key: 'status' },
           { title: 'Department', key: 'department.name' },
         ]"
@@ -92,12 +91,12 @@ watch(() => route.params.id, () => run())
         empty="No users assigned this role"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'admin-users-id', params: { id: item.id } }"
+            :secondary="item.email"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -105,14 +104,11 @@ watch(() => route.params.id, () => run())
           </HBadge>
         </template>
         <template #cell-department.name="{ item }">
-          <RouterLink
-            v-if="item.department?.id"
-            class="h-inline-link"
-            :to="{ name: 'admin-departments-id', params: { id: item.department.id } }"
+          <HCell
+            :to="item.department?.id ? { name: 'admin-departments-id', params: { id: item.department.id } } : null"
           >
-            {{ item.department.name }}
-          </RouterLink>
-          <span v-else>—</span>
+            {{ item.department?.name || '—' }}
+          </HCell>
         </template>
       </HTable>
     </HCard>

@@ -64,6 +64,7 @@ declare global {
   const isReactive: typeof import('vue')['isReactive']
   const isReadonly: typeof import('vue')['isReadonly']
   const isRef: typeof import('vue')['isRef']
+  const joinContext: typeof import('./resources/js/utils/helpers.js')['joinContext']
   const kinshipOptions: typeof import('./resources/js/utils/clinicalOptions.js')['kinshipOptions']
   const labelize: typeof import('./resources/js/utils/status.js')['labelize']
   const markRaw: typeof import('vue')['markRaw']
@@ -104,6 +105,7 @@ declare global {
   const resolveComponent: typeof import('vue')['resolveComponent']
   const resolveError: typeof import('./resources/js/utils/errors.js')['resolveError']
   const resolveHomeRoute: typeof import('./resources/js/utils/session.js')['resolveHomeRoute']
+  const routeTo: typeof import('./resources/js/utils/helpers.js')['routeTo']
   const sameValue: typeof import('./resources/js/utils/formOptions.js')['sameValue']
   const saveError: typeof import('./resources/js/composables/usePageLoad.js')['saveError']
   const setPageError: typeof import('./resources/js/composables/usePageLoad.js')['setPageError']
@@ -223,6 +225,7 @@ declare module 'vue' {
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
+    readonly joinContext: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['joinContext']>
     readonly kinshipOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['kinshipOptions']>
     readonly labelize: UnwrapRef<typeof import('./resources/js/utils/status.js')['labelize']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
@@ -262,6 +265,7 @@ declare module 'vue' {
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveError: UnwrapRef<typeof import('./resources/js/utils/errors.js')['resolveError']>
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
+    readonly routeTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['routeTo']>
     readonly sameValue: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['sameValue']>
     readonly saveError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['saveError']>
     readonly setPageError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['setPageError']>
@@ -373,6 +377,7 @@ declare module '@vue/runtime-core' {
     readonly isReactive: UnwrapRef<typeof import('vue')['isReactive']>
     readonly isReadonly: UnwrapRef<typeof import('vue')['isReadonly']>
     readonly isRef: UnwrapRef<typeof import('vue')['isRef']>
+    readonly joinContext: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['joinContext']>
     readonly kinshipOptions: UnwrapRef<typeof import('./resources/js/utils/clinicalOptions.js')['kinshipOptions']>
     readonly labelize: UnwrapRef<typeof import('./resources/js/utils/status.js')['labelize']>
     readonly markRaw: UnwrapRef<typeof import('vue')['markRaw']>
@@ -412,6 +417,7 @@ declare module '@vue/runtime-core' {
     readonly resolveComponent: UnwrapRef<typeof import('vue')['resolveComponent']>
     readonly resolveError: UnwrapRef<typeof import('./resources/js/utils/errors.js')['resolveError']>
     readonly resolveHomeRoute: UnwrapRef<typeof import('./resources/js/utils/session.js')['resolveHomeRoute']>
+    readonly routeTo: UnwrapRef<typeof import('./resources/js/utils/helpers.js')['routeTo']>
     readonly sameValue: UnwrapRef<typeof import('./resources/js/utils/formOptions.js')['sameValue']>
     readonly saveError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['saveError']>
     readonly setPageError: UnwrapRef<typeof import('./resources/js/composables/usePageLoad.js')['setPageError']>

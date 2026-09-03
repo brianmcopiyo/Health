@@ -60,17 +60,17 @@ const { pending } = usePageQuery(load)
     <HCard flush>
       <HTable
         :loading="pending"
-        :headers="[{ title: 'Request', key: 'reference' }, { title: 'Store', key: 'to_store.name' }, { title: 'Status', key: 'status' }, { title: 'When', key: 'requested_at' }]"
+        :headers="[{ title: 'Request', key: 'reference', fill: true }, { title: 'Status', key: 'status' }, { title: 'When', key: 'requested_at' }]"
         :items="rows"
         empty="No requests"
       >
         <template #cell-reference="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'inventory-requests-id', params: { id: item.id } }"
+            :secondary="item.to_store?.name"
           >
             {{ item.reference }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">

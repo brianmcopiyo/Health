@@ -4,6 +4,25 @@ export const getByPath = (item, path) => {
   return path.split('.').reduce((value, key) => value?.[key], item)
 }
 
+export const joinContext = (...parts) => parts
+  .flat()
+  .map(part => (part === null || part === undefined ? '' : String(part).trim()))
+  .filter(part => part && part !== '—')
+  .join(' · ')
+
+export const routeTo = to => {
+  if (!to)
+    return undefined
+  if (typeof to === 'string') {
+    if (to.startsWith('/') || to.startsWith('http'))
+      return to
+    return { name: to }
+  }
+
+  return to
+}
+
+
 export const facilityRecordTo = item => {
   const slug = item?.type?.slug || item?.type
 

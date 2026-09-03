@@ -123,46 +123,53 @@ const { pending } = usePageQuery(load)
         v-if="tab === 'lists'"
         :loading="pending"
         :headers="[
-          { title: 'Name', key: 'name' },
-          { title: 'Kind', key: 'kind' },
+          { title: 'Name', key: 'name', fill: true },
           { title: 'Items', key: 'items_count' },
         ]"
         :items="lists"
         empty="No price lists yet"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'pricing-id', params: { id: item.id } }"
+            :secondary="labelize(item.kind)"
           >
             {{ item.name }}
-          </RouterLink>
-        </template>
-        <template #cell-kind="{ item }">
-          {{ labelize(item.kind) }}
+          </HCell>
         </template>
       </HTable>
       <HTable
         v-else-if="tab === 'rules'"
         :loading="pending"
         :headers="[
-          { title: 'Name', key: 'name' },
-          { title: 'Type', key: 'type' },
+          { title: 'Name', key: 'name', fill: true },
           { title: 'Value', key: 'value' },
         ]"
         :items="rules"
         empty="No rules yet"
-      />
+      >
+        <template #cell-name="{ item }">
+          <HCell :secondary="labelize(item.type)">
+            {{ item.name }}
+          </HCell>
+        </template>
+      </HTable>
       <HTable
         v-else
         :loading="pending"
         :headers="[
-          { title: 'Name', key: 'name' },
+          { title: 'Name', key: 'name', fill: true },
           { title: 'Price', key: 'unit_price' },
         ]"
         :items="packages"
         empty="No packages yet"
-      />
+      >
+        <template #cell-name="{ item }">
+          <HCell>
+            {{ item.name }}
+          </HCell>
+        </template>
+      </HTable>
       <HPager
         :meta="meta"
         @update:page="value => { page = value; load() }"

@@ -112,20 +112,19 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Name', key: 'name' },
-          { title: 'Title', key: 'job_title' },
+          { title: 'Name', key: 'name', fill: true },
           { title: 'Role', key: 'role.name' },
         ]"
         :items="staffRows"
         empty="No staff assigned to this department"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'admin-users-id', params: { id: item.id } }"
+            :secondary="item.job_title"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
       </HTable>
       <fieldset
@@ -159,12 +158,17 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Service', key: 'name' },
-          { title: 'Category', key: 'category' },
+          { title: 'Service', key: 'name', fill: true },
         ]"
         :items="record.services || []"
         empty="No services mapped to this department"
-      />
+      >
+        <template #cell-name="{ item }">
+          <HCell :secondary="item.category">
+            {{ item.name }}
+          </HCell>
+        </template>
+      </HTable>
     </HCard>
 
     <HCard
@@ -174,20 +178,19 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Facility', key: 'name' },
-          { title: 'Type', key: 'type.name' },
+          { title: 'Facility', key: 'name', fill: true },
           { title: 'Status', key: 'status' },
         ]"
         :items="record.facilities || []"
         empty="No facilities mapped"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="facilityRecordTo(item)"
+            :secondary="item.type?.name"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -204,8 +207,7 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Type', key: 'type' },
+          { title: 'Patient', key: 'patient.first_name', fill: true },
           { title: 'Clinician', key: 'clinician.name' },
           { title: 'Status', key: 'status' },
         ]"
@@ -213,21 +215,12 @@ watch(() => route.params.id, () => run())
         empty="No recent encounters"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : { name: 'encounters-id', params: { id: item.id } }"
+            :secondary="labelize(item.type)"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-        </template>
-        <template #cell-type="{ item }">
-          <RouterLink
-            class="h-inline-link"
-            :to="{ name: 'encounters-id', params: { id: item.id } }"
-          >
-            {{ labelize(item.type) }}
-          </RouterLink>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">

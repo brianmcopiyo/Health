@@ -24,9 +24,7 @@ const form = ref({
 })
 
 const headers = [
-  { title: 'Hospital', key: 'name' },
-  { title: 'City', key: 'city' },
-  { title: 'Region', key: 'region' },
+  { title: 'Hospital', key: 'name', fill: true },
   { title: 'Active', key: 'is_active' },
   { title: 'Actions', key: 'actions' },
 ]
@@ -109,38 +107,21 @@ const { pending } = usePageQuery(load)
           </HBadge>
         </template>
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'admin-hospitals-id', params: { id: item.id } }"
+            :secondary="joinContext(item.city, item.region)"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              variant="ghost"
-              size="sm"
-              :to="{ name: 'admin-hospitals-id', params: { id: item.id } }"
-            >
-              View
-            </HButton>
-            <HButton
-              variant="ghost"
-              size="icon"
-              @click="openEdit(item)"
-            >
-              <HIcon name="edit" />
-            </HButton>
-            <HButton
-              v-if="userData?.role === 'platform-admin'"
-              variant="ghost"
-              size="sm"
-              @click="formError = ''; removing = item"
-            >
-              Remove
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'View', icon: 'eye', to: { name: 'admin-hospitals-id', params: { id: item.id } } },
+              { label: 'Edit', icon: 'edit', onSelect: () => openEdit(item) },
+              { label: 'Remove', icon: 'trash', danger: true, if: userData?.role === 'platform-admin', onSelect: () => { formError = ''; removing = item } },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>

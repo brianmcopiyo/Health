@@ -293,9 +293,7 @@ const { pending } = usePageQuery(load)
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'Number', key: 'number' },
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Encounter', key: 'encounter.type' },
+          { title: 'Number', key: 'number', fill: true },
           { title: 'Total', key: 'total' },
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
@@ -304,25 +302,15 @@ const { pending } = usePageQuery(load)
         empty="No invoices yet"
       >
         <template #cell-number="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'billing-id', params: { id: item.id } }"
+            :secondary="joinContext(
+              item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim(),
+              item.encounter ? labelize(item.encounter.type) : '',
+            )"
           >
             {{ item.number }}
-          </RouterLink>
-        </template>
-        <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
-          >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
-        </template>
-        <template #cell-encounter.type="{ item }">
-          {{ item.encounter ? labelize(item.encounter.type) : '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -330,41 +318,14 @@ const { pending } = usePageQuery(load)
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              variant="ghost"
-              size="sm"
-              :to="{ name: 'billing-id', params: { id: item.id } }"
-            >
-              View
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Invoice') && item.status === 'draft'"
-              size="sm"
-              @click="updateStatus(item, 'issued')"
-            >
-              Issue
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Invoice') && item.status !== 'paid' && item.status !== 'cancelled'"
-              variant="ghost"
-              size="sm"
-              @click="openPay(item)"
-            >
-              Record payment
-            </HButton>
-            <HActionMenu v-if="ability.can('update', 'Invoice') && ['draft', 'issued'].includes(item.status)">
-              <template #default="{ close }">
-                <button
-                  type="button"
-                  class="h-action-item is-danger"
-                  @click="cancelInvoice(item); close()"
-                >
-                  Cancel invoice
-                </button>
-              </template>
-            </HActionMenu>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'View', icon: 'eye', to: { name: 'billing-id', params: { id: item.id } } },
+              { label: 'Issue', icon: 'send', if: ability.can('update', 'Invoice') && item.status === 'draft', onSelect: () => updateStatus(item, 'issued') },
+              { label: 'Record payment', icon: 'wallet', if: ability.can('update', 'Invoice') && item.status !== 'paid' && item.status !== 'cancelled', onSelect: () => openPay(item) },
+              { label: 'Cancel invoice', icon: 'ban', danger: true, if: ability.can('update', 'Invoice') && ['draft', 'issued'].includes(item.status), onSelect: () => cancelInvoice(item) },
+            ]"
+          />
         </template>
       </HTable>
       <HPager

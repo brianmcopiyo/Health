@@ -23,10 +23,7 @@ const destinationFacilityId = ref(null)
 const facilities = ref([])
 
 const headers = [
-  { title: 'Patient', key: 'patient_name' },
-  { title: 'Encounter', key: 'encounter.type' },
-  { title: 'From', key: 'from_hospital.name' },
-  { title: 'To', key: 'to_hospital.name' },
+  { title: 'Patient', key: 'patient_name', fill: true },
   { title: 'Need', key: 'required_facility_type.name' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions' },
@@ -126,17 +123,12 @@ const { pending } = usePageQuery(load)
         empty="No referrals in this view"
       >
         <template #cell-patient_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+            :secondary="joinContext(item.from_hospital?.name, item.to_hospital?.name)"
           >
-            {{ item.patient.full_name || item.patient_name }}
-          </RouterLink>
-          <span v-else>{{ item.patient_name || '—' }}</span>
-        </template>
-        <template #cell-encounter.type="{ item }">
-          {{ item.encounter ? labelize(item.encounter.type) : '—' }}
+            {{ item.patient?.full_name || item.patient_name || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -144,22 +136,12 @@ const { pending } = usePageQuery(load)
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              variant="ghost"
-              size="icon"
-              :to="{ name: 'referrals-id', params: { id: item.id } }"
-            >
-              <HIcon name="eye" />
-            </HButton>
-            <HButton
-              variant="ghost"
-              size="sm"
-              @click="openManage(item)"
-            >
-              Manage
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'View', icon: 'eye', to: { name: 'referrals-id', params: { id: item.id } } },
+              { label: 'Manage', icon: 'edit', onSelect: () => openManage(item) },
+            ]"
+          />
         </template>
       </HTable>
       <HPager

@@ -126,8 +126,7 @@ const today = new Date().toISOString().slice(0, 10)
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'MRN', key: 'mrn' },
-          { title: 'Name', key: 'full_name' },
+          { title: 'Name', key: 'full_name', fill: true },
           { title: 'Sex', key: 'sex' },
           { title: 'Phone', key: 'phone' },
           { title: 'Status', key: 'status' },
@@ -136,29 +135,26 @@ const today = new Date().toISOString().slice(0, 10)
         :items="patients"
         empty="No patients registered yet"
       >
+        <template #cell-full_name="{ item }">
+          <HCell
+            :to="{ name: 'patients-id', params: { id: item.id } }"
+            :secondary="item.mrn"
+          >
+            {{ item.full_name }}
+          </HCell>
+        </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
             {{ labelize(item.status) }}
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              variant="ghost"
-              size="icon"
-              :to="{ name: 'patients-id', params: { id: item.id } }"
-            >
-              <HIcon name="eye" />
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Patient')"
-              variant="ghost"
-              size="icon"
-              @click="openEdit(item)"
-            >
-              <HIcon name="edit" />
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'View', icon: 'eye', to: { name: 'patients-id', params: { id: item.id } } },
+              { label: 'Edit', icon: 'edit', if: ability.can('update', 'Patient'), onSelect: () => openEdit(item) },
+            ]"
+          />
         </template>
       </HTable>
       <HPager

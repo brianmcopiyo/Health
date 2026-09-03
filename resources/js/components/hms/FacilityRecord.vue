@@ -292,49 +292,17 @@ watch(() => route.params.id, () => run())
             v-if="ability.can('update', 'Facility') || (isWard && ability.can('update', 'Ward')) || (isBed && ability.can('update', 'Bed')) || ability.can('manage', 'Facility')"
             #actions
           >
-            <HButton
-              v-if="ability.can('update', 'Facility') || (isWard && ability.can('update', 'Ward')) || (isBed && ability.can('update', 'Bed'))"
-              variant="ghost"
-              size="sm"
-              @click="openStatus"
-            >
-              Update status
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Facility')"
-              size="sm"
-              @click="openEdit"
-            >
-              Edit
-            </HButton>
-            <HActionMenu v-if="ability.can('manage', 'Facility') || (isBed && ability.can('update', 'Facility'))">
-              <template #default="{ close }">
-                <button
-                  v-if="isBed && ability.can('update', 'Facility')"
-                  type="button"
-                  class="h-action-item"
-                  @click="openMove(); close()"
-                >
-                  Move ward
-                </button>
-                <button
-                  v-if="isBed && record.parent_id && ability.can('update', 'Facility')"
-                  type="button"
-                  class="h-action-item"
-                  @click="unassignWard(); close()"
-                >
-                  Unassign ward
-                </button>
-                <button
-                  v-if="ability.can('manage', 'Facility')"
-                  type="button"
-                  class="h-action-item is-danger"
-                  @click="formError = ''; removing = true; close()"
-                >
-                  Remove
-                </button>
-              </template>
-            </HActionMenu>
+            <HActionMenu
+              :compact="false"
+              label="More"
+              :actions="[
+                { label: 'Update status', icon: 'wrench', if: ability.can('update', 'Facility') || (isWard && ability.can('update', 'Ward')) || (isBed && ability.can('update', 'Bed')), onSelect: openStatus },
+                { label: 'Edit', icon: 'edit', if: ability.can('update', 'Facility'), onSelect: openEdit },
+                { label: 'Move ward', icon: 'transfer', if: isBed && ability.can('update', 'Facility'), onSelect: openMove },
+                { label: 'Unassign ward', icon: 'ban', if: isBed && record.parent_id && ability.can('update', 'Facility'), onSelect: unassignWard },
+                { label: 'Remove', icon: 'trash', danger: true, if: ability.can('manage', 'Facility'), onSelect: () => { formError = ''; removing = true } },
+              ]"
+            />
           </template>
           <p>{{ record.resource_notes || 'No resource notes yet.' }}</p>
           <p
@@ -393,7 +361,7 @@ watch(() => route.params.id, () => run())
       </template>
       <HTable
         :headers="[
-          { title: 'Bed', key: 'name' },
+          { title: 'Bed', key: 'name', fill: true },
           { title: 'Patient', key: 'patient' },
           { title: 'Status', key: 'status' },
         ]"
@@ -401,22 +369,19 @@ watch(() => route.params.id, () => run())
         empty="No beds are assigned to this ward"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'beds-id', params: { id: item.id } }"
+            :secondary="joinContext(record.hospital?.name, record.name)"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-patient="{ item }">
-          <RouterLink
-            v-if="item.active_assignment?.patient?.id || item.activeAssignment?.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: (item.active_assignment || item.activeAssignment).patient.id } }"
+          <HCell
+            :to="(item.active_assignment || item.activeAssignment)?.patient?.id ? { name: 'patients-id', params: { id: (item.active_assignment || item.activeAssignment).patient.id } } : null"
           >
-            {{ (item.active_assignment || item.activeAssignment).patient.first_name }} {{ (item.active_assignment || item.activeAssignment).patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
+            {{ (item.active_assignment || item.activeAssignment)?.patient ? `${(item.active_assignment || item.activeAssignment).patient.first_name} ${(item.active_assignment || item.activeAssignment).patient.last_name}` : '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -444,8 +409,7 @@ watch(() => route.params.id, () => run())
       </template>
       <HTable
         :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Bed', key: 'facility.name' },
+          { title: 'Patient', key: 'patient.first_name', fill: true },
           { title: 'Status', key: 'status' },
           { title: 'Actions', key: 'actions' },
         ]"
@@ -453,22 +417,12 @@ watch(() => route.params.id, () => run())
         empty="No patients are occupying beds in this ward"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+            :secondary="item.facility?.name"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-        </template>
-        <template #cell-facility.name="{ item }">
-          <RouterLink
-            v-if="item.facility_id"
-            class="h-inline-link"
-            :to="{ name: 'beds-id', params: { id: item.facility_id } }"
-          >
-            {{ item.facility?.name || 'Bed' }}
-          </RouterLink>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -476,32 +430,13 @@ watch(() => route.params.id, () => run())
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              v-if="item.encounter_id || item.encounter"
-              size="sm"
-              variant="ghost"
-              @click="openChart(item)"
-            >
-              Chart
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Bed') && item.status === 'active'"
-              size="sm"
-              variant="ghost"
-              @click="openTransfer(item)"
-            >
-              Transfer
-            </HButton>
-            <HButton
-              v-if="ability.can('update', 'Bed') && item.status === 'active'"
-              size="sm"
-              variant="ghost"
-              @click="discharge(item)"
-            >
-              Discharge
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'Open chart', icon: 'stethoscope', if: Boolean(item.encounter_id || item.encounter), onSelect: () => openChart(item) },
+              { label: 'Transfer', icon: 'transfer', if: ability.can('update', 'Bed') && item.status === 'active', onSelect: () => openTransfer(item) },
+              { label: 'Discharge', icon: 'door', if: ability.can('update', 'Bed') && item.status === 'active', onSelect: () => discharge(item) },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>
@@ -538,29 +473,15 @@ watch(() => route.params.id, () => run())
           <strong>{{ record.assignment.nurse?.name || '—' }}</strong>
         </div>
         <div class="h-actions">
-          <HButton
-            v-if="record.assignment.encounter_id || record.assignment.encounter"
-            size="sm"
-            variant="ghost"
-            @click="openChart(record.assignment)"
-          >
-            Open chart
-          </HButton>
-          <HButton
-            v-if="ability.can('update', 'Bed')"
-            size="sm"
-            variant="ghost"
-            @click="openTransfer(record.assignment)"
-          >
-            Transfer
-          </HButton>
-          <HButton
-            v-if="ability.can('update', 'Bed')"
-            size="sm"
-            @click="discharge(record.assignment)"
-          >
-            Discharge
-          </HButton>
+          <HActionMenu
+            :compact="false"
+            label="More"
+            :actions="[
+              { label: 'Open chart', icon: 'stethoscope', if: Boolean(record.assignment.encounter_id || record.assignment.encounter), onSelect: () => openChart(record.assignment) },
+              { label: 'Transfer', icon: 'transfer', if: ability.can('update', 'Bed'), onSelect: () => openTransfer(record.assignment) },
+              { label: 'Discharge', icon: 'door', if: ability.can('update', 'Bed'), onSelect: () => discharge(record.assignment) },
+            ]"
+          />
         </div>
       </template>
       <HEmpty
@@ -576,20 +497,19 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Unit', key: 'name' },
-          { title: 'Type', key: 'type.name' },
+          { title: 'Unit', key: 'name', fill: true },
           { title: 'Status', key: 'status' },
         ]"
         :items="[...(record.units || []), ...(record.beds || [])]"
         empty="No child units"
       >
         <template #cell-name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="facilityRecordTo(item)"
+            :secondary="joinContext(item.type?.name, item.hospital?.name, item.parent?.name)"
           >
             {{ item.name }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -606,22 +526,19 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Staff', key: 'user.name' },
-          { title: 'Role', key: 'assignment_role' },
+          { title: 'Staff', key: 'user.name', fill: true },
           { title: 'Shift', key: 'shift' },
         ]"
         :items="record.staff_assignments || []"
         empty="No staff are assigned to this unit"
       >
         <template #cell-user.name="{ item }">
-          <RouterLink
-            v-if="item.user?.id && ability.can('read', 'User')"
-            class="h-inline-link"
-            :to="{ name: 'admin-users-id', params: { id: item.user.id } }"
+          <HCell
+            :to="item.user?.id && ability.can('read', 'User') ? { name: 'admin-users-id', params: { id: item.user.id } } : null"
+            :secondary="item.assignment_role"
           >
-            {{ item.user.name }}
-          </RouterLink>
-          <span v-else>{{ item.user?.name || '—' }}</span>
+            {{ item.user?.name || '—' }}
+          </HCell>
         </template>
       </HTable>
     </HCard>
@@ -633,8 +550,7 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Patient', key: 'patient.first_name' },
-          { title: 'Bed', key: 'facility.name' },
+          { title: 'Patient', key: 'patient.first_name', fill: true },
           { title: 'Status', key: 'status' },
           { title: 'When', key: 'assigned_at' },
         ]"
@@ -642,22 +558,12 @@ watch(() => route.params.id, () => run())
         empty="No assignment history"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+            :secondary="item.facility?.name"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-        </template>
-        <template #cell-facility.name="{ item }">
-          <RouterLink
-            v-if="item.facility?.id"
-            class="h-inline-link"
-            :to="{ name: 'beds-id', params: { id: item.facility.id } }"
-          >
-            {{ item.facility.name }}
-          </RouterLink>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">

@@ -215,43 +215,16 @@ const today = new Date().toISOString().slice(0, 10)
             v-if="ability.can('update', 'Patient') || ability.can('manage', 'Patient')"
             #actions
           >
-            <HButton
-              v-if="ability.can('update', 'Patient')"
-              variant="ghost"
-              size="sm"
-              @click="openEdit"
-            >
-              <HIcon name="edit" />
-              Edit
-            </HButton>
-            <HActionMenu v-if="ability.can('update', 'Patient') || ability.can('manage', 'Patient')">
-              <template #default="{ close }">
-                <button
-                  v-if="ability.can('update', 'Patient')"
-                  type="button"
-                  class="h-action-item"
-                  @click="openStatus(); close()"
-                >
-                  Update status
-                </button>
-                <button
-                  v-if="ability.can('manage', 'Patient')"
-                  type="button"
-                  class="h-action-item"
-                  @click="exportRecord(); close()"
-                >
-                  Export record
-                </button>
-                <button
-                  v-if="ability.can('update', 'Patient') && !chart.archived_at"
-                  type="button"
-                  class="h-action-item is-danger"
-                  @click="archivePatient(); close()"
-                >
-                  Archive
-                </button>
-              </template>
-            </HActionMenu>
+            <HActionMenu
+              :compact="false"
+              label="More"
+              :actions="[
+                { label: 'Edit', icon: 'edit', if: ability.can('update', 'Patient'), onSelect: openEdit },
+                { label: 'Update status', icon: 'wrench', if: ability.can('update', 'Patient'), onSelect: openStatus },
+                { label: 'Export record', icon: 'download', if: ability.can('manage', 'Patient'), onSelect: exportRecord },
+                { label: 'Archive', icon: 'ban', danger: true, if: ability.can('update', 'Patient') && !chart.archived_at, onSelect: archivePatient },
+              ]"
+            />
           </template>
           <div class="h-metric">
             <span>Sex</span>
@@ -356,22 +329,21 @@ const today = new Date().toISOString().slice(0, 10)
       >
         <HTable
           :headers="[
-            { title: 'Type', key: 'type' },
-            { title: 'Complaint', key: 'chief_complaint' },
+            { title: 'Encounter', key: 'type', fill: true },
             { title: 'Clinician', key: 'clinician.name' },
             { title: 'Status', key: 'status' },
-            { title: '', key: 'actions' },
+            { title: 'Actions', key: 'actions' },
           ]"
           :items="chart.encounters"
           empty="No encounters yet"
         >
           <template #cell-type="{ item }">
-            <RouterLink
-              class="h-inline-link"
+            <HCell
               :to="{ name: 'encounters-id', params: { id: item.id } }"
+              :secondary="item.chief_complaint"
             >
               {{ labelize(item.type) }}
-            </RouterLink>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -379,13 +351,11 @@ const today = new Date().toISOString().slice(0, 10)
             </HBadge>
           </template>
           <template #cell-actions="{ item }">
-            <HButton
-              size="sm"
-              variant="ghost"
-              @click="openEncounter(item.id)"
-            >
-              Open
-            </HButton>
+            <HActionMenu
+              :actions="[
+                { label: 'Open chart', icon: 'stethoscope', onSelect: () => openEncounter(item.id) },
+              ]"
+            />
           </template>
         </HTable>
       </HCard>
@@ -397,22 +367,19 @@ const today = new Date().toISOString().slice(0, 10)
       >
         <HTable
           :headers="[
-            { title: 'Item', key: 'item_name' },
-            { title: 'Module', key: 'module_key' },
+            { title: 'Item', key: 'item_name', fill: true },
             { title: 'Status', key: 'status' },
           ]"
           :items="chart.orders"
           empty="No service orders"
         >
-          <template #cell-module_key="{ item }">
-            <RouterLink
-              v-if="['laboratory', 'imaging', 'pharmacy', 'theatre', 'emergency'].includes(item.module_key)"
-              class="h-inline-link"
-              :to="{ name: item.module_key }"
+          <template #cell-item_name="{ item }">
+            <HCell
+              :to="['laboratory', 'imaging', 'pharmacy', 'theatre', 'emergency'].includes(item.module_key) ? { name: item.module_key } : null"
+              :secondary="labelize(item.module_key)"
             >
-              {{ labelize(item.module_key) }}
-            </RouterLink>
-            <span v-else>{{ labelize(item.module_key) }}</span>
+              {{ item.item_name }}
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -436,12 +403,9 @@ const today = new Date().toISOString().slice(0, 10)
           empty="No prescriptions"
         >
           <template #cell-items="{ item }">
-            <RouterLink
-              class="h-inline-link"
-              :to="{ name: 'pharmacy' }"
-            >
+            <HCell :to="{ name: 'pharmacy' }">
               {{ (item.items || []).map(row => row.medication?.name).join(', ') || 'Prescription' }}
-            </RouterLink>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -458,28 +422,30 @@ const today = new Date().toISOString().slice(0, 10)
       >
         <HTable
           :headers="[
-            { title: 'Number', key: 'number' },
+            { title: 'Number', key: 'number', fill: true },
             { title: 'Total', key: 'total' },
             { title: 'Status', key: 'status' },
-            { title: '', key: 'actions' },
+            { title: 'Actions', key: 'actions' },
           ]"
           :items="chart.invoices"
           empty="No invoices"
         >
+          <template #cell-number="{ item }">
+            <HCell :to="{ name: 'billing-id', params: { id: item.id } }">
+              {{ item.number }}
+            </HCell>
+          </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
               {{ labelize(item.status) }}
             </HBadge>
           </template>
           <template #cell-actions="{ item }">
-            <HButton
-              v-if="ability.can('read', 'Invoice')"
-              size="sm"
-              variant="ghost"
-              :to="{ name: 'billing-id', params: { id: item.id } }"
-            >
-              View
-            </HButton>
+            <HActionMenu
+              :actions="[
+                { label: 'View', icon: 'eye', if: ability.can('read', 'Invoice'), to: { name: 'billing-id', params: { id: item.id } } },
+              ]"
+            />
           </template>
         </HTable>
       </HCard>
@@ -498,14 +464,12 @@ const today = new Date().toISOString().slice(0, 10)
           empty="No bed assignments"
         >
           <template #cell-facility.name="{ item }">
-            <RouterLink
-              v-if="item.facility?.id"
-              class="h-inline-link"
-              :to="{ name: 'beds-id', params: { id: item.facility.id } }"
+            <HCell
+              :to="item.facility?.id ? { name: 'beds-id', params: { id: item.facility.id } } : null"
+              :secondary="item.facility?.parent?.name || item.ward?.name"
             >
-              {{ item.facility.name }}
-            </RouterLink>
-            <span v-else>{{ item.facility?.name || '—' }}</span>
+              {{ item.facility?.name || '—' }}
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">
@@ -533,7 +497,7 @@ const today = new Date().toISOString().slice(0, 10)
         </template>
         <HTable
           :headers="[
-            { title: 'File', key: 'original_name' },
+            { title: 'File', key: 'original_name', fill: true },
             { title: 'Uploaded', key: 'uploaded_at' },
             { title: '', key: 'actions' },
           ]"
@@ -543,14 +507,17 @@ const today = new Date().toISOString().slice(0, 10)
           <template #cell-uploaded_at="{ item }">
             {{ item.uploaded_at ? new Date(item.uploaded_at).toLocaleString() : '—' }}
           </template>
+          <template #cell-original_name="{ item }">
+            <HCell>
+              {{ item.original_name }}
+            </HCell>
+          </template>
           <template #cell-actions="{ item }">
-            <HButton
-              size="sm"
-              variant="ghost"
-              @click="downloadDocument(item)"
-            >
-              Download
-            </HButton>
+            <HActionMenu
+              :actions="[
+                { label: 'Download', icon: 'download', onSelect: () => downloadDocument(item) },
+              ]"
+            />
           </template>
         </HTable>
       </HCard>
@@ -562,19 +529,19 @@ const today = new Date().toISOString().slice(0, 10)
       >
         <HTable
           :headers="[
-            { title: 'Destination', key: 'to_hospital.name' },
+            { title: 'Destination', key: 'to_hospital.name', fill: true },
             { title: 'Status', key: 'status' },
           ]"
           :items="chart.referrals"
           empty="No referrals"
         >
           <template #cell-to_hospital.name="{ item }">
-            <RouterLink
-              class="h-inline-link"
+            <HCell
               :to="{ name: 'referrals-id', params: { id: item.id } }"
+              :secondary="item.from_hospital?.name"
             >
               {{ item.to_hospital?.name || 'Referral' }}
-            </RouterLink>
+            </HCell>
           </template>
           <template #cell-status="{ item }">
             <HBadge :tone="statusColor(item.status)">

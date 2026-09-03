@@ -29,15 +29,12 @@ const openChart = id => {
 
 const { pending, run } = usePageQuery(load)
 const mineHeaders = [
-  { title: 'Patient', key: 'patient.first_name' },
-  { title: 'Type', key: 'type' },
-  { title: 'Complaint', key: 'chief_complaint' },
+  { title: 'Patient', key: 'patient.first_name', fill: true },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions' },
 ]
 const queueHeaders = [
-  { title: 'Patient', key: 'patient.first_name' },
-  { title: 'Complaint', key: 'chief_complaint' },
+  { title: 'Patient', key: 'patient.first_name', fill: true },
   { title: 'Clinician', key: 'clinician.name' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions' },
@@ -72,14 +69,12 @@ onBeforeUnmount(() => {
         empty="No patients currently assigned to you"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+            :secondary="joinContext(labelize(item.type), item.chief_complaint)"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -87,12 +82,11 @@ onBeforeUnmount(() => {
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <HButton
-            size="sm"
-            @click="openChart(item.id)"
-          >
-            Open chart
-          </HButton>
+          <HActionMenu
+            :actions="[
+              { label: 'Open chart', icon: 'stethoscope', onSelect: () => openChart(item.id) },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>
@@ -108,14 +102,12 @@ onBeforeUnmount(() => {
         empty="No patients waiting in OPD"
       >
         <template #cell-patient.first_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+          <HCell
+            :to="item.patient?.id ? { name: 'patients-id', params: { id: item.patient.id } } : null"
+            :secondary="item.chief_complaint"
           >
-            {{ item.patient.first_name }} {{ item.patient.last_name }}
-          </RouterLink>
-          <span v-else>—</span>
+            {{ item.patient?.full_name || `${item.patient?.first_name || ''} ${item.patient?.last_name || ''}`.trim() || '—' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -123,13 +115,11 @@ onBeforeUnmount(() => {
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <HButton
-            v-if="ability.can('update', 'Opd')"
-            size="sm"
-            @click="openChart(item.id)"
-          >
-            Open chart
-          </HButton>
+          <HActionMenu
+            :actions="[
+              { label: 'Open chart', icon: 'stethoscope', if: ability.can('update', 'Opd'), onSelect: () => openChart(item.id) },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>

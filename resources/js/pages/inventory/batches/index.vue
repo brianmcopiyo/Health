@@ -34,9 +34,7 @@ const { pending } = usePageQuery(load)
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'Batch', key: 'batch_number' },
-          { title: 'Item', key: 'item.name' },
-          { title: 'Store', key: 'store.name' },
+          { title: 'Batch', key: 'batch_number', fill: true },
           { title: 'Expiry', key: 'expiry_date' },
           { title: 'Qty', key: 'quantity' },
           { title: 'Status', key: 'status' },
@@ -45,12 +43,12 @@ const { pending } = usePageQuery(load)
         empty="No batches"
       >
         <template #cell-batch_number="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'inventory-batches-id', params: { id: item.id } }"
+            :secondary="joinContext(item.item?.name, item.store?.name)"
           >
             {{ item.batch_number }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-expiry_date="{ item }">
           {{ formatDate(item.expiry_date) }}

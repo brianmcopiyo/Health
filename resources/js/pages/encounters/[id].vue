@@ -49,12 +49,13 @@ watch(() => route.params.id, () => run())
     >
       <HCard title="Visit">
         <template #actions>
-          <HButton
-            size="sm"
-            @click="chartOpen = true"
-          >
-            Open chart
-          </HButton>
+          <HActionMenu
+            :compact="false"
+            label="More"
+            :actions="[
+              { label: 'Open chart', icon: 'stethoscope', onSelect: () => { chartOpen = true } },
+            ]"
+          />
         </template>
         <div class="h-metric">
           <span>Patient</span>
@@ -123,21 +124,18 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Clinician', key: 'user.name' },
-          { title: 'Role', key: 'care_role' },
+          { title: 'Clinician', key: 'user.name', fill: true },
         ]"
         :items="record.care_team || []"
         empty="No care team recorded"
       >
         <template #cell-user.name="{ item }">
-          <RouterLink
-            v-if="item.user?.id"
-            class="h-inline-link"
-            :to="{ name: 'admin-users-id', params: { id: item.user.id } }"
+          <HCell
+            :to="item.user?.id ? { name: 'admin-users-id', params: { id: item.user.id } } : null"
+            :secondary="item.care_role"
           >
-            {{ item.user.name }}
-          </RouterLink>
-          <span v-else>—</span>
+            {{ item.user?.name || '—' }}
+          </HCell>
         </template>
       </HTable>
     </HCard>
@@ -149,12 +147,17 @@ watch(() => route.params.id, () => run())
       >
         <HTable
           :headers="[
-            { title: 'Diagnosis', key: 'name' },
-            { title: 'Code', key: 'code' },
+            { title: 'Diagnosis', key: 'name', fill: true },
           ]"
           :items="record.diagnoses || []"
           empty="No diagnoses"
-        />
+        >
+          <template #cell-name="{ item }">
+            <HCell :secondary="item.code">
+              {{ item.name }}
+            </HCell>
+          </template>
+        </HTable>
       </HCard>
       <HCard
         title="Notes"
@@ -162,12 +165,17 @@ watch(() => route.params.id, () => run())
       >
         <HTable
           :headers="[
-            { title: 'Note', key: 'body' },
-            { title: 'Author', key: 'author.name' },
+            { title: 'Note', key: 'body', fill: true },
           ]"
           :items="record.clinical_notes || []"
           empty="No clinical notes"
-        />
+        >
+          <template #cell-body="{ item }">
+            <HCell :secondary="item.author?.name">
+              {{ item.body }}
+            </HCell>
+          </template>
+        </HTable>
       </HCard>
       <HCard
         title="Vitals"
@@ -192,15 +200,16 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Item', key: 'item_name' },
-          { title: 'Module', key: 'module_key' },
+          { title: 'Item', key: 'item_name', fill: true },
           { title: 'Status', key: 'status' },
         ]"
         :items="record.orders || []"
         empty="No orders"
       >
-        <template #cell-module_key="{ item }">
-          {{ labelize(item.module_key) }}
+        <template #cell-item_name="{ item }">
+          <HCell :secondary="labelize(item.module_key)">
+            {{ item.item_name }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -224,7 +233,9 @@ watch(() => route.params.id, () => run())
         empty="No prescriptions"
       >
         <template #cell-items="{ item }">
-          {{ (item.items || []).map(row => row.medication?.name).join(', ') || 'Prescription' }}
+          <HCell>
+            {{ (item.items || []).map(row => row.medication?.name).join(', ') || 'Prescription' }}
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">
@@ -241,7 +252,7 @@ watch(() => route.params.id, () => run())
     >
       <HTable
         :headers="[
-          { title: 'Number', key: 'number' },
+          { title: 'Number', key: 'number', fill: true },
           { title: 'Total', key: 'total' },
           { title: 'Status', key: 'status' },
         ]"
@@ -249,12 +260,9 @@ watch(() => route.params.id, () => run())
         empty="No invoices"
       >
         <template #cell-number="{ item }">
-          <RouterLink
-            class="h-inline-link"
-            :to="{ name: 'billing-id', params: { id: item.id } }"
-          >
+          <HCell :to="{ name: 'billing-id', params: { id: item.id } }">
             {{ item.number }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-status="{ item }">
           <HBadge :tone="statusColor(item.status)">

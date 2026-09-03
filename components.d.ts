@@ -24,6 +24,7 @@ declare module 'vue' {
     HBars: typeof import('./resources/js/components/ui/HBars.vue')['default']
     HButton: typeof import('./resources/js/components/ui/HButton.vue')['default']
     HCard: typeof import('./resources/js/components/ui/HCard.vue')['default']
+    HCell: typeof import('./resources/js/components/ui/HCell.vue')['default']
     HCheckbox: typeof import('./resources/js/components/ui/HCheckbox.vue')['default']
     HCheckboxGroup: typeof import('./resources/js/components/ui/HCheckboxGroup.vue')['default']
     HCombobox: typeof import('./resources/js/components/ui/HCombobox.vue')['default']

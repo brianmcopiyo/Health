@@ -65,13 +65,19 @@ watch(() => route.params.id, () => run())
       </template>
       <HTable
         :headers="[
-          { title: 'Type', key: 'billable_type' },
+          { title: 'Type', key: 'billable_type', fill: true },
           { title: 'Min qty', key: 'min_quantity' },
           { title: 'Price', key: 'unit_price' },
         ]"
         :items="record.items || []"
         empty="No prices on this list"
-      />
+      >
+        <template #cell-billable_type="{ item }">
+          <HCell :secondary="item.billable?.name || item.service?.name">
+            {{ item.billable_type }}
+          </HCell>
+        </template>
+      </HTable>
     </HCard>
 
     <HModal

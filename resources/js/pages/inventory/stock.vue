@@ -59,8 +59,7 @@ const { pending } = usePageQuery(load)
       <HTable
         :loading="pending"
         :headers="[
-          { title: 'Item', key: 'item.name' },
-          { title: 'Store', key: 'store.name' },
+          { title: 'Item', key: 'item.name', fill: true },
           { title: 'On hand', key: 'quantity' },
           { title: 'Value', key: 'value' },
           { title: 'Status', key: 'status' },
@@ -69,12 +68,12 @@ const { pending } = usePageQuery(load)
         empty="No stock balances"
       >
         <template #cell-item.name="{ item }">
-          <RouterLink
-            class="h-inline-link"
+          <HCell
             :to="{ name: 'inventory-items-id', params: { id: item.item_id } }"
+            :secondary="joinContext(item.item?.sku, item.store?.name)"
           >
             {{ item.item?.name }}
-          </RouterLink>
+          </HCell>
         </template>
         <template #cell-quantity="{ item }">
           {{ formatQty(item.quantity) }}

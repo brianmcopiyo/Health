@@ -38,11 +38,8 @@ const encounterOptions = computed(() => encounters.value.map(item => ({
 })))
 
 const headers = [
-  { title: 'Request', key: 'title' },
-  { title: 'Patient', key: 'patient.full_name' },
+  { title: 'Request', key: 'title', fill: true },
   { title: 'Type', key: 'type' },
-  { title: 'From', key: 'from_hospital.name' },
-  { title: 'To', key: 'to_hospital.name' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions' },
 ]
@@ -149,15 +146,13 @@ const { pending } = usePageQuery(load)
         :items="items"
         empty="No assistance requests yet"
       >
-        <template #cell-patient.full_name="{ item }">
-          <RouterLink
-            v-if="item.patient?.id"
-            class="h-inline-link"
-            :to="{ name: 'patients-id', params: { id: item.patient.id } }"
+        <template #cell-title="{ item }">
+          <HCell
+            :to="{ name: 'assistance-id', params: { id: item.id } }"
+            :secondary="joinContext(item.patient?.full_name, item.from_hospital?.name, item.to_hospital?.name)"
           >
-            {{ item.patient.full_name }}
-          </RouterLink>
-          <span v-else>—</span>
+            {{ item.title }}
+          </HCell>
         </template>
         <template #cell-type="{ item }">
           {{ labelize(item.type) }}
@@ -168,22 +163,12 @@ const { pending } = usePageQuery(load)
           </HBadge>
         </template>
         <template #cell-actions="{ item }">
-          <div class="h-actions">
-            <HButton
-              variant="ghost"
-              size="icon"
-              :to="{ name: 'assistance-id', params: { id: item.id } }"
-            >
-              <HIcon name="eye" />
-            </HButton>
-            <HButton
-              variant="ghost"
-              size="sm"
-              @click="formError = ''; selected = item"
-            >
-              Manage
-            </HButton>
-          </div>
+          <HActionMenu
+            :actions="[
+              { label: 'View', icon: 'eye', to: { name: 'assistance-id', params: { id: item.id } } },
+              { label: 'Manage', icon: 'edit', onSelect: () => { formError = ''; selected = item } },
+            ]"
+          />
         </template>
       </HTable>
     </HCard>
